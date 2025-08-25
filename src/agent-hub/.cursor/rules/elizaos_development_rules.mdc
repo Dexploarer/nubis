@@ -1,0 +1,213 @@
+# Master Rules List for Coding ElizaOS Agents: The Agent Developer's Manifesto
+
+## Critical Development Rules
+
+### Rule 1: Prioritize Interface Definitions (The Contract is King)
+- **Always start by defining** the name, description, inputSchema, and outputSchema for every Action, Provider, and Evaluator
+- **Use Zod consistently** for all schema definitions
+- **Ensure description fields** are highly descriptive and explain the purpose, use case, and effect of the interface for the agent's reasoning
+
+### Rule 2: Actions are for State Change or External Interactions
+- **An Action should represent** a discrete, executable task that modifies the agent's state, affects the external world, or explicitly communicates with the user
+- **If a capability changes something** or does something outside the agent's internal reasoning, it should be an Action
+- **Avoid using Actions solely** for retrieving information that doesn't cause a side effect; use a Provider for that
+
+### Rule 3: Providers are for Contextual Information Retrieval (Passive Data)
+- **A Provider should represent** a source of passive information that the agent can "observe" or "know"
+- **Providers should ideally be side-effect free**. Their primary role is to fetch data
+- **If the agent needs to know something** about its environment, internal state, or external data, it should be a Provider
+
+### Rule 4: Evaluators are for Feedback and Quality Control
+- **Evaluators are designed for** assessing outputs, decisions, or behaviors
+- **They provide a structured way** for the agent (or the system supervising the agent) to determine the quality, appropriateness, or completeness of an action or response
+- **Implement evaluators to enable** agents to learn, self-correct, and improve over time (e.g., for reinforcement learning, policy refinement)
+
+### Rule 5: Services are for Persistence and Centralized Logic
+- **Use Services to manage persistent state** (e.g., database connections, API client instances, caching layers)
+- **Use Services to encapsulate complex business logic** or external integrations that need to be shared across multiple actions, providers, or evaluators
+- **Services are initialized once** and remain active throughout the agent's lifecycle, making them ideal for long-running connections or background tasks
+
+### Rule 6: Asynchronous by Default
+- **Assume all handlers** (Action, Provider, Evaluator) and Service methods that involve external interactions or significant computation are asynchronous
+- **Always use async/await** and return Promises
+
+### Rule 7: Leverage Context for Inter-Plugin Communication
+- **Direct Service Calls**: Access other registered services through `context.services.get('SERVICE_NAME')` for synchronous, direct method invocations. This is suitable for tightly coupled operations where one service directly depends on another's API
+- **Event Bus**: For asynchronous, decoupled communication, use `context.eventBus.publish()` and `context.eventBus.subscribe()`. This is preferred for broadcasting events or triggering background tasks without direct dependencies
+
+### Rule 8: Robust Error Handling and Logging
+- **Implement comprehensive try-catch blocks** in all handler functions and critical service methods
+- **Return clear success: false** and informative message/error fields in ActionResult objects
+- **Utilize context.logger** (or your custom LOGGER_SERVICE) for detailed, context-aware logging at appropriate levels (info, warn, error). This is crucial for debugging and monitoring agent behavior
+
+### Rule 9: Security is Paramount
+- **Input Validation**: Never trust input. Always validate all parameters received by actions, providers, and evaluators against their Zod schemas
+- **Least Privilege**: Design plugins and services to operate with the minimum necessary permissions required for their function
+- **Secure Credentials**: Never hardcode sensitive information (API keys, database passwords) directly in code. Use ElizaOS's configuration mechanisms or environment variables
+- **Sanitization**: Sanitize any user-provided input before using it in queries or external calls to prevent injection attacks
+
+### Rule 10: Optimize for LLM Comprehension
+- **The name and description** of your interfaces are the primary means by which the LLM understands how to use your tools
+- **Be Explicit**: Provide clear, concise, and unambiguous descriptions. Avoid jargon or internal technical terms that the LLM might not understand
+- **Action Verbs**: Use strong, imperative verbs for action names (e.g., SEND_EMAIL, CREATE_TASK, UPDATE_RECORD)
+- **Provider Nouns**: Use clear nouns or noun phrases for provider names (e.g., CURRENT_WEATHER, STOCK_PRICE, USER_PREFERENCES)
+- **Evaluator Criteria**: Describe what criteria the evaluator uses to assess (e.g., RESPONSE_APPROPRIATENESS, TASK_COMPLETION_STATUS)
+- **Example Usage**: Consider including brief, illustrative examples within descriptions if complexity warrants
+
+### Rule 11: Manage Plugin Configuration (Externalize Settings)
+- **Define configSchema** for any plugin that requires external configuration
+- **Do not embed environment-specific settings** directly into plugin code
+- **Use context.config** within services and handlers to access validated configuration values
+
+### Rule 12: Maintain Semantic Versioning
+- **Increment MAJOR version** for breaking changes to an interface's schema or behavior
+- **Increment MINOR version** for new features or non-breaking API additions
+- **Increment PATCH version** for bug fixes or backward-compatible changes
+- **This helps agent administrators** and other plugin developers manage dependencies and upgrades
+
+### Rule 13: Test Rigorously
+- **Unit Tests**: Write unit tests for the handler functions of all Actions, Providers, and Evaluators, and for the public methods of Services
+- **Integration Tests**: Test how plugins interact with each other and with the core ElizaOS runtime
+- **Agent-Level Tests**: Test the end-to-end behavior of the agent to ensure it correctly utilizes the plugins in various scenarios
+
+### Rule 14: Embrace Modularity and Reusability
+- **Break down large functionalities** into smaller, reusable plugins or interfaces
+- **Design interfaces with reusability in mind**, so they can be combined in different ways to create varied agent behaviors
+- **Avoid tightly coupling plugins** where loose coupling (via Event Bus or shared Services) is sufficient
+
+### Rule 15: Documentation is Code
+- **Treat descriptions and schemas** as executable documentation
+- **Supplement inline documentation** with external README.md files for complex plugins, explaining installation, configuration, and advanced usage
+- **Keep documentation up-to-date** with code changes
+
+## Implementation Standards
+
+### Schema Definition Standards
+```typescript
+// Always use Zod with descriptive field descriptions
+const actionInputSchema = z.object({
+  userId: z.string().describe("The unique identifier of the user performing the action"),
+  actionType: z.enum(["CREATE", "UPDATE", "DELETE"]).describe("The type of action to perform"),
+  payload: z.record(z.any()).describe("The data payload for the action")
+});
+
+const actionOutputSchema = z.object({
+  success: z.boolean().describe("Whether the action completed successfully"),
+  message: z.string().describe("Human-readable message about the action result"),
+  data: z.any().optional().describe("Additional data returned by the action")
+});
+```
+
+### Error Handling Standards
+```typescript
+// Always return structured error results
+try {
+  const result = await performAction();
+  return {
+    success: true,
+    message: "Action completed successfully",
+    data: result
+  };
+} catch (error) {
+  context.logger.error('Action execution failed:', error);
+  return {
+    success: false,
+    message: `Action failed: ${error.message}`,
+    error: error instanceof Error ? error.message : String(error)
+  };
+}
+```
+
+### Service Lifecycle Standards
+```typescript
+const myService: ServiceDefinition = {
+  name: "MY_SERVICE",
+  description: "Provides specific functionality for the agent",
+  
+  async init(context) {
+    const { config, logger, services } = context;
+    logger.info('Initializing MY_SERVICE');
+    
+    // Validate configuration
+    if (!config.requiredSetting) {
+      throw new Error('Required setting is missing');
+    }
+    
+    // Initialize connections, load data, etc.
+    this.connection = await establishConnection(config.connectionString);
+    logger.info('MY_SERVICE initialized successfully');
+  },
+  
+  async destroy(context) {
+    const { logger } = context;
+    logger.info('Shutting down MY_SERVICE');
+    
+    // Cleanup resources
+    if (this.connection) {
+      await this.connection.close();
+    }
+    
+    logger.info('MY_SERVICE shutdown complete');
+  }
+};
+```
+
+### Event Communication Standards
+```typescript
+// Publish events with structured payloads
+context.eventBus.publish('USER_ACTION_COMPLETED', {
+  userId: 'user123',
+  actionType: 'PROFILE_UPDATE',
+  timestamp: new Date().toISOString(),
+  metadata: {
+    fieldsUpdated: ['name', 'email'],
+    source: 'web_interface'
+  }
+});
+
+// Subscribe to events with proper error handling
+context.eventBus.subscribe('USER_ACTION_COMPLETED', async (payload) => {
+  try {
+    context.logger.info('Processing user action completion:', payload);
+    await processUserActionCompletion(payload);
+  } catch (error) {
+    context.logger.error('Failed to process user action completion:', error);
+  }
+});
+```
+
+## Quality Assurance Checklist
+
+### Before Deploying a Plugin
+- [ ] All interfaces have proper Zod schemas defined
+- [ ] All descriptions are clear and comprehensive
+- [ ] Error handling is implemented for all handlers
+- [ ] Logging is implemented at appropriate levels
+- [ ] Unit tests are written and passing
+- [ ] Integration tests are written and passing
+- [ ] Configuration schema is defined if needed
+- [ ] Security considerations are addressed
+- [ ] Documentation is complete and up-to-date
+- [ ] Semantic versioning is properly set
+
+### Performance Considerations
+- [ ] Async operations are properly handled
+- [ ] Database queries are optimized
+- [ ] Caching is implemented where appropriate
+- [ ] Resource cleanup is implemented
+- [ ] Memory usage is monitored
+
+### Security Checklist
+- [ ] Input validation is implemented
+- [ ] Output sanitization is implemented
+- [ ] Sensitive data is encrypted
+- [ ] Authentication/authorization is implemented
+- [ ] API keys are stored securely
+- [ ] SQL injection is prevented
+- [ ] XSS attacks are prevented
+
+By strictly adhering to these rules, developers can build a robust, scalable, and highly intelligent ElizaOS ecosystem, unleashing the full potential of their AI agents.
+description:
+globs:
+alwaysApply: false
+---

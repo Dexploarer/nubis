@@ -1,0 +1,383 @@
+# ElizaOS Quick Reference Guide
+
+## Core Interface Templates
+
+### Action Template
+```typescript
+import { z } from 'zod';
+
+const actionInputSchema = z.object({
+  // Define your input parameters
+  userId: z.string(),
+  data: z.any()
+});
+
+const actionOutputSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  data: z.any().optional()
+});
+
+const myAction: ActionDefinition = {
+  name: "MY_ACTION",
+  description: "Clear description of what this action does and when to use it",
+  inputSchema: actionInputSchema,
+  outputSchema: actionOutputSchema,
+  handler: async (context) => {
+    const { params, services, logger } = context;
+    
+    try {
+      logger.info(`Executing MY_ACTION for user: ${params.userId}`);
+      
+      // Your action logic here
+      const result = await performAction(params);
+      
+      return {
+        success: true,
+        message: "Action completed successfully",
+        data: result
+      };
+    } catch (error) {
+      logger.error('Action failed:', error);
+      return {
+        success: false,
+        message: `Action failed: ${error.message}`,
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
+};
+```
+
+### Provider Template
+```typescript
+import { z } from 'zod';
+
+const providerOutputSchema = z.object({
+  // Define your output data structure
+  data: z.any(),
+  timestamp: z.string(),
+  source: z.string()
+});
+
+const myProvider: ProviderDefinition = {
+  name: "MY_PROVIDER",
+  description: "Clear description of what information this provider supplies",
+  outputSchema: providerOutputSchema,
+  handler: async (context) => {
+    const { services } = context;
+    
+    // Fetch or compute data
+    const data = await fetchData();
+    
+    return {
+      data,
+      timestamp: new Date().toISOString(),
+      source: 'internal_service'
+    };
+  },
+  refreshInterval: 300000 // 5 minutes, optional
+};
+```
+
+### Evaluator Template
+```typescript
+import { z } from 'zod';
+
+const evaluatorInputSchema = z.object({
+  // Define what gets evaluated
+  input: z.any(),
+  context: z.any()
+});
+
+const evaluatorOutputSchema = z.object({
+  score: z.number(),
+  feedback: z.string(),
+  recommendations: z.array(z.string())
+});
+
+const myEvaluator: EvaluatorDefinition = {
+  name: "MY_EVALUATOR",
+  description: "Clear description of what this evaluator assesses and how",
+  inputSchema: evaluatorInputSchema,
+  outputSchema: evaluatorOutputSchema,
+  handler: async (context) => {
+    const { input, agent, services } = context;
+    
+    // Perform evaluation
+    const score = await evaluateInput(input);
+    const feedback = generateFeedback(score);
+    const recommendations = generateRecommendations(score);
+    
+    return {
+      score,
+      feedback,
+      recommendations
+    };
+  }
+};
+```
+
+### Service Template
+```typescript
+const myService: ServiceDefinition = {
+  name: "MY_SERVICE",
+  description: "Clear description of what functionality this service provides",
+  
+  async init(context) {
+    const { config, logger } = context;
+    logger.info('Initializing MY_SERVICE');
+    
+    // Initialize connections, load config, etc.
+    this.connection = await establishConnection(config.connectionString);
+    logger.info('MY_SERVICE initialized successfully');
+  },
+  
+  async destroy(context) {
+    const { logger } = context;
+    logger.info('Shutting down MY_SERVICE');
+    
+    // Cleanup resources
+    if (this.connection) {
+      await this.connection.close();
+    }
+    
+    logger.info('MY_SERVICE shutdown complete');
+  },
+  
+  // Service-specific methods
+  async performOperation(data: any) {
+    // Implementation
+    return { success: true, result: 'operation completed' };
+  }
+};
+```
+
+## Plugin Export Template
+```typescript
+import { z } from 'zod';
+
+// Configuration schema
+const configSchema = z.object({
+  apiKey: z.string().min(1, "API Key is required"),
+  baseUrl: z.string().url().optional(),
+  timeout: z.number().min(1000).default(5000)
+});
+
+// Plugin definition
+export const myPlugin: ElizaOSPlugin = {
+  name: "my-plugin",
+  description: "Description of what this plugin does",
+  version: "1.0.0",
+  configSchema,
+  
+  async init(config: Record<string, any>) {
+    const validatedConfig = await configSchema.parseAsync(config);
+    
+    // Set environment variables
+    for (const [key, value] of Object.entries(validatedConfig)) {
+      if (value !== undefined) process.env[key] = String(value);
+    }
+  },
+  
+  actions: {
+    MY_ACTION: myAction
+  },
+  
+  providers: {
+    MY_PROVIDER: myProvider
+  },
+  
+  evaluators: {
+    MY_EVALUATOR: myEvaluator
+  },
+  
+  services: {
+    MY_SERVICE: myService
+  }
+};
+```
+
+## Common Patterns
+
+### Service Communication
+```typescript
+// Get service from registry
+const dbService = context.services.get('DATABASE_SERVICE');
+const loggerService = context.services.get('LOGGER_SERVICE');
+
+// Use service methods
+const result = await dbService.query('SELECT * FROM users WHERE id = ?', [userId]);
+loggerService.info('Query executed successfully');
+```
+
+### Event Publishing
+```typescript
+// Publish event
+context.eventBus.publish('USER_CREATED', {
+  userId: 'user123',
+  timestamp: new Date().toISOString(),
+  metadata: { source: 'registration_form' }
+});
+```
+
+### Event Subscription
+```typescript
+// Subscribe to event
+context.eventBus.subscribe('USER_CREATED', async (payload) => {
+  try {
+    console.log('New user created:', payload.userId);
+    await sendWelcomeEmail(payload.userId);
+  } catch (error) {
+    console.error('Failed to send welcome email:', error);
+  }
+});
+```
+
+### Error Handling
+```typescript
+// Standard error handling pattern
+try {
+  const result = await riskyOperation();
+  return { success: true, data: result };
+} catch (error) {
+  context.logger.error('Operation failed:', error);
+  return {
+    success: false,
+    message: error.message,
+    error: error instanceof Error ? error.message : String(error)
+  };
+}
+```
+
+### Configuration Access
+```typescript
+// In service init
+async init(context) {
+  const { config } = context;
+  
+  // Access validated configuration
+  this.apiKey = config.apiKey;
+  this.baseUrl = config.baseUrl || 'https://api.default.com';
+  this.timeout = config.timeout;
+}
+```
+
+## Zod Schema Examples
+
+### Basic Types
+```typescript
+import { z } from 'zod';
+
+const schema = z.object({
+  // String validation
+  name: z.string().min(1, "Name is required").max(100, "Name too long"),
+  email: z.string().email("Invalid email format"),
+  
+  // Number validation
+  age: z.number().min(0, "Age cannot be negative").max(150, "Invalid age"),
+  score: z.number().min(0).max(100),
+  
+  // Boolean
+  active: z.boolean().default(true),
+  
+  // Optional fields
+  description: z.string().optional(),
+  
+  // Arrays
+  tags: z.array(z.string()).max(10, "Too many tags"),
+  
+  // Enums
+  status: z.enum(["pending", "active", "inactive"]),
+  
+  // Union types
+  value: z.union([z.string(), z.number()]),
+  
+  // Custom validation
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Password must contain lowercase, uppercase, and number")
+});
+```
+
+### Complex Schemas
+```typescript
+const userSchema = z.object({
+  id: z.string().uuid(),
+  profile: z.object({
+    firstName: z.string().min(1),
+    lastName: z.string().min(1),
+    avatar: z.string().url().optional()
+  }),
+  preferences: z.record(z.string(), z.any()).optional(),
+  metadata: z.object({
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+    version: z.number().int().positive()
+  })
+});
+
+const orderSchema = z.object({
+  orderId: z.string(),
+  items: z.array(z.object({
+    productId: z.string(),
+    quantity: z.number().positive(),
+    price: z.number().positive()
+  })).min(1, "Order must have at least one item"),
+  customer: userSchema,
+  status: z.enum(["pending", "confirmed", "shipped", "delivered", "cancelled"]),
+  total: z.number().positive()
+});
+```
+
+## Quick Commands
+
+### Create New Plugin
+```bash
+elizaos create plugin my-awesome-plugin
+```
+
+### Backend-Only Plugin
+```bash
+elizaos create plugin --backend-only my-backend-service
+```
+
+### Test Plugin
+```bash
+npm test
+npm run test:coverage
+```
+
+### Build Plugin
+```bash
+npm run build
+npm run bundle
+```
+
+## Common Issues & Solutions
+
+### Plugin Not Loading
+- Check plugin priority (negative = early, positive = late)
+- Verify dependencies are met
+- Check configuration validation
+
+### Service Not Available
+- Ensure service is included in plugin.services array
+- Check service type name matches exactly
+- Verify service initialization completed successfully
+
+### Schema Validation Errors
+- Use Zod's .describe() for clear error messages
+- Test schemas with sample data
+- Check for required vs optional fields
+
+### Event Communication Issues
+- Verify event names match exactly
+- Check event payload structure
+- Ensure proper error handling in subscribers
+
+This quick reference provides the essential patterns and syntax for ElizaOS development. For comprehensive guidance, refer to the full development rules and interface system documentation.
+description:
+globs:
+alwaysApply: false
+---

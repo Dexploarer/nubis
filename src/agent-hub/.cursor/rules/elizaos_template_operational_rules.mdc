@@ -1,0 +1,423 @@
+# ElizaOS Template System: Operational Rules and Best Practices
+
+## Critical Development Rules
+
+### Rule 1: XML Response Format Compliance
+
+**Rule 1.1: Strict XML Structure**
+- **ALL LLM responses MUST be contained within `<response></response>` XML blocks**
+- **NO text, thinking, or reasoning should appear before or after the XML block**
+- **Responses MUST start immediately with `<response>` and end with `</response>`**
+- **XML must be well-formed with proper opening and closing tags**
+
+**Rule 1.2: XML Content Requirements**
+```typescript
+// ✅ CORRECT - Proper XML structure
+<response>
+  <thought>Agent is planning to help the user</thought>
+  <actions>REPLY,HELP_USER</actions>
+  <providers>FACTS,ENTITIES</providers>
+  <text>I'll help you with that right away!</text>
+</response>
+
+// ❌ INCORRECT - Missing XML wrapper
+thought: Agent is planning to help the user
+actions: REPLY,HELP_USER
+providers: FACTS,ENTITIES
+text: I'll help you with that right away!
+
+// ❌ INCORRECT - Text before XML
+I think the agent should help the user.
+<response>
+  <thought>Agent is planning to help the user</thought>
+  <actions>REPLY,HELP_USER</actions>
+  <text>I'll help you with that right away!</text>
+</response>
+```
+
+**Rule 1.3: XML Key Format Standards**
+- **actions, providers, evaluators**: Comma-separated lists that get parsed into arrays
+- **simple**: Boolean values (true/false) - only this specific key is treated as boolean
+- **All other keys**: String values
+- **XML entities are automatically unescaped** (&lt;, &gt;, &amp;, etc.)
+
+### Rule 2: Action Ordering Protocol
+
+**Rule 2.1: Critical Action Sequence Rules**
+- **Actions are executed in the ORDER you list them - the order MATTERS!**
+- **REPLY should come FIRST to acknowledge the user's request before executing other actions**
+- **Use IGNORE only when you should not respond at all**
+- **If you use IGNORE, do not include any other actions**
+
+**Rule 2.2: Action Pattern Examples**
+```typescript
+// ✅ CORRECT - Proper action ordering
+<actions>REPLY,CALL_MCP_TOOL</actions>        // Acknowledge first, then gather info
+<actions>REPLY,SEND_MESSAGE</actions>          // Acknowledge first, then send message
+<actions>REPLY,ACTION1,ACTION2</actions>       // Acknowledge first, then complete steps
+<actions>IGNORE</actions>                       // No response needed (use alone)
+
+// ❌ INCORRECT - Wrong action ordering
+<actions>CALL_MCP_TOOL,REPLY</actions>         // REPLY should be first
+<actions>IGNORE,SEND_MESSAGE</actions>          // IGNORE should be used alone
+<actions>ACTION1,REPLY,ACTION2</actions>       // REPLY should be first
+```
+
+**Rule 2.3: Common Action Patterns**
+```typescript
+// For requests requiring tool use
+<actions>REPLY,CALL_MCP_TOOL</actions>
+
+// For task execution
+<actions>REPLY,SEND_MESSAGE</actions>
+<actions>REPLY,EVM_SWAP_TOKENS</actions>
+
+// For multi-step operations
+<actions>REPLY,ACTION1,ACTION2</actions>
+
+// For simple responses
+<actions>REPLY</actions>
+
+// For no response needed
+<actions>IGNORE</actions>
+```
+
+### Rule 3: Provider Selection Rules
+
+**Rule 3.1: Mandatory Provider Inclusion**
+- **ATTACHMENTS**: MUST include if message mentions images, photos, pictures, attachments, or visual content, OR if you see "(Attachments:" in the conversation
+- **ENTITIES**: MUST include if message asks about or references specific people
+- **RELATIONSHIPS**: MUST include if message asks about relationships or connections between people
+- **FACTS**: MUST include if message asks about facts or specific information
+- **WORLD**: MUST include if message asks about environment or world context
+
+**Rule 3.2: Provider Usage Guidelines**
+```typescript
+// ✅ CORRECT - Appropriate provider selection
+<providers>FACTS,ENTITIES</providers>          // User asked about people and facts
+<providers>ATTACHMENTS</providers>              // Message mentions images
+<providers>WORLD,RELATIONSHIPS</providers>     // User asked about environment and connections
+<providers></providers>                         // No additional context needed
+
+// ❌ INCORRECT - Provider misuse
+<providers>IGNORE</providers>                   // Never use IGNORE as a provider
+<providers>FACTS</providers>                    // Including when not needed
+<providers>ATTACHMENTS,ENTITIES</providers>     // Including both when only one is relevant
+```
+
+**Rule 3.3: Provider Selection Logic**
+```typescript
+// Decision tree for provider selection
+if (message.mentionsVisualContent) {
+  providers.push('ATTACHMENTS');
+}
+
+if (message.asksAboutPeople) {
+  providers.push('ENTITIES');
+}
+
+if (message.asksAboutConnections) {
+  providers.push('RELATIONSHIPS');
+}
+
+if (message.asksAboutFacts) {
+  providers.push('FACTS');
+}
+
+if (message.asksAboutEnvironment) {
+  providers.push('WORLD');
+}
+
+// Only include providers that are actually needed
+return providers.length > 0 ? providers.join(',') : '';
+```
+
+### Rule 4: Code Block Formatting Standards
+
+**Rule 4.1: Fenced Code Block Requirements**
+- **ALWAYS wrap code examples with ``` fenced code blocks**
+- **Specify language if known** (e.g., ```python, ```javascript, ```typescript)
+- **ONLY use fenced blocks for actual code**
+- **Use single backticks (`) for inline code elements**
+
+**Rule 4.2: Code Formatting Examples**
+```typescript
+// ✅ CORRECT - Proper code formatting
+<text>Here's how to create a function:
+
+```python
+def hello_world():
+    print("Hello, World!")
+```
+
+You can also use `print()` for simple output.</text>
+
+// ❌ INCORRECT - Wrong code formatting
+<text>Here's how to create a function:
+
+```python
+def hello_world():
+    print("Hello, World!")
+```
+
+You can also use ```print()``` for simple output.</text>
+
+// ❌ INCORRECT - Non-code in code blocks
+<text>Here's the ```instruction``` for creating a function:
+
+```python
+def hello_world():
+    print("Hello, World!")
+```</text>
+```
+
+**Rule 4.3: Inline Code Usage**
+```typescript
+// ✅ CORRECT - Proper inline code usage
+<text>Use the `print()` function for output. The `def` keyword defines functions.</text>
+
+// ❌ INCORRECT - Overuse of inline code
+<text>Use the `print()` function for `output`. The `def` keyword `defines` `functions`.</text>
+```
+
+### Rule 5: Template Structure Compliance
+
+**Rule 5.1: Required Template Sections**
+Every template MUST include these sections:
+- `<task>`: Defines what the LLM should accomplish
+- `<providers>`: Contextual information sources
+- `<instructions>`: Detailed behavioral guidelines
+- `<output>`: Specific formatting requirements
+
+**Rule 5.2: Template Section Examples**
+```typescript
+// ✅ CORRECT - Complete template structure
+export const customTemplate = `<task>Your task description here.</task>
+
+<providers>
+{{providers}}
+</providers>
+
+<instructions>Your detailed instructions here.</instructions>
+
+<output>Your output format requirements here.</output>`;
+
+// ❌ INCORRECT - Missing required sections
+export const incompleteTemplate = `<task>Your task description here.</task>
+
+<output>Your output format requirements here.</output>`;
+```
+
+### Rule 6: Character Template Integration
+
+**Rule 6.1: Character Provider Usage**
+- **ALWAYS use the CHARACTER provider** for character-specific information
+- **Leverage bio arrays for natural variation**
+- **Use topics and adjectives for personality depth**
+- **Include style guides for different contexts**
+
+**Rule 6.2: Character Template Structure**
+```typescript
+// ✅ CORRECT - Character template usage
+<providers>
+{{providers}}
+</providers>
+
+<instructions>
+You are {{agentName}}. {{bio}} You are currently {{adjective}} and interested in {{topic}}.
+
+{{messageDirections}}
+
+Respond in character using these examples:
+{{examples}}
+</instructions>
+
+// ❌ INCORRECT - Missing character context
+<instructions>
+Respond to the user's message.
+</instructions>
+```
+
+**Rule 6.3: Character Variation Implementation**
+```typescript
+// Character provider automatically selects random elements
+const bioText = Array.isArray(character.bio)
+  ? character.bio
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 10)
+      .join(' ')
+  : character.bio || '';
+
+const topicString = character.topics && character.topics.length > 0
+  ? character.topics[Math.floor(Math.random() * character.topics.length)]
+  : null;
+
+const adjectiveString = character.adjectives && character.adjectives.length > 0
+  ? character.adjectives[Math.floor(Math.random() * character.adjectives.length)]
+  : '';
+```
+
+### Rule 7: Template Processing and State Management
+
+**Rule 7.1: State Composition Rules**
+- **State keys 'text', 'values', and 'data' are excluded from main state**
+- **State.values are merged back into the flattened state**
+- **Templates receive a clean, flattened state object**
+
+**Rule 7.2: State Processing Example**
+```typescript
+// State structure
+const state = {
+  text: "Some text",
+  values: { key1: "value1", key2: "value2" },
+  data: { someData: "data" },
+  otherKey: "otherValue"
+};
+
+// Processed state for templates
+const processedState = {
+  otherKey: "otherValue",
+  key1: "value1",
+  key2: "value2"
+};
+```
+
+**Rule 7.3: Template Variable Resolution**
+```typescript
+// ✅ CORRECT - Template variable usage
+<text>Hello {{agentName}}, you are {{adjective}} today!</text>
+
+// ❌ INCORRECT - Invalid template variables
+<text>Hello {{user.name}}, you are {{personality.trait}} today!</text>
+```
+
+### Rule 8: Template Security and Validation
+
+**Rule 8.1: Handlebars Security**
+- **Double-brace placeholders are automatically converted to triple-brace**
+- **Prevents HTML escaping for raw text output**
+- **Maintains security while preserving formatting**
+
+**Rule 8.2: Template Validation**
+```typescript
+// ✅ CORRECT - Template validation
+const validateTemplate = (template: string): boolean => {
+  if (!template.includes('<task>')) return false;
+  if (!template.includes('<providers>')) return false;
+  if (!template.includes('<instructions>')) return false;
+  if (!template.includes('<output>')) return false;
+  return true;
+};
+
+// Validate before use
+if (!validateTemplate(customTemplate)) {
+  throw new Error('Invalid template structure');
+}
+```
+
+### Rule 9: Template Testing and Quality Assurance
+
+**Rule 9.1: Template Testing Requirements**
+- **Test all template sections are properly formatted**
+- **Verify XML parsing works correctly**
+- **Ensure provider data is properly formatted**
+- **Test action ordering and execution**
+
+**Rule 9.2: Template Test Examples**
+```typescript
+describe('Template Processing', () => {
+  it('should process character provider correctly', async () => {
+    const state = {
+      values: { agentName: 'TestAgent' },
+      data: { room: { type: 'chat' } }
+    };
+    
+    const prompt = composePromptFromState({
+      state,
+      template: messageHandlerTemplate
+    });
+    
+    expect(prompt).toContain('TestAgent');
+    expect(prompt).toContain('<task>');
+    expect(prompt).toContain('<providers>');
+  });
+  
+  it('should handle provider selection correctly', () => {
+    const message = { content: { text: 'Show me the image' } };
+    const providers = selectProviders(message);
+    
+    expect(providers).toContain('ATTACHMENTS');
+  });
+});
+```
+
+### Rule 10: Performance and Optimization
+
+**Rule 10.1: Template Efficiency**
+- **Keep templates concise but comprehensive**
+- **Avoid unnecessary provider calls**
+- **Use efficient state composition**
+- **Cache frequently used template data**
+
+**Rule 10.2: Provider Optimization**
+```typescript
+// ✅ CORRECT - Efficient provider usage
+const providers = [];
+if (needsFacts) providers.push('FACTS');
+if (needsEntities) providers.push('ENTITIES');
+if (needsAttachments) providers.push('ATTACHMENTS');
+
+// ❌ INCORRECT - Inefficient provider usage
+const providers = ['FACTS', 'ENTITIES', 'ATTACHMENTS', 'WORLD', 'RELATIONSHIPS'];
+```
+
+## Compliance Checklist
+
+Before deploying any template-related code, ensure:
+
+- [ ] All templates follow the required structure (task, providers, instructions, output)
+- [ ] XML responses are properly formatted with `<response></response>` wrapper
+- [ ] Action ordering follows the REPLY-first rule
+- [ ] Provider selection follows the mandatory inclusion rules
+- [ ] Code blocks are properly formatted with fenced blocks
+- [ ] Character templates integrate with the provider system
+- [ ] State composition excludes reserved keys (text, values, data)
+- [ ] Templates are tested for proper XML parsing
+- [ ] Security features (triple-brace conversion) are working
+- [ ] Performance optimizations are implemented
+
+## Violation Consequences
+
+**Minor Violations:**
+- Template parsing errors
+- Inconsistent response formatting
+- Poor user experience
+
+**Major Violations:**
+- System crashes from malformed XML
+- Incorrect action execution order
+- Missing critical context from providers
+
+**Critical Violations:**
+- Complete system failure
+- Security vulnerabilities
+- Data corruption
+
+## Best Practices Summary
+
+1. **ALWAYS** use proper XML structure with `<response></response>` wrapper
+2. **ALWAYS** put REPLY actions first in the action sequence
+3. **ALWAYS** include required providers based on message content
+4. **ALWAYS** format code blocks with proper fenced syntax
+5. **ALWAYS** follow the template structure requirements
+6. **ALWAYS** integrate character information through providers
+7. **ALWAYS** validate templates before deployment
+8. **ALWAYS** test template processing thoroughly
+9. **ALWAYS** optimize provider usage for performance
+10. **NEVER** bypass the XML response format requirements
+
+Following these rules ensures robust, secure, and performant template systems that integrate seamlessly with the ElizaOS framework.
+description:
+globs:
+alwaysApply: false
+---
