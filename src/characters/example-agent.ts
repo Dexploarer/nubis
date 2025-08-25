@@ -55,6 +55,7 @@ export function getExampleAgent(): Character {
     },
     plugins: [
       "@elizaos/plugin-sql",       // Database support - MUST be first
+      ...(process.env.REDIS_URL?.trim() ? ["@elizaos/plugin-redis"] : []), // Redis for enhanced caching
       "@elizaos/plugin-bootstrap", // Essential for basic functionality
       // Add more plugins as needed
     ],

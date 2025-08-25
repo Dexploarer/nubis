@@ -31,7 +31,7 @@ bun run src/test-connections.ts
 ### Environment Variables
 The application uses the following key environment variables:
 
-- **Database**: `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+- **Database**: `DATABASE_URL`, `ELIZAOS_DATABASE_URL`
 - **Discord**: `DISCORD_API_TOKEN`, `ENABLE_DISCORD_BOT`
 - **Telegram**: `TELEGRAM_BOT_TOKEN`, `ENABLE_TELEGRAM_BOT`
 - **Raids**: `RAIDS_ENABLED`, `AUTO_RAIDS`, `RAID_INTERVAL_HOURS`
@@ -44,16 +44,31 @@ The application uses the following key environment variables:
 
 ## 🗄️ Database Setup
 
-### Supabase Connection
-The application automatically connects to your Supabase instance using:
-- PostgreSQL connection pool
-- Supabase client for real-time features
-- Automatic health checks
+### SQL Plugin Configuration
+The application uses the ElizaOS SQL plugin for database operations:
+- PostgreSQL, MySQL, or SQLite support
+- Automatic table creation and migration
+- Connection pooling and health checks
+- No external database service required
+
+### Database Connection
+Configure your database connection in the `.env` file:
+
+```bash
+# PostgreSQL example
+DATABASE_URL="postgresql://username:password@localhost:5432/database_name"
+ELIZAOS_DATABASE_URL="postgresql://username:password@localhost:5432/database_name"
+
+# SQLite example (for development)
+DATABASE_URL="sqlite:./data/elizaos.db"
+ELIZAOS_DATABASE_URL="sqlite:./data/elizaos.db"
+```
 
 ### Required Tables
-The application will create necessary tables automatically. Ensure your Supabase instance has:
-- Proper RLS policies
-- Service role key with appropriate permissions
+The application will create necessary tables automatically. Ensure your database instance has:
+- Proper permissions for table creation
+- Adequate storage space
+- Network access (if using remote database)
 
 ## 🤖 Bot Services
 

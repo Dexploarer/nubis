@@ -67,22 +67,24 @@ describe("Integration: Project Structure and Components", () => {
 
 describe("Integration: Character and Plugin", () => {
   it("should have character with required properties", () => {
+    const char = character();
     // Verify character has required properties
-    expect(character).toHaveProperty("name");
-    expect(character).toHaveProperty("plugins");
-    expect(character).toHaveProperty("bio");
-    expect(character).toHaveProperty("system");
-    expect(character).toHaveProperty("messageExamples");
+    expect(char).toHaveProperty("name");
+    expect(char).toHaveProperty("plugins");
+    expect(char).toHaveProperty("bio");
+    expect(char).toHaveProperty("style");
+    expect(char).toHaveProperty("messageExamples");
 
     // Verify plugins is an array
-    expect(Array.isArray(character.plugins)).toBe(true);
+    expect(Array.isArray(char.plugins)).toBe(true);
   });
 
   it("should configure plugin correctly", () => {
     // Verify plugin has necessary components that character will use
     expect(plugin).toHaveProperty("name");
     expect(plugin).toHaveProperty("description");
-    expect(plugin).toHaveProperty("init");
+    expect(plugin).toHaveProperty("initialize");
+    expect(plugin).toHaveProperty("cleanup");
 
     // Check if plugin has actions, models, providers, etc. that character might use
     const components = [
@@ -148,11 +150,8 @@ describe("Integration: Runtime Initialization", () => {
 
     try {
       // Initialize plugin in runtime
-      if (plugin.init) {
-        await plugin.init(
-          { EXAMPLE_PLUGIN_VARIABLE: "test-value" },
-          customMockRuntime,
-        );
+      if (plugin.initialize) {
+        await plugin.initialize(customMockRuntime);
       }
 
       // Verify our wrapper was called
@@ -196,7 +195,7 @@ describeScaffolding("Integration: Project Scaffolding", () => {
       // In a real scenario, you'd use the CLI or API to scaffold
 
       // Copy essential files to test directory
-      const srcFiles = ["index.ts", "plugin.ts", "character.ts"];
+      const srcFiles = ["index.ts", "plugin.ts"];
 
       for (const file of srcFiles) {
         const sourceFilePath = path.join(process.cwd(), "src", file);
@@ -225,7 +224,6 @@ describeScaffolding("Integration: Project Scaffolding", () => {
       // Verify files exist
       expect(fs.existsSync(path.join(TEST_DIR, "index.ts"))).toBe(true);
       expect(fs.existsSync(path.join(TEST_DIR, "plugin.ts"))).toBe(true);
-      expect(fs.existsSync(path.join(TEST_DIR, "character.ts"))).toBe(true);
       expect(fs.existsSync(path.join(TEST_DIR, "package.json"))).toBe(true);
     } catch (error) {
       logger.error({ error }, "Error in scaffolding test:");

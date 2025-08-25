@@ -18,6 +18,12 @@ export * from './database-integration-templates';
 // Platform-Specific Templates
 export * from './platform-templates';
 
+// Discord Templates
+export * from './discord-templates';
+export * from './discord-message-handler.template';
+export * from './discord-service.template';
+export * from './discord-integration.template';
+
 // Use Case Templates
 export * from './use-case-templates';
 
@@ -71,7 +77,12 @@ export const templateCategories = {
   
   // Platform-specific templates
   platforms: {
-    discord: 'discordPlatformTemplate',
+    discord: {
+      messageHandler: 'discordMessageHandlerPlugin',
+      service: 'discordServicePlugin',
+      integration: 'discordIntegrationPlugin',
+      templates: 'discordTemplates'
+    },
     telegram: 'telegramPlatformTemplate',
     twitter: 'twitterPlatformTemplate',
     web: 'webPlatformTemplate',

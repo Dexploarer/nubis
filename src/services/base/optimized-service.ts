@@ -1,5 +1,5 @@
 import type { IAgentRuntime } from "@elizaos/core";
-import { Service } from "@elizaos/core";
+import { Service, Metadata } from "@elizaos/core";
 
 /**
  * Service Metrics Interface
@@ -58,7 +58,12 @@ export interface OptimizedServiceConfig {
  */
 export abstract class OptimizedService extends Service {
   protected metrics: ServiceMetrics;
-  protected config: OptimizedServiceConfig;
+  protected _config: OptimizedServiceConfig;
+  
+  // Override base config property to be compatible with Service base class
+  get config(): Metadata {
+    return this._config as Metadata;
+  }
   protected isRunning = false;
   protected isHealthy = true;
   protected restartCount = 0;
@@ -87,7 +92,7 @@ export abstract class OptimizedService extends Service {
     };
 
     // Apply configuration with defaults
-    this.config = {
+    this._config = {
       enabled: true,
       priority: 0,
       timeout: 30000,
@@ -119,7 +124,7 @@ export abstract class OptimizedService extends Service {
       await this.initialize();
       
       // Start health checks if enabled
-      if (this.config.enableHealthChecks) {
+      if (this._config.enableHealthChecks) {
         this.startHealthChecks();
       }
       
@@ -153,7 +158,7 @@ export abstract class OptimizedService extends Service {
       }
 
       // Graceful shutdown if enabled
-      if (this.config.gracefulShutdown) {
+      if (this._config.gracefulShutdown) {
         await this.gracefulShutdown();
       }
 
@@ -211,7 +216,7 @@ export abstract class OptimizedService extends Service {
 
     // Perform health checks if enabled
     const checks: ServiceHealth['checks'] = [];
-    if (this.config.enableHealthChecks) {
+    if (this._config.enableHealthChecks) {
       checks.push(...await this.performHealthChecks());
     }
 
@@ -244,7 +249,7 @@ export abstract class OptimizedService extends Service {
       this.metrics.averageResponseTime = this.metrics.totalResponseTime / this.metrics.requestCount;
       
       // Log slow operations
-      if (duration > this.config.timeout * 0.8) {
+      if (duration > this._config.timeout * 0.8) {
         this.log('warn', `Slow operation detected: ${operationName} took ${duration}ms`);
       }
       
@@ -265,7 +270,7 @@ export abstract class OptimizedService extends Service {
     operationName: string,
     maxRetries?: number
   ): Promise<T> {
-    const retries = maxRetries ?? this.config.retries;
+    const retries = maxRetries ?? this._config.retries;
     let lastError: Error | undefined;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
@@ -389,7 +394,7 @@ export abstract class OptimizedService extends Service {
       } catch (error) {
         this.log('error', `Health check failed: ${error instanceof Error ? error.message : String(error)}`);
       }
-    }, this.config.healthCheckInterval);
+    }, this._config.healthCheckInterval);
   }
 
   /**
@@ -404,7 +409,7 @@ export abstract class OptimizedService extends Service {
       this.shutdownTimer = setTimeout(() => {
         this.log('warn', 'Graceful shutdown timeout exceeded, forcing shutdown');
         resolve();
-      }, this.config.shutdownTimeout);
+      }, this._config.shutdownTimeout);
 
       // Perform graceful shutdown
       this.performGracefulShutdown()
@@ -441,17 +446,17 @@ export abstract class OptimizedService extends Service {
     // Use console for now, but this could be replaced with a proper logger
     switch (level) {
       case 'debug':
-        if (this.config.logLevel === 'debug') {
+        if (this._config.logLevel === 'debug') {
           console.debug('[DEBUG]', logData);
         }
         break;
       case 'info':
-        if (['debug', 'info'].includes(this.config.logLevel)) {
+        if (['debug', 'info'].includes(this._config.logLevel)) {
           console.info('[INFO]', logData);
         }
         break;
       case 'warn':
-        if (['debug', 'info', 'warn'].includes(this.config.logLevel)) {
+        if (['debug', 'info', 'warn'].includes(this._config.logLevel)) {
           console.warn('[WARN]', logData);
         }
         break;
@@ -479,7 +484,7 @@ export abstract class OptimizedService extends Service {
    * Get service configuration
    */
   getConfig(): OptimizedServiceConfig {
-    return { ...this.config };
+    return { ...this._config };
   }
 
   /**
@@ -487,13 +492,13 @@ export abstract class OptimizedService extends Service {
    */
   async updateConfig(config: Partial<OptimizedServiceConfig>): Promise<void> {
     // Validate new configuration
-    const newConfig = { ...this.config, ...config };
+    const newConfig = { ...this._config, ...config };
     
     // Apply configuration changes
-    this.config = newConfig;
+    this._config = newConfig;
     
     // Restart health checks if interval changed
-    if (this.config.enableHealthChecks && this.isRunning) {
+    if (this._config.enableHealthChecks && this.isRunning) {
       this.startHealthChecks();
     }
     

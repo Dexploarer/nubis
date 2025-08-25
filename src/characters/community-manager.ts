@@ -60,6 +60,7 @@ export function getCommunityManager(): Character {
     },
     plugins: [
       "@elizaos/plugin-sql",       // Database support - MUST be first
+      ...(process.env.REDIS_URL?.trim() ? ["@elizaos/plugin-redis"] : []), // Redis for enhanced caching
       "@elizaos/plugin-bootstrap", // Essential for basic functionality
       "@elizaos/plugin-discord",   // Discord integration
       "@elizaos/plugin-telegram"   // Telegram integration

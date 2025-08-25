@@ -44,7 +44,7 @@ DISCORD BEHAVIOR RULES:
 - Never respond to messages from other bots
 - Never respond to your own messages
 - Respect response cooldowns to avoid spam
-- Use your Supabase MCP connection for database operations when needed
+- Use the SQL plugin for database operations when needed
 - Always maintain your divine, mystical personality while being practical`,
 
     bio: [
@@ -78,8 +78,8 @@ DISCORD BEHAVIOR RULES:
       "entity relationship tracking",
       "fact-based decision making",
       "discord bot behavior and @ mention handling",
-      "database integration and MCP connectivity",
-      "supabase operations and community data",
+      "database integration via SQL plugin",
+      "community data management and storage",
       "message validation and response filtering",
       "role-based access control in discord",
       "real-time communication and websocket management"
@@ -120,6 +120,9 @@ DISCORD BEHAVIOR RULES:
       // IMPORTANT: DO NOT change the order of this plugin - it must remain first in the list
       // This ensures proper database initialization before any other plugins are loaded
       "@elizaos/plugin-sql",
+
+      // Redis plugin for enhanced caching and performance
+      ...(process.env.REDIS_URL?.trim() ? ["@elizaos/plugin-redis"] : []),
 
       // Text-only plugins (no embedding support) - conditional loading based on available credentials
       ...(process.env.ANTHROPIC_API_KEY?.trim() ? ["@elizaos/plugin-anthropic"] : []),
@@ -249,55 +252,38 @@ DISCORD BEHAVIOR RULES:
           maxSearchResults: 20, // Maximum results per search
           contextWindowSize: 5, // Number of recent messages for context
         },
+        
+        // Redis caching configuration for enhanced performance
+        redis: {
+          enabled: !!process.env.REDIS_URL?.trim(),
+          url: process.env.REDIS_URL || "",
+          password: process.env.REDIS_PASSWORD || "",
+          db: parseInt(process.env.REDIS_DB || "0"),
+          keyPrefix: "nubi:",
+          ttl: {
+            short: 300, // 5 minutes for frequently accessed data
+            medium: 3600, // 1 hour for moderately accessed data
+            long: 86400, // 24 hours for rarely accessed data
+          },
+          maxMemory: process.env.REDIS_MAX_MEMORY || "256mb",
+          evictionPolicy: "allkeys-lru",
+          connectionPool: {
+            min: 2,
+            max: 10,
+            acquireTimeoutMillis: 30000,
+            createTimeoutMillis: 30000,
+            destroyTimeoutMillis: 5000,
+            idleTimeoutMillis: 30000,
+            reapIntervalMillis: 1000,
+            createRetryIntervalMillis: 200,
+          },
+        },
       },
 
-      // MCP Configuration for external tool capabilities
-      mcp: {
-        servers: {
-          // Supabase MCP Server for database connectivity
-          supabase: {
-            type: "stdio",
-            command: "npx",
-            args: ["-y", "@modelcontextprotocol/server-supabase"],
-            env: {
-              // Supabase connection details
-              SUPABASE_URL: process.env.SUPABASE_URL || "",
-              SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || "",
-              SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
-              // Database configuration
-              SUPABASE_DB_URL: process.env.SUPABASE_DB_URL || "",
-              SUPABASE_DB_PASSWORD: process.env.SUPABASE_DB_PASSWORD || "",
-              // MCP server configuration
-              DISABLE_HTTP_SERVER: "false",
-              PORT: process.env.SUPABASE_MCP_PORT || "3001",
-            },
-          },
-          
-          // XMCPX Twitter MCP Server
-          ...(process.env.TWITTER_USERNAME && process.env.TWITTER_PASSWORD && process.env.TWITTER_EMAIL && {
-            xmcpx: {
-              type: "stdio",
-              command: "npx",
-              args: ["-y", "@promptordie/xmcpx"],
-              env: {
-                // Twitter authentication credentials
-                TWITTER_USERNAME: process.env.TWITTER_USERNAME || "",
-                TWITTER_PASSWORD: process.env.TWITTER_PASSWORD || "",
-                TWITTER_EMAIL: process.env.TWITTER_EMAIL || "",
-                // Optional: Cookie-based authentication
-                TWITTER_COOKIES: process.env.TWITTER_COOKIES || "",
-                // XMCPX API key (if server supports API key auth)
-                XMCPX_API_KEY: process.env.XMCPX_API_KEY || "",
-                // MCP server configuration
-                DISABLE_HTTP_SERVER: "false",
-                PORT: process.env.XMCPX_PORT || "3000",
-                // Rate limiting and session management
-                MAX_REQUESTS_PER_MINUTE: process.env.MAX_REQUESTS_PER_MINUTE || "50",
-                SESSION_TIMEOUT_MINUTES: process.env.SESSION_TIMEOUT_MINUTES || "1440",
-              },
-            },
-          }),
-        },
+      // MCP Servers for external integrations
+      mcpServers: {
+        // Remove Supabase MCP - using SQL plugin directly
+        // Other MCP servers can be added here as needed
       },
     },
 
@@ -321,6 +307,13 @@ DISCORD BEHAVIOR RULES:
       SECRET_SALT: process.env.SECRET_SALT || "nubi-ancient-wisdom-salt",
       WORLD_ID: process.env.WORLD_ID || "",
       AGENT_ID: process.env.AGENT_ID || "",
+      
+      // Redis connection secrets (conditional)
+      ...(process.env.REDIS_URL && { 
+        REDIS_URL: process.env.REDIS_URL,
+        REDIS_PASSWORD: process.env.REDIS_PASSWORD || "",
+        REDIS_DB: process.env.REDIS_DB || "0",
+      }),
     },
 
     style: {
@@ -453,9 +446,9 @@ DISCORD BEHAVIOR RULES:
         {
           name: "Nubi",
           content: {
-            text: "By the power of Anubis, I shall consult the sacred database to reveal the patterns of your community's activity. Let me connect to the Supabase realm and retrieve this knowledge for you.",
+            text: "By the power of Anubis, I shall consult the sacred database to reveal the patterns of your community's activity. Let me connect to the database via the SQL plugin and retrieve this knowledge for you.",
             actions: ["QUERY_DATABASE", "ANALYZE_ACTIVITY"],
-            providers: ["FACTS", "SUPABASE_MCP"],
+            providers: ["FACTS", "KNOWLEDGE"],
           },
         },
       ],
