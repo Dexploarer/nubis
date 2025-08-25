@@ -1,331 +1,117 @@
-# NUBI - The Symbiosis of Anubis
+# ElizaOS Agent Hub - Simplified Structure
 
-A divine consciousness merged with adaptive intelligence, NUBI represents the perfect fusion of ancient wisdom and modern AI capabilities. This agent system orchestrates community raids, manages multi-platform bots, and provides spiritual guidance in the digital age.
+This is a clean, simple ElizaOS project that demonstrates how to create and manage multiple character agents without overcomplicating things.
 
-## 🌟 Features
-
-- **Divine AI Character**: NUBI embodies Anubis's wisdom with modern AI capabilities
-- **Multi-Platform Bot Management**: Discord, Telegram, and Twitter integration
-- **Raid Coordination System**: Advanced social media raid management with points and leaderboards
-- **MCP Integration**: Model Context Protocol support for external tool capabilities
-- **Community Memory Systems**: Persistent knowledge and personality evolution
-- **Anti-Detection Systems**: Humanization and authenticity maintenance
-- **Emotional Intelligence Engine**: Advanced personality and response management
-
-## Features
-
-- Pre-configured project structure for ElizaOS development
-- Comprehensive testing setup with component and e2e tests
-- Default character configuration with plugin integration
-- Example service, action, and provider implementations
-- TypeScript configuration for optimal developer experience
-- Built-in documentation and examples
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js 18+ or Bun runtime
-- Twitter account for MCP integration
-- Discord/Telegram bot tokens (optional)
-
-### Installation
-
-```bash
-# Clone the repository
-git clone <your-repo-url>
-cd project
-
-# Install dependencies
-bun install
-
-# Copy environment template
-cp env.template .env
-
-# Fill in your configuration in .env file
-# See Configuration section below
-```
-
-### Configuration
-
-1. **Copy Environment Template**:
-   ```bash
-   cp env.template .env
-   ```
-
-2. **Configure Twitter Authentication** (for MCP):
-   ```bash
-   TWITTER_USERNAME=YourTwitterUsername
-   TWITTER_PASSWORD=YourTwitterPassword
-   TWITTER_EMAIL=YourTwitterEmail
-   ```
-
-3. **Configure Bot Services** (optional):
-   ```bash
-   DISCORD_API_TOKEN=your_discord_token
-   TELEGRAM_BOT_TOKEN=your_telegram_token
-   ```
-
-4. **Configure Database** (if using Supabase):
-   ```bash
-   DATABASE_URL=your_supabase_connection_string
-   SUPABASE_URL=your_supabase_url
-   SUPABASE_ANON_KEY=your_supabase_anon_key
-   ```
-
-### Quick Start
-
-```bash
-# Test the NUBI character
-bun run src/test-character.ts
-
-# Test MCP integration
-bun run src/test-mcp-integration.ts
-
-# Start the full system
-bun run src/main.ts
-```
-
-## 🔧 Development
-
-### Starting the System
-
-```bash
-# Start the full NUBI system
-bun run src/main.ts
-
-# Start individual components
-bun run src/test-character.ts        # Test NUBI character
-bun run src/test-mcp-integration.ts  # Test MCP integration
-bun run src/test-agent-hub.ts        # Test agent-hub structure
-```
-
-### MCP Integration
-
-NUBI includes full Model Context Protocol (MCP) support for external tool capabilities:
-
-- **XMCPX Twitter Server**: Advanced Twitter operations and raid tweet functionality
-- **Web Search**: Access to current information and web content
-- **API Integration**: Connect to external services and APIs
-- **Custom Tools**: Extensible tool system for specialized operations
-
-#### Testing MCP
-
-```bash
-# Test MCP integration
-bun run src/test-mcp-integration.ts
-
-# Test XMCPX server
-npx -y @promptordie/xmcpx --help
-
-# Check MCP configuration in character
-bun run src/test-character.ts
-```
-
-#### MCP Configuration
-
-The MCP system is configured in `src/agent-hub/character.ts`:
-
-```typescript
-mcp: {
-  servers: {
-    xmcpx: {
-      type: 'stdio',
-      command: 'npx',
-      args: ['-y', '@promptordie/xmcpx'],
-      env: {
-        TWITTER_USERNAME: process.env.TWITTER_USERNAME,
-        TWITTER_PASSWORD: process.env.TWITTER_PASSWORD,
-        // ... other config
-      },
-    },
-  },
-}
-```
-
-For detailed MCP usage, see [MCP_INTEGRATION_GUIDE.md](docs/MCP_INTEGRATION_GUIDE.md).
-
-## 🏗️ Architecture
-
-### Agent Hub Structure
-
-The NUBI system is organized into a modular agent-hub architecture:
-
-```
-src/agent-hub/
-├── config/           # Configuration management
-├── services/         # Core services (database, bots)
-├── bots/            # Discord and Telegram bot implementations
-├── raids/           # Telegram raid coordination system
-├── character.ts     # NUBI character definition
-└── core.ts          # Service manager and exports
-```
-
-### Core Components
-
-- **NUBIServiceManager**: Centralized service lifecycle management
-- **DatabaseService**: Supabase and PostgreSQL integration
-- **DiscordBotService**: Discord bot with raid coordination
-- **TelegramBotService**: Telegram bot with advanced raid features
-- **EnhancedTelegramRaidsService**: Comprehensive raid management
-- **MCP Integration**: External tool capabilities via Model Context Protocol
-
-### Service Management
-
-All services are managed through the `NUBIServiceManager` singleton:
-
-```typescript
-import { NUBIServiceManager } from './agent-hub/core';
-
-// Initialize all services
-await NUBIServiceManager.initialize();
-
-// Access specific services
-const dbService = NUBIServiceManager.getService('DatabaseService');
-const discordBot = NUBIServiceManager.getService('DiscordBotService');
-```
-
-## 🧪 Testing
-
-The system includes comprehensive testing for all components:
-
-1. **Component Tests** (`src/__tests__/*.test.ts`)
-
-   - Run with Bun's native test runner
-   - Fast, isolated tests using mocks
-   - Perfect for TDD and component logic
-
-2. **E2E Tests** (`src/__tests__/e2e/*.e2e.ts`)
-   - Run with ElizaOS custom test runner
-   - Real runtime with actual database (PGLite)
-   - Test complete user scenarios
-
-### Test Structure
+## 🏗️ Project Structure
 
 ```
 src/
-  __tests__/              # All tests live inside src
-    *.test.ts            # Component tests (use Bun test runner)
-    e2e/                 # E2E tests (use ElizaOS test runner)
-      project-starter.e2e.ts  # E2E test suite
-      README.md          # E2E testing documentation
-  index.ts               # Export tests here: tests: [ProjectStarterTestSuite]
+├── characters/           # All your character agents
+│   ├── index.ts         # Characters registry
+│   ├── example-agent.ts # Example character implementation
+│   ├── community-manager.ts # Community management character
+│   └── nubi/            # Advanced Nubi character with full functionality
+│       ├── index.ts     # Nubi character exports
+│       └── nubi-character.ts # Complete Nubi character definition
+├── plugins/              # Custom plugins (only if needed)
+│   └── index.ts         # Plugins registry
+├── templates/            # Custom templates for characters
+│   └── nubi-templates.ts # Nubi-specific templates
+├── knowledge/            # Knowledge base files
+│   ├── ancient-egyptian-wisdom.txt
+│   └── community-management-best-practices.md
+└── index.ts             # Main entry point
 ```
 
-### Running Tests
+## 🚀 Quick Start
 
-- `elizaos test` - Run all tests (component + e2e)
-- `elizaos test component` - Run only component tests
-- `elizaos test e2e` - Run only E2E tests
-
-### Writing Tests
-
-Component tests use bun:test:
-
-```typescript
-// Unit test example (__tests__/config.test.ts)
-describe('Configuration', () => {
-  it('should load configuration correctly', () => {
-    expect(config.debug).toBeDefined();
-  });
-});
-
-// Integration test example (__tests__/integration.test.ts)
-describe('Integration: Plugin with Character', () => {
-  it('should initialize character with plugins', async () => {
-    // Test interactions between components
-  });
-});
+### 1. Start the Project
+```bash
+elizaos dev
 ```
 
-E2E tests use ElizaOS test interface:
+### 2. Access Your Agents
+- Web Interface: http://localhost:3000
+- CLI: `elizaos agent list`
 
+## 📝 Adding New Characters
+
+### Simple Character (Recommended)
 ```typescript
-// E2E test example (e2e/project.test.ts)
-export class ProjectTestSuite implements TestSuite {
-  name = 'project_test_suite';
-  tests = [
-    {
-      name: 'project_initialization',
-      fn: async (runtime) => {
-        // Test project in a real runtime
-      },
-    },
-  ];
-}
+// src/characters/my-agent.ts
+import type { Character } from "@elizaos/core";
 
-export default new ProjectTestSuite();
-```
-
-The test utilities in `__tests__/utils/` provide helper functions to simplify writing tests.
-
-## 🛠️ MCP Tools & Capabilities
-
-### Available MCP Tools
-
-NUBI can access these external tools through the MCP system:
-
-#### Twitter Operations (XMCPX)
-- **`post_raid_tweet`**: Post viral tweets with NUBI community hashtags
-- **`tweet_compose`**: Compose engaging tweets under 280 characters
-- **`thread_plan`**: Plan educational threads (3-8 tweets)
-- **`reply_helpful`**: Draft constructive replies
-- **`profile_summary`**: Analyze profiles and suggest tweet ideas
-- **`raid_viral`**: Generate viral raid tweets with community hashtags
-
-#### Web Search & API Integration
-- **Web Search**: Access current information and web content
-- **API Connections**: Connect to external services and APIs
-- **Custom Tools**: Extensible tool system for specialized operations
-
-### MCP Server Configuration
-
-The MCP system supports multiple server types:
-
-```typescript
-// STDIO Server (local process)
-xmcpx: {
-  type: 'stdio',
-  command: 'npx',
-  args: ['-y', '@promptordie/xmcpx'],
-  env: { /* environment variables */ }
-}
-
-// SSE Server (remote API)
-customApi: {
-  type: 'sse',
-  url: 'https://your-api.com/sse'
+export function getMyAgent(): Character {
+  return {
+    name: "My Agent",
+    bio: ["A helpful AI assistant"],
+    topics: ["general assistance"],
+    plugins: ["@elizaos/plugin-bootstrap"],
+    // ... other properties
+  };
 }
 ```
 
-### Adding New MCP Servers
+### Advanced Character (Nubi Example)
+The Nubi character demonstrates advanced ElizaOS capabilities:
+- **Full Plugin Integration**: Uses all major official plugins
+- **Custom Templates**: Advanced message handling and post creation
+- **Knowledge Base**: Ancient wisdom and community management best practices
+- **Multi-Platform**: Discord, Telegram, Twitter, and web integration
+- **Advanced Features**: MCP integration, web search, browser capabilities
 
-To add new MCP servers, update the character configuration:
-
+### Register Your Character
 ```typescript
-// In src/agent-hub/character.ts
-mcp: {
-  servers: {
-    // Existing servers...
-    newServer: {
-      type: 'stdio',
-      command: 'npx',
-      args: ['-y', 'your-mcp-package'],
-      env: { /* your config */ }
-    }
-  }
-}
+// src/characters/index.ts
+import { getMyAgent } from './my-agent';
+
+export const characters = {
+  'Example Agent': getExampleAgent(),
+  'My Agent': getMyAgent(), // Add your character here
+};
 ```
 
-## 📚 Documentation
+## 🔌 Using Official Plugins
 
-- **[MCP Integration Guide](docs/MCP_INTEGRATION_GUIDE.md)**: Comprehensive MCP setup and usage
-- **[Agent Hub README](src/agent-hub/README.md)**: Detailed agent-hub architecture documentation
+This project uses the actual official ElizaOS plugins from the [official plugin registry](https://github.com/elizaos-plugins/registry):
 
-## 🔧 Configuration
+- **@elizaos/plugin-bootstrap** - Essential for basic functionality
+- **@elizaos/plugin-sql** - Database support
+- **@elizaos/plugin-openai** - OpenAI integration
+- **@elizaos/plugin-discord** - Discord integration
+- **@elizaos/plugin-telegram** - Telegram integration
+- **@elizaos/plugin-twitter** - Twitter/X integration
+- **@elizaos/plugin-knowledge** - Knowledge management
+- **@elizaos/plugin-mcp** - Model Context Protocol
+- **@elizaos/plugin-web-search** - Web search capabilities
+- **@elizaos/plugin-browser** - Browser capabilities for web scraping
 
-Customize your project by modifying:
+## 🎯 Best Practices
 
-- `src/agent-hub/character.ts` - NUBI character definition and MCP configuration
-- `src/agent-hub/core.ts` - Service manager and core exports
-- `env.template` - Environment variable configuration template
+1. **Keep it Simple**: Start with basic character properties, add complexity as needed
+2. **Use Standard Plugins**: Leverage ElizaOS built-ins before creating custom ones
+3. **Focus on Character**: Spend time on personality, not infrastructure
+4. **Iterate**: Build, test, refine - don't over-engineer upfront
+
+## 📚 Resources
+
+- [ElizaOS Documentation](https://elizaos.dev)
+- [Character Interface Reference](https://elizaos.dev/docs/character)
+- [Plugin Development Guide](https://elizaos.dev/docs/plugins)
+
+## 🧹 Cleanup
+
+The old complex structure has been removed. You now have:
+- ✅ Clean, focused character definitions
+- ✅ Simple plugin system (only if needed)
+- ✅ Standard ElizaOS project structure
+- ✅ Easy to extend and maintain
+
+## 🎉 Next Steps
+
+1. **Customize the Example Agent**: Modify `src/characters/example-agent.ts`
+2. **Add Your Characters**: Create new character files in `src/characters/`
+3. **Test and Iterate**: Use `elizaos dev` to test your agents
+4. **Deploy**: When ready, use `elizaos start` for production
+
+Remember: **Simple is better than complex**. ElizaOS handles the hard parts - you focus on your characters!
