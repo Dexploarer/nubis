@@ -1,0 +1,508 @@
+# ElizaOS Template System: Quick Reference Guide
+
+## Core Template Types
+
+### 1. shouldRespondTemplate
+**Purpose**: Decides if agent should respond, ignore, or stop conversation
+
+**Response Format**:
+```xml
+<response>
+  <name>{{agentName}}</name>
+  <reasoning>Your reasoning here</reasoning>
+  <action>RESPOND | IGNORE | STOP</action>
+</response>
+```
+
+**Usage**: Use when determining if agent should engage with a message
+
+### 2. messageHandlerTemplate
+**Purpose**: Generates dialog and actions for the character
+
+**Response Format**:
+```xml
+<response>
+  <thought>Your thought here</thought>
+  <actions>ACTION1,ACTION2</actions>
+  <providers>PROVIDER1,PROVIDER2</providers>
+  <text>Your response text here</text>
+</response>
+```
+
+**Usage**: Main template for agent responses and action planning
+
+### 3. postCreationTemplate
+**Purpose**: Creates social media posts in agent's voice
+
+**Response Format**:
+```xml
+<response>
+  <thought>Your thought here</thought>
+  <post>Your post text here</post>
+  <imagePrompt>Optional image prompt here</imagePrompt>
+</response>
+```
+
+**Usage**: For generating social media content
+
+### 4. imageDescriptionTemplate
+**Purpose**: Analyzes and describes images with multiple detail levels
+
+**Response Format**:
+```xml
+<response>
+  <title>A concise, descriptive title for the image</title>
+  <description>A brief 1-2 sentence summary of the key elements</description>
+  <text>An extensive, detailed description covering all visible elements</text>
+</response>
+```
+
+**Usage**: For image analysis and description
+
+### 5. replyTemplate
+**Purpose**: Generates character dialog responses
+
+**Response Format**:
+```xml
+<response>
+  <thought>Your thought here</thought>
+  <message>Your message here</message>
+</response>
+```
+
+**Usage**: For simple reply actions
+
+## Critical Rules Quick Reference
+
+### XML Response Format
+- **ALWAYS wrap responses in `<response></response>`**
+- **NO text before or after XML block**
+- **Start immediately with `<response>`**
+
+### Action Ordering
+- **REPLY must come FIRST**
+- **Actions execute in listed order**
+- **IGNORE used alone only**
+
+### Provider Selection
+- **ATTACHMENTS**: Images, photos, visual content
+- **ENTITIES**: Questions about specific people
+- **RELATIONSHIPS**: Questions about connections
+- **FACTS**: Questions about facts/information
+- **WORLD**: Questions about environment/context
+
+### Code Block Formatting
+- **Use ``` for multi-line code**
+- **Specify language: ```python, ```javascript**
+- **Use ` for inline code: `function()`**
+
+## Template Structure Template
+
+### Basic Template Structure
+```typescript
+export const customTemplate = `<task>Your task description here.</task>
+
+<providers>
+{{providers}}
+</providers>
+
+<instructions>Your detailed instructions here.</instructions>
+
+<output>Your output format requirements here.</output>`;
+```
+
+### Required Sections
+```typescript
+// Every template MUST have these sections:
+<task>          // What the LLM should accomplish
+<providers>     // Contextual information sources
+<instructions>  // Detailed behavioral guidelines
+<output>        // Specific formatting requirements
+```
+
+## Provider System Quick Reference
+
+### Character Provider (CHARACTER)
+**Output Variables**:
+- `{{agentName}}` - Character name
+- `{{bio}}` - Random background information
+- `{{system}}` - Core behavior instructions
+- `{{topic}}` - Randomly selected current interest
+- `{{topics}}` - List of other interests
+- `{{adjective}}` - Randomly selected personality trait
+- `{{messageDirections}}` - Chat behavioral guidelines
+- `{{postDirections}}` - Post behavioral guidelines
+- `{{examples}}` - Message or post examples
+
+### Facts Provider (FACTS)
+**Output Variables**:
+- `{{facts}}` - Formatted facts text
+- `data.facts` - Array of fact memories
+
+**Usage**: Include when user asks about facts or specific information
+
+### Entities Provider (ENTITIES)
+**Output Variables**:
+- `{{entities}}` - Formatted entities text with header
+- `data.entitiesData` - Array of entity data
+- `data.senderName` - Name of message sender
+
+**Usage**: Include when user asks about specific people
+
+### Attachments Provider (ATTACHMENTS)
+**Output Variables**: Media and file information
+
+**Usage**: Include when message mentions images, photos, pictures, attachments, or visual content
+
+### World Provider (WORLD)
+**Output Variables**: Environmental context information
+
+**Usage**: Include when user asks about environment or world context
+
+### Relationships Provider (RELATIONSHIPS)
+**Output Variables**: Connection data between entities
+
+**Usage**: Include when user asks about relationships or connections between people
+
+## Character Definition Quick Reference
+
+### Character Structure
+```typescript
+export const character: Character = {
+  name: 'Character Name',
+  system: 'Core behavior instructions',
+  bio: [
+    'Background description 1',
+    'Background description 2',
+    // ... more bio entries for variety
+  ],
+  topics: [
+    'Interest area 1',
+    'Interest area 2',
+    // ... current interests
+  ],
+  adjectives: [
+    'Personality trait 1',
+    'Personality trait 2',
+    // ... personality characteristics
+  ],
+  messageExamples: [
+    [
+      { name: '{{user}}', content: { text: 'User message' } },
+      { name: 'Character Name', content: { text: 'Character response' } }
+    ]
+    // ... conversation examples
+  ],
+  postExamples: [
+    'Example post 1',
+    'Example post 2',
+    // ... social media examples
+  ],
+  style: {
+    all: [
+      'General behavioral guidelines',
+      'Universal style rules'
+    ],
+    chat: [
+      'Chat-specific guidelines',
+      'Conversation rules'
+    ],
+    post: [
+      'Post-specific guidelines',
+      'Content creation rules'
+    ]
+  }
+};
+```
+
+### Character Provider Integration
+```typescript
+// In your template
+<instructions>
+You are {{agentName}}. {{bio}} You are currently {{adjective}} and interested in {{topic}}.
+
+{{messageDirections}}
+
+Respond in character using these examples:
+{{examples}}
+</instructions>
+```
+
+## Template Processing Quick Reference
+
+### State Composition
+```typescript
+// State structure
+const state = {
+  text: "Some text",
+  values: { key1: "value1", key2: "value2" },
+  data: { someData: "data" },
+  otherKey: "otherValue"
+};
+
+// Processed state for templates (excludes text, values, data)
+const processedState = {
+  otherKey: "otherValue",
+  key1: "value1",
+  key2: "value2"
+};
+```
+
+### Template Composition Functions
+```typescript
+// Basic composition
+import { composePrompt } from '@elizaos/core';
+
+const prompt = composePrompt({
+  state: { agentName: 'TestAgent' },
+  template: messageHandlerTemplate
+});
+
+// Advanced composition with state flattening
+import { composePromptFromState } from '@elizaos/core';
+
+const prompt = composePromptFromState({
+  state: complexState,
+  template: messageHandlerTemplate
+});
+```
+
+### Handlebars Security
+- **Double-brace `{{}}` automatically converted to triple-brace `{{{}}}`**
+- **Prevents HTML escaping**
+- **Maintains security while preserving formatting**
+
+## Common Use Cases
+
+### 1. Simple Response Template
+```typescript
+export const simpleResponseTemplate = `<task>Generate a simple response.</task>
+
+<providers>
+{{providers}}
+</providers>
+
+<instructions>Respond to the user's message in a helpful way.</instructions>
+
+<output>
+<response>
+  <thought>Your thought here</thought>
+  <actions>REPLY</actions>
+  <providers></providers>
+  <text>Your response text here</text>
+</response>
+</output>`;
+```
+
+### 2. Action-Based Template
+```typescript
+export const actionTemplate = `<task>Plan and execute actions based on user request.</task>
+
+<providers>
+{{providers}}
+</providers>
+
+<instructions>Plan what actions to take and execute them in order.</instructions>
+
+<output>
+<response>
+  <thought>Your thought here</thought>
+  <actions>REPLY,ACTION1,ACTION2</actions>
+  <providers>FACTS,ENTITIES</providers>
+  <text>Your response text here</text>
+</response>
+</output>`;
+```
+
+### 3. Character-Specific Template
+```typescript
+export const characterTemplate = `<task>Respond as {{agentName}} in character.</task>
+
+<providers>
+{{providers}}
+</providers>
+
+<instructions>
+You are {{agentName}}. {{bio}} You are currently {{adjective}} and interested in {{topic}}.
+
+{{messageDirections}}
+
+Respond in character using these examples:
+{{examples}}
+</instructions>
+
+<output>
+<response>
+  <thought>Your thought here</thought>
+  <actions>REPLY</actions>
+  <providers></providers>
+  <text>Your response text here</text>
+</response>
+</output>`;
+```
+
+## Provider Selection Logic
+
+### Decision Tree
+```typescript
+const selectProviders = (message: any) => {
+  const providers = [];
+  
+  // Check for visual content
+  if (message.content.text.toLowerCase().includes('image') ||
+      message.content.text.toLowerCase().includes('photo') ||
+      message.content.text.toLowerCase().includes('picture') ||
+      message.content.text.toLowerCase().includes('attachment')) {
+    providers.push('ATTACHMENTS');
+  }
+  
+  // Check for people references
+  if (message.content.text.toLowerCase().includes('who') ||
+      message.content.text.toLowerCase().includes('person') ||
+      message.content.text.toLowerCase().includes('people')) {
+    providers.push('ENTITIES');
+  }
+  
+  // Check for relationship questions
+  if (message.content.text.toLowerCase().includes('relationship') ||
+      message.content.text.toLowerCase().includes('connection') ||
+      message.content.text.toLowerCase().includes('related')) {
+    providers.push('RELATIONSHIPS');
+  }
+  
+  // Check for fact questions
+  if (message.content.text.toLowerCase().includes('what') ||
+      message.content.text.toLowerCase().includes('fact') ||
+      message.content.text.toLowerCase().includes('information')) {
+    providers.push('FACTS');
+  }
+  
+  // Check for environment questions
+  if (message.content.text.toLowerCase().includes('where') ||
+      message.content.text.toLowerCase().includes('environment') ||
+      message.content.text.toLowerCase().includes('world')) {
+    providers.push('WORLD');
+  }
+  
+  return providers.join(',');
+};
+```
+
+## Testing Quick Reference
+
+### Template Testing
+```typescript
+describe('Template Processing', () => {
+  it('should process template correctly', async () => {
+    const state = {
+      values: { agentName: 'TestAgent' },
+      data: { room: { type: 'chat' } }
+    };
+    
+    const prompt = composePromptFromState({
+      state,
+      template: messageHandlerTemplate
+    });
+    
+    expect(prompt).toContain('TestAgent');
+    expect(prompt).toContain('<task>');
+    expect(prompt).toContain('<providers>');
+  });
+});
+```
+
+### Provider Testing
+```typescript
+it('should select correct providers', () => {
+  const message = { content: { text: 'Show me the image' } };
+  const providers = selectProviders(message);
+  
+  expect(providers).toContain('ATTACHMENTS');
+});
+```
+
+## Performance Tips
+
+### Provider Optimization
+```typescript
+// ✅ Efficient - Only include needed providers
+const providers = [];
+if (needsFacts) providers.push('FACTS');
+if (needsEntities) providers.push('ENTITIES');
+
+// ❌ Inefficient - Include all providers
+const providers = ['FACTS', 'ENTITIES', 'ATTACHMENTS', 'WORLD', 'RELATIONSHIPS'];
+```
+
+### Template Caching
+```typescript
+// Cache compiled templates
+const compiledTemplate = handlebars.compile(templateString);
+
+// Reuse compiled template
+const prompt = compiledTemplate(state);
+```
+
+## Error Handling
+
+### Template Validation
+```typescript
+const validateTemplate = (template: string): boolean => {
+  const requiredSections = ['<task>', '<providers>', '<instructions>', '<output>'];
+  
+  return requiredSections.every(section => 
+    template.includes(section)
+  );
+};
+
+// Validate before use
+if (!validateTemplate(customTemplate)) {
+  throw new Error('Invalid template structure');
+}
+```
+
+### Provider Error Handling
+```typescript
+const safeProviderCall = async (provider: Provider, runtime: IAgentRuntime, message: Memory) => {
+  try {
+    return await provider.get(runtime, message);
+  } catch (error) {
+    logger.error(`Provider ${provider.name} failed:`, error);
+    return {
+      values: {},
+      data: {},
+      text: ''
+    };
+  }
+};
+```
+
+## Integration Examples
+
+### Plugin Integration
+```typescript
+// In your plugin
+export const plugin: Plugin = {
+  name: 'custom-template-plugin',
+  providers: [customProvider],
+  actions: [customAction],
+  // ... other plugin properties
+};
+```
+
+### Action Integration
+```typescript
+// In your action
+const prompt = composePromptFromState({
+  state,
+  template: runtime.character.templates?.customTemplate || defaultTemplate
+});
+
+const response = await runtime.useModel(ModelType.TEXT_LARGE, { prompt });
+```
+
+This quick reference provides the essential patterns and syntax for working with the ElizaOS Template System. For detailed explanations and advanced patterns, refer to the comprehensive Template System guide.
+description:
+globs:
+alwaysApply: false
+---

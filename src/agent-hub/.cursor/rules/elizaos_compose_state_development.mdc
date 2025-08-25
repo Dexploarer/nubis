@@ -1,0 +1,521 @@
+# ElizaOS composeState Development: Advanced Provider and State Management
+
+## Overview of composeState Function
+
+The `composeState` function is the core method in the AgentRuntime class that aggregates contextual information from multiple providers to create a comprehensive State object for agent operations. This function serves as the central state composition mechanism that combines data from registered providers into a unified state object.
+
+## Function Signature and Parameters
+
+```typescript
+// Location: packages/core/src/runtime.ts
+async composeState(
+  message: Memory,                    // The message context for state composition
+  includeList: string[] | null = null, // Optional list of provider names to include
+  onlyInclude: boolean = false,       // Whether to exclusively use providers in the include list
+  skipCache: boolean = false          // Whether to bypass the state cache
+): Promise<State>
+```
+
+## Understanding Provider Filtering Logic
+
+### Default Provider Selection
+When no parameters are specified, the function automatically includes all non-private, non-dynamic providers:
+
+```typescript
+// Default behavior: include all public, non-dynamic providers
+this.providers
+  .filter((p) => !p.private && !p.dynamic)
+  .forEach((p) => providerNames.add(p.name));
+```
+
+### Explicit Provider Inclusion
+Use `includeList` to specify which providers should contribute to state composition:
+
+```typescript
+// Include specific providers
+if (includeList && includeList.length > 0) {
+  includeList.forEach((name) => providerNames.add(name));
+}
+```
+
+### Exclusive Provider Mode
+Set `onlyInclude = true` to use only the providers specified in `includeList`:
+
+```typescript
+// Exclusive mode: only use specified providers
+const filterList = onlyInclude ? includeList : null;
+if (filterList && filterList.length > 0) {
+  filterList.forEach((name) => providerNames.add(name));
+}
+```
+
+## Provider Interface and Implementation
+
+### Core Provider Interface
+Providers must implement the Provider interface:
+
+```typescript
+// Location: packages/core/src/types/components.ts
+export interface Provider {
+  /** Provider name - must be unique */
+  name: string;
+  
+  /** Description of the provider functionality */
+  description?: string;
+  
+  /** Whether the provider provides dynamic content */
+  dynamic?: boolean;
+  
+  /** Position for execution ordering (negative = early, positive = late) */
+  position?: number;
+  
+  /** Whether the provider is private (excluded from default composition) */
+  private?: boolean;
+  
+  /** Core data retrieval function */
+  get: (runtime: IAgentRuntime, message: Memory, state: State) => Promise<ProviderResult>;
+}
+
+export interface ProviderResult {
+  /** Key-value pairs to merge into state.values */
+  values?: { [key: string]: any; };
+  
+  /** Structured data to include in state.data */
+  data?: { [key: string]: any; };
+  
+  /** String content to include in combined text output */
+  text?: string;
+}
+```
+
+### Provider Positioning Strategy
+Use the `position` property to control execution order:
+
+```typescript
+// Early execution providers (negative positions)
+const earlyProvider: Provider = {
+  name: 'EARLY_PROVIDER',
+  position: -100,  // Executes early
+  get: async (runtime, message, state) => {
+    // Provide foundational context
+    return {
+      values: { baseContext: 'foundation' },
+      text: 'Base context established'
+    };
+  }
+};
+
+// Late execution providers (positive positions)
+const lateProvider: Provider = {
+  name: 'LATE_PROVIDER',
+  position: 100,   // Executes late
+  get: async (runtime, message, state) => {
+    // Build upon earlier providers
+    return {
+      values: { enhancedContext: 'built upon foundation' },
+      text: 'Enhanced context added'
+    };
+  }
+};
+```
+
+### Private vs Public Providers
+Mark providers as private to exclude them from default composition:
+
+```typescript
+const privateProvider: Provider = {
+  name: 'PRIVATE_PROVIDER',
+  private: true,  // Must be explicitly included
+  get: async (runtime, message, state) => {
+    // Sensitive or specialized functionality
+    return {
+      values: { sensitiveData: 'confidential' },
+      text: 'Private information available'
+    };
+  }
+};
+
+// Usage: explicitly include private provider
+const state = await runtime.composeState(message, ['PRIVATE_PROVIDER'], true);
+```
+
+## Creating Custom Providers
+
+### Simple Provider Pattern
+Basic providers that return static or computed values:
+
+```typescript
+const simpleProvider: Provider = {
+  name: 'SIMPLE_PROVIDER',
+  description: 'Provides basic information',
+  position: 0,
+  
+  get: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+    return {
+      values: {
+        timestamp: new Date().toISOString(),
+        messageId: message.id,
+        agentId: runtime.agentId
+      },
+      text: `Message ${message.id} processed at ${new Date().toISOString()}`,
+      data: {
+        metadata: {
+          processed: true,
+          timestamp: Date.now()
+        }
+      }
+    };
+  }
+};
+```
+
+### Context-Aware Provider Pattern
+Providers that adapt output based on current context:
+
+```typescript
+const contextAwareProvider: Provider = {
+  name: 'CONTEXT_PROVIDER',
+  description: 'Provides context-aware information',
+  position: 50,
+  
+  get: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+    const room = await runtime.getRoom(message.roomId);
+    const isPostFormat = room?.type === 'FEED' || room?.type === 'THREAD';
+    
+    if (isPostFormat) {
+      return {
+        values: { contextType: 'post', format: 'social' },
+        text: 'Context: Social media post format',
+        data: { roomType: room.type }
+      };
+    } else {
+      return {
+        values: { contextType: 'chat', format: 'conversation' },
+        text: 'Context: Direct conversation format',
+        data: { roomType: room.type }
+      };
+    }
+  }
+};
+```
+
+### State-Dependent Provider Pattern
+Providers that build upon existing state:
+
+```typescript
+const stateDependentProvider: Provider = {
+  name: 'STATE_DEPENDENT_PROVIDER',
+  description: 'Builds upon existing state',
+  position: 75,
+  
+  get: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+    // Access previous provider results
+    const previousValues = state.values || {};
+    const previousData = state.data || {};
+    
+    // Build enhanced context
+    const enhancedContext = {
+      ...previousValues,
+      enhanced: true,
+      providerCount: Object.keys(previousData.providers || {}).length
+    };
+    
+    return {
+      values: enhancedContext,
+      text: `Enhanced context with ${enhancedContext.providerCount} providers`,
+      data: { enhancement: 'completed' }
+    };
+  }
+};
+```
+
+## Advanced State Composition Patterns
+
+### Progressive State Building
+Build state incrementally across multiple composeState calls:
+
+```typescript
+// Step 1: Get basic context
+let state = await runtime.composeState(message, ['BASIC_PROVIDER']);
+
+// Step 2: Add action-specific context
+if (needsActionContext) {
+  state = await runtime.composeState(message, ['ACTION_STATE', 'RECENT_MESSAGES']);
+}
+
+// Step 3: Add specialized context
+if (needsSpecializedContext) {
+  state = await runtime.composeState(message, ['SPECIALIZED_PROVIDER'], true);
+}
+
+// Step 4: Final composition with all relevant providers
+const finalState = await runtime.composeState(message, [
+  'BASIC_PROVIDER',
+  'ACTION_STATE',
+  'SPECIALIZED_PROVIDER'
+], true);
+```
+
+### Selective Provider Composition
+Use provider filtering for specific use cases:
+
+```typescript
+// For action processing
+const actionState = await runtime.composeState(message, [
+  'RECENT_MESSAGES',
+  'ACTION_STATE'
+]);
+
+// For content generation
+const contentState = await runtime.composeState(message, [
+  'CHARACTER',
+  'TOPIC_PROVIDER',
+  'STYLE_PROVIDER'
+]);
+
+// For decision making
+const decisionState = await runtime.composeState(message, [
+  'CONTEXT_PROVIDER',
+  'RULES_PROVIDER',
+  'HISTORY_PROVIDER'
+]);
+```
+
+### Cache Management
+Control caching behavior for different scenarios:
+
+```typescript
+// Force fresh data (bypass cache)
+const freshState = await runtime.composeState(message, null, false, true);
+
+// Use cached data when available
+const cachedState = await runtime.composeState(message);
+
+// Selective cache bypass for specific providers
+let state = await runtime.composeState(message);
+if (needsFreshData) {
+  const freshData = await runtime.composeState(message, ['FRESH_DATA_PROVIDER'], true, true);
+  state = { ...state, ...freshData };
+}
+```
+
+## Provider Registration and Management
+
+### Plugin-Based Registration
+Register providers through the plugin system:
+
+```typescript
+// In your plugin definition
+export const myPlugin: ElizaOSPlugin = {
+  name: "my-provider-plugin",
+  description: "Provides custom state information",
+  version: "1.0.0",
+  
+  providers: [
+    simpleProvider,
+    contextAwareProvider,
+    stateDependentProvider
+  ],
+  
+  // ... other plugin components
+};
+```
+
+### Runtime Registration
+Register providers directly with the runtime:
+
+```typescript
+// Direct registration (for testing or dynamic scenarios)
+runtime.registerProvider(customProvider);
+
+// Verify registration
+const registeredProviders = runtime.providers.map(p => p.name);
+console.log('Registered providers:', registeredProviders);
+```
+
+## Error Handling and Resilience
+
+### Provider Error Handling
+The runtime handles provider errors gracefully:
+
+```typescript
+// Runtime automatically catches provider errors
+const providerData = await Promise.all(
+  providersToGet.map(async (provider) => {
+    try {
+      const result = await provider.get(this, message, cachedState);
+      return { ...result, providerName: provider.name };
+    } catch (error: any) {
+      // Return empty result instead of failing
+      console.error('provider error', provider.name, error);
+      return { values: {}, text: '', data: {}, providerName: provider.name };
+    }
+  })
+);
+```
+
+### Robust Provider Implementation
+Implement error handling in your providers:
+
+```typescript
+const robustProvider: Provider = {
+  name: 'ROBUST_PROVIDER',
+  description: 'Handles errors gracefully',
+  
+  get: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+    try {
+      // Attempt to get data
+      const data = await fetchData();
+      
+      return {
+        values: { data: data },
+        text: 'Data retrieved successfully',
+        data: { success: true }
+      };
+    } catch (error) {
+      // Log error and return fallback
+      runtime.logger.error('Provider error:', error);
+      
+      return {
+        values: { data: null, error: true },
+        text: 'Data unavailable due to error',
+        data: { success: false, error: error.message }
+      };
+    }
+  }
+};
+```
+
+## Performance Optimization
+
+### Parallel Execution
+Providers are executed in parallel for optimal performance:
+
+```typescript
+// All providers execute simultaneously
+const providerData = await Promise.all(
+  providersToGet.map(async (provider) => {
+    const start = Date.now();
+    const result = await provider.get(this, message, cachedState);
+    const duration = Date.now() - start;
+    
+    runtime.logger.debug(`${provider.name} Provider took ${duration}ms to respond`);
+    return { ...result, providerName: provider.name };
+  })
+);
+```
+
+### Caching Strategy
+Implement intelligent caching in your providers:
+
+```typescript
+const cachedProvider: Provider = {
+  name: 'CACHED_PROVIDER',
+  description: 'Implements intelligent caching',
+  
+  get: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+    const cacheKey = `provider_${message.id}_${Date.now()}`;
+    
+    // Check if we have recent data
+    if (this.cache.has(cacheKey) && !this.isExpired(cacheKey)) {
+      return this.cache.get(cacheKey);
+    }
+    
+    // Fetch fresh data
+    const freshData = await fetchFreshData();
+    const result = {
+      values: { data: freshData, cached: false },
+      text: 'Fresh data retrieved',
+      data: { timestamp: Date.now() }
+    };
+    
+    // Cache the result
+    this.cache.set(cacheKey, result);
+    
+    return result;
+  }
+};
+```
+
+## Testing and Debugging
+
+### Mock Provider Testing
+Create mock providers for testing:
+
+```typescript
+const mockProvider: Provider = {
+  name: 'MOCK_PROVIDER',
+  description: 'Mock provider for testing',
+  
+  get: jest.fn().mockResolvedValue({
+    values: { testValue: 'mock' },
+    text: 'Mock provider text',
+    data: { testData: 'mock' }
+  })
+};
+
+// Test provider integration
+it('should integrate with mock provider', async () => {
+  runtime.registerProvider(mockProvider);
+  
+  const state = await runtime.composeState(message, ['MOCK_PROVIDER'], true);
+  
+  expect(state.values.testValue).toBe('mock');
+  expect(mockProvider.get).toHaveBeenCalledTimes(1);
+});
+```
+
+### Provider Debugging
+Add debugging information to your providers:
+
+```typescript
+const debugProvider: Provider = {
+  name: 'DEBUG_PROVIDER',
+  description: 'Provides debugging information',
+  
+  get: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+    const debugInfo = {
+      messageId: message.id,
+      roomId: message.roomId,
+      timestamp: new Date().toISOString(),
+      stateKeys: Object.keys(state.values || {}),
+      providerCount: runtime.providers.length
+    };
+    
+    runtime.logger.debug('Debug provider info:', debugInfo);
+    
+    return {
+      values: { debug: debugInfo },
+      text: `Debug info: ${JSON.stringify(debugInfo)}`,
+      data: { debugInfo }
+    };
+  }
+};
+```
+
+## Best Practices Summary
+
+### Provider Design
+1. **Single Responsibility**: Each provider should have one clear purpose
+2. **Error Resilience**: Handle errors gracefully and provide fallbacks
+3. **Performance**: Keep provider execution fast and efficient
+4. **Positioning**: Use position property to control execution order
+5. **Privacy**: Mark sensitive providers as private
+
+### State Composition
+1. **Selective Inclusion**: Use includeList for targeted state composition
+2. **Progressive Building**: Build state incrementally when needed
+3. **Cache Management**: Use skipCache appropriately for fresh data
+4. **Provider Coordination**: Design providers to work together
+
+### Testing and Debugging
+1. **Mock Providers**: Create testable mock implementations
+2. **Error Scenarios**: Test provider error handling
+3. **Performance Monitoring**: Track provider execution times
+4. **State Validation**: Verify state composition results
+
+This comprehensive guide provides the foundation for developing advanced providers and state composition strategies in ElizaOS. Follow these patterns to create robust, efficient, and maintainable state management systems.
+description:
+globs:
+alwaysApply: false
+---

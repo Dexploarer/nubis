@@ -1,0 +1,121 @@
+{
+  "name": "project",
+  "description": "Project starter for elizaOS",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/src/index.js",
+  "module": "dist/src/index.js",
+  "types": "dist/index.d.ts",
+  "keywords": [
+    "project",
+    "elizaos"
+  ],
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/src/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@elizaos/cli": "latest",
+    "@elizaos/core": "latest",
+    "@elizaos/plugin-bootstrap": "latest",
+    "@elizaos/plugin-mcp": "^1.0.7",
+    "@elizaos/plugin-openai": "^1.0.11",
+    "@elizaos/plugin-sql": "latest",
+    "@modelcontextprotocol/sdk": "^1.17.4",
+    "@sentry/node": "^10.5.0",
+    "@supabase/supabase-js": "^2.56.0",
+    "@tanstack/react-query": "^5.29.0",
+    "@types/bcryptjs": "^3.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.10",
+    "@types/node-cron": "^3.0.11",
+    "@types/node-telegram-bot-api": "^0.64.10",
+    "@types/pg": "^8.15.5",
+    "@types/redis": "^4.0.11",
+    "@types/uuid": "^10.0.0",
+    "axios": "^1.11.0",
+    "bcryptjs": "^3.0.2",
+    "clsx": "^2.1.1",
+    "cors": "^2.8.5",
+    "crypto-js": "^4.2.0",
+    "discord.js": "^14.22.1",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "jwt-decode": "^4.0.0",
+    "morgan": "^1.10.1",
+    "node-cron": "^4.2.1",
+    "node-telegram-bot-api": "^0.66.0",
+    "pg": "^8.16.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "redis": "^5.8.2",
+    "socket.io": "^4.8.1",
+    "tailwind-merge": "^2.6.0",
+    "tailwindcss": "^4.1.10",
+    "telegram-bot-api": "^2.0.1",
+    "uuid": "^11.1.0",
+    "winston": "^3.17.0",
+    "zod": "3.24.2"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/lru-cache": "^7.10.9",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/sqlite3": "^3.1.11",
+    "@vitejs/plugin-react": "^4.3.1",
+    "prettier": "3.5.3",
+    "telegraf": "^4.16.3",
+    "tsup": "8.5.0",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.1"
+  },
+  "scripts": {
+    "start": "elizaos start",
+    "dev": "elizaos dev",
+    "build": "tsc --noEmit && vite build && tsup",
+    "lint": "prettier --write ./src",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "tsc --noEmit --watch",
+    "test:component": "bun run test:install && bun test",
+    "test:e2e": "bun run test:install && bun test",
+    "test": "bun run test:install && bun run test:component && bun run test:e2e",
+    "test:coverage": "bun run test:install && bun test --coverage",
+    "test:watch": "bun run test:install && bun test --watch",
+    "test:install": "node scripts/install-test-deps.js",
+    "format": "prettier --write ./src",
+    "format:check": "prettier --check ./src",
+    "check-all": "bun run type-check && bun run format:check && bun run test",
+    "cy:open": "bun run test:install && cypress open",
+    "cy:run": "bun run test:install && cypress run --component",
+    "cy:test": "bun run test:install && cypress run --component --reporter spec",
+    "cypress:component": "bun run test:install && cypress run --component",
+    "cypress:e2e": "bun run test:install && cypress run --e2e",
+    "cypress:open": "bun run test:install && cypress open",
+    "backend": "bun src/server.ts",
+    "web": "vite",
+    "agent:dev": "ENABLE_TELEGRAM_BOT=false ENABLE_DISCORD_BOT=false elizaos dev",
+    "xmcpx": "PORT=3000 DISABLE_HTTP_SERVER=false npx -y @promptordie/xmcpx",
+    "test:connections": "ENABLE_TELEGRAM_BOT=false ENABLE_DISCORD_BOT=false bun src/test-connections.ts"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "gitHead": "b165ad83e5f7a21bc1edbd83374ca087e3cd6b33"
+}

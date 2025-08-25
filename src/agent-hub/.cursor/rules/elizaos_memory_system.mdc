@@ -1,0 +1,434 @@
+# ElizaOS Memory System: The Definitive Development Guide
+
+## Memory System Overview
+
+The ElizaOS Memory System is a cornerstone of intelligent agent functionality, providing persistent storage, semantic search, and contextual awareness. It operates through a unified database adapter interface with support for multiple memory types, embeddings, and rich metadata.
+
+## 1. Memory Definition and Architecture
+
+### Core Memory Interface
+The memory system is built around the `Memory` interface defined in [memory.ts](mdc:packages/core/src/types/memory.ts:85-118):
+
+```typescript
+interface Memory {
+  id?: UUID;                    // Optional unique identifier
+  entityId: UUID;              // Associated user ID
+  agentId?: UUID;              // Associated agent ID
+  createdAt?: number;          // Creation timestamp
+  content: Content;            // Memory content
+  embedding?: number[];        // Vector for semantic search
+  roomId: UUID;               // Associated room ID
+  worldId?: UUID;             // Associated world ID (optional)
+  unique?: boolean;           // Prevents duplicates
+  similarity?: number;        // Embedding similarity score
+  metadata?: MemoryMetadata;  // Rich metadata
+}
+```
+
+### Memory Types
+Built-in memory types are defined in [memory.ts](mdc:packages/core/src/types/memory.ts:17-23):
+
+```typescript
+enum MemoryType {
+  DOCUMENT = 'document',      // Whole documents
+  FRAGMENT = 'fragment',      // Document chunks
+  MESSAGE = 'message',        // Conversational messages
+  DESCRIPTION = 'description', // Entity descriptions
+  CUSTOM = 'custom'           // Application-specific
+}
+```
+
+### Memory Metadata System
+Rich metadata through specialized interfaces in [memory.ts](mdc:packages/core/src/types/memory.ts:44-80):
+
+```typescript
+interface BaseMetadata {
+  type: MemoryTypeAlias;
+  source?: string;
+  sourceId?: UUID;
+  scope?: MemoryScope;        // 'shared' | 'private' | 'room'
+  timestamp?: number;
+  tags?: string[];
+}
+```
+
+## 2. How to Use the Memory System
+
+### Runtime-Level Access
+All memory operations go through `AgentRuntime` class methods in [runtime.ts](mdc:packages/core/src/runtime.ts:2108-2234):
+
+```typescript
+// Retrieve memories
+const memories = await runtime.getMemories({
+  tableName: 'messages',
+  roomId: roomId,
+  count: 10,
+  unique: false
+});
+
+// Semantic search with embeddings
+const relevantMemories = await runtime.searchMemories({
+  tableName: 'facts',
+  embedding: queryEmbedding,
+  roomId: roomId,
+  count: 6,
+  query: userQuery
+});
+
+// Create new memory
+const memoryId = await runtime.createMemory(memory, 'messages', true);
+
+// Update existing memory
+const success = await runtime.updateMemory({
+  id: memoryId,
+  content: updatedContent
+});
+
+// Delete memory
+await runtime.deleteMemory(memoryId);
+```
+
+### Database Adapter Interface
+Underlying operations defined in [database.ts](mdc:packages/core/src/types/database.ts:99-167):
+
+```typescript
+interface IDatabaseAdapter {
+  getMemories(params: MemoryQueryParams): Promise<Memory[]>;
+  searchMemories(params: SearchParams): Promise<Memory[]>;
+  createMemory(memory: Memory, tableName: string, unique?: boolean): Promise<UUID>;
+  updateMemory(memory: Partial<Memory> & { id: UUID }): Promise<boolean>;
+  deleteMemory(memoryId: UUID): Promise<void>;
+}
+```
+
+### Message Memory Factory
+Use factory functions for proper defaults in [memory.ts](mdc:packages/core/src/types/memory.ts:133-150):
+
+```typescript
+const messageMemory = createMessageMemory({
+  entityId: userId,
+  agentId: agentId,
+  roomId: roomId,
+  content: { text: messageText, source: 'user' }
+});
+```
+
+## 3. Memory in Templates and Prompts
+
+### Provider Integration
+Memory data is integrated through specialized providers like the facts provider in [facts.ts](mdc:packages/plugin-bootstrap/src/providers/facts.ts:30-117):
+
+```typescript
+const factsProvider: Provider = {
+  name: 'FACTS',
+  description: 'Key facts that the agent knows',
+  dynamic: true,
+  get: async (runtime: IAgentRuntime, message: Memory, _state?: State) => {
+    const relevantFacts = await runtime.searchMemories({
+      tableName: 'facts',
+      embedding: queryEmbedding,
+      roomId: message.roomId,
+      count: 6,
+      query: message.content.text
+    });
+    
+    return {
+      values: { facts: formatFacts(relevantFacts) },
+      data: { facts: relevantFacts },
+      text: `Key facts that ${runtime.character.name} knows:\n${formatFacts(relevantFacts)}`
+    };
+  }
+};
+```
+
+### Template Processing
+Templates use utility functions in [utils.ts](mdc:packages/core/src/utils.ts:80-91) and [utils.ts](mdc:packages/core/src/utils.ts:101-124):
+
+```typescript
+export const composePromptFromState = ({
+  state,
+  template
+}: {
+  state: State;
+  template: TemplateType;
+}) => {
+  const templateStr = typeof template === 'function' ? template({ state }) : template;
+  const templateFunction = handlebars.compile(upgradeDoubleToTriple(templateStr));
+  
+  // Flatten state for template consumption
+  const stateKeys = Object.keys(state);
+  const filteredKeys = stateKeys.filter(key => !['text', 'values', 'data'].includes(key));
+  
+  return composeRandomUser(templateFunction({ ...filteredKeys, ...state.values }), 10);
+};
+```
+
+## 4. How to Extend and Modify Memory
+
+### Custom Memory Types
+Extend the base metadata interface in [memory.ts](mdc:packages/core/src/types/memory.ts:71-80):
+
+```typescript
+interface CustomMetadata extends BaseMetadata {
+  [key: string]: unknown;
+  // Add your custom fields here
+  customField?: string;
+  customNumber?: number;
+}
+```
+
+### Database Adapter Customization
+Implement custom adapters by extending the base interface in [database.ts](mdc:packages/core/src/types/database.ts:33-267):
+
+```typescript
+class CustomDatabaseAdapter implements IDatabaseAdapter {
+  async createMemory(memory: Memory, tableName: string, unique?: boolean): Promise<UUID> {
+    // Your custom implementation
+  }
+  
+  async searchMemories(params: SearchParams): Promise<Memory[]> {
+    // Your custom search logic
+  }
+  
+  // Implement all required methods...
+}
+```
+
+### Embedding Dimensions
+Configure embedding dimensions in [base.ts](mdc:packages/plugin-sql/src/base.ts:162-180):
+
+```typescript
+const DIMENSION_MAP = {
+  384: 'embedding_384',   // SMALL
+  512: 'embedding_512',   // MEDIUM
+  768: 'embedding_768',   // LARGE
+  1024: 'embedding_1024', // XL
+  1536: 'embedding_1536', // XXL
+  3072: 'embedding_3072'  // XXXL
+};
+```
+
+## 5. Native Memory Handling
+
+### Automatic Features
+ElizaOS handles memory natively with these automatic features:
+
+- **Embedding Generation**: Automatic vector creation for semantic search
+- **Deduplication**: Built-in uniqueness checks in [base.ts](mdc:packages/plugin-sql/src/base.ts:1526-1540)
+- **Fragmentation**: Support for large document chunking in [base.ts](mdc:packages/plugin-sql/src/base.ts:1745-1782)
+- **Vector Search**: Cosine distance similarity in [base.ts](mdc:packages/plugin-sql/src/base.ts:1440-1500)
+- **Transaction Safety**: Retry logic and consistency in [base.ts](mdc:packages/plugin-sql/src/base.ts:124-154)
+
+### Initialization
+Memory system is automatically initialized when database adapter is set up in [runtime.ts](mdc:packages/core/src/runtime.ts:162-164):
+
+```typescript
+if (opts.adapter) {
+  this.registerDatabaseAdapter(opts.adapter);
+}
+```
+
+## 6. Best Practices and Patterns
+
+### 1. Use Runtime Methods
+Always use `AgentRuntime` methods instead of direct database access:
+
+```typescript
+// ✅ Correct - Use runtime methods
+const memories = await runtime.getMemories({ tableName: 'messages', roomId });
+
+// ❌ Incorrect - Direct database access
+const memories = await runtime.adapter.getMemories({ tableName: 'messages', roomId });
+```
+
+### 2. Proper Table Naming
+Use consistent table names for different memory types:
+
+```typescript
+const TABLE_NAMES = {
+  MESSAGES: 'messages',
+  FACTS: 'facts',
+  DOCUMENTS: 'documents',
+  CUSTOM: 'custom_memories'
+};
+```
+
+### 3. Memory Uniqueness
+Set the `unique` flag appropriately to prevent duplicates:
+
+```typescript
+await runtime.createMemory(memory, 'facts', true); // Prevents duplicate facts
+await runtime.createMemory(memory, 'messages', false); // Allows duplicate messages
+```
+
+### 4. Embedding Generation
+Queue embedding generation for semantic search capabilities:
+
+```typescript
+// In your action or provider
+if (memory.content.text) {
+  const embedding = await runtime.useModel(ModelType.TEXT_EMBEDDING, {
+    text: memory.content.text
+  });
+  memory.embedding = embedding;
+}
+```
+
+### 5. Metadata Utilization
+Always include relevant metadata for proper categorization:
+
+```typescript
+const memory: Memory = {
+  content: { text: "Important fact" },
+  metadata: {
+    type: MemoryType.CUSTOM,
+    source: 'user_input',
+    tags: ['important', 'fact'],
+    scope: 'shared'
+  }
+};
+```
+
+## 7. Integration Patterns
+
+### Provider Integration
+Create providers that leverage memory search for contextual information:
+
+```typescript
+const contextProvider: Provider = {
+  name: 'CONTEXT',
+  description: 'Relevant context from memory',
+  dynamic: true,
+  get: async (runtime: IAgentRuntime, message: Memory) => {
+    const context = await runtime.searchMemories({
+      tableName: 'context',
+      embedding: await runtime.useModel(ModelType.TEXT_EMBEDDING, { text: message.content.text }),
+      roomId: message.roomId,
+      count: 5
+    });
+    
+    return {
+      values: { context: formatContext(context) },
+      text: `Relevant context:\n${formatContext(context)}`
+    };
+  }
+};
+```
+
+### Action Integration
+Store action results as memories for future reference:
+
+```typescript
+const actionMemory: Memory = {
+  entityId: message.entityId,
+  agentId: runtime.agentId,
+  roomId: message.roomId,
+  content: {
+    text: `Action ${actionName} executed successfully`,
+    source: 'action_result',
+    actions: [actionName],
+    result: actionResult
+  },
+  metadata: {
+    type: MemoryType.CUSTOM,
+    source: 'action_execution',
+    tags: ['action', actionName]
+  }
+};
+
+await runtime.createMemory(actionMemory, 'action_results');
+```
+
+## 8. Testing and Mocking
+
+### Mock Memory Creation
+Use test utilities for comprehensive testing in [memory.ts](mdc:packages/test-utils/src/mocks/memory.ts:48-78):
+
+```typescript
+import { createMockMemory, createMockUserMessage, createMockFact } from '@elizaos/test-utils';
+
+const mockMemory = createMockMemory({
+  content: { text: 'Test content' },
+  metadata: { type: MemoryType.MESSAGE }
+});
+
+const mockUserMessage = createMockUserMessage('Hello world');
+const mockFact = createMockFact('Test fact', 0.9);
+```
+
+## 9. API Integration
+
+### REST API Access
+Use the memory API client for external access in [memory.ts](mdc:packages/api-client/src/services/memory.ts:16-31):
+
+```typescript
+import { MemoryService } from '@elizaos/api-client';
+
+const memoryService = new MemoryService(baseUrl);
+
+// Get agent memories
+const { memories } = await memoryService.getAgentMemories(agentId, {
+  tableName: 'messages',
+  count: 10
+});
+
+// Update memory
+await memoryService.updateMemory(agentId, memoryId, {
+  content: { text: 'Updated content' }
+});
+```
+
+## 10. Performance Considerations
+
+### Memory Management
+- Use appropriate `count` limits in queries
+- Implement pagination for large result sets
+- Cache frequently accessed memories
+- Use `unique: true` sparingly to avoid unnecessary deduplication checks
+
+### Embedding Optimization
+- Choose appropriate embedding dimensions for your use case
+- Batch embedding operations when possible
+- Use similarity thresholds to filter low-quality matches
+- Consider embedding caching for repeated queries
+
+## 11. Security and Access Control
+
+### Memory Scoping
+Use memory scope to control access:
+
+```typescript
+const privateMemory: Memory = {
+  // ... other fields
+  metadata: {
+    type: MemoryType.CUSTOM,
+    scope: 'private'  // Only accessible to the entity
+  }
+};
+
+const sharedMemory: Memory = {
+  // ... other fields
+  metadata: {
+    type: MemoryType.CUSTOM,
+    scope: 'shared'   // Accessible to all entities
+  }
+};
+```
+
+### Validation
+Always validate memory data before storage:
+
+```typescript
+const validateMemory = (memory: Memory): boolean => {
+  if (!memory.content || !memory.content.text) return false;
+  if (!memory.entityId || !memory.roomId) return false;
+  if (memory.embedding && !Array.isArray(memory.embedding)) return false;
+  return true;
+};
+```
+
+This comprehensive guide covers all aspects of the ElizaOS Memory System, from basic usage to advanced customization. Follow these patterns and best practices to build robust, scalable memory systems for your agents.
+description:
+globs:
+alwaysApply: false
+---
