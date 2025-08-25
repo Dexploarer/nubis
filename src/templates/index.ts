@@ -12,6 +12,9 @@ export * from './elizaos-core-templates';
 // Runtime Integration Templates (Core Runtime Components)
 export * from './runtime-integration-templates';
 
+// Database Integration Templates (Complete Database Layer)
+export * from './database-integration-templates';
+
 // Platform-Specific Templates
 export * from './platform-templates';
 
@@ -50,6 +53,20 @@ export const templateCategories = {
     databaseSystem: 'runtimeDatabaseIntegrationTemplate',
     pluginManagement: 'runtimePluginManagementTemplate',
     stateManagement: 'runtimeStateManagementTemplate'
+  },
+  
+  // Database integration templates (Complete Database Layer)
+  database: {
+    adapterInterface: 'databaseAdapterInterfaceTemplate',
+    drizzleOrmIntegration: 'drizzleOrmIntegrationTemplate',
+    configuration: 'databaseConfigurationTemplate',
+    schemaTables: 'databaseSchemaTablesTemplate',
+    connectionManagement: 'databaseConnectionManagementTemplate',
+    pluginIntegration: 'databasePluginIntegrationTemplate',
+    embeddingDimension: 'databaseEmbeddingDimensionTemplate',
+    transactionManagement: 'databaseTransactionManagementTemplate',
+    performanceOptimization: 'databasePerformanceOptimizationTemplate',
+    errorHandlingRecovery: 'databaseErrorHandlingRecoveryTemplate'
   },
   
   // Platform-specific templates
@@ -152,6 +169,15 @@ export const getRuntimeTemplate = (runtimeComponent: string) => {
 
 export const getCoreRuntimeTemplates = () => {
   return templateCategories.runtime;
+};
+
+// Database-specific template helpers
+export const getDatabaseTemplate = (databaseComponent: string) => {
+  return templateCategories.database[databaseComponent as keyof typeof templateCategories.database];
+};
+
+export const getDatabaseIntegrationTemplates = () => {
+  return templateCategories.database;
 };
 
 // Default export for the main templates object

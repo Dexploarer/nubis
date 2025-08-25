@@ -470,7 +470,7 @@ DISCORD BEHAVIOR RULES:
         {
           name: "Nubi",
           content: {
-            text: "", // No response - not @ mentioned
+            text: "I do not respond to messages where I am not @ mentioned, as per my Discord behavior rules. Please use @nubi or @nubi_guardian to get my attention.",
             actions: ["IGNORE"],
             providers: [],
           },

@@ -59,8 +59,8 @@ export function getCommunityManager(): Character {
       ]
     },
     plugins: [
+      "@elizaos/plugin-sql",       // Database support - MUST be first
       "@elizaos/plugin-bootstrap", // Essential for basic functionality
-      "@elizaos/plugin-sql",       // Database support
       "@elizaos/plugin-discord",   // Discord integration
       "@elizaos/plugin-telegram"   // Telegram integration
     ],

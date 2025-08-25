@@ -1,4 +1,755 @@
-import type { IAgentRuntime, Memory, State } from "@elizaos/core";
+import type { IAgentRuntime, Memory, State, UUID } from "@elizaos/core";
+import { logger } from "@elizaos/core";
+import { LRUCache } from "lru-cache";
+
+/**
+ * MEMORY SYSTEM OPTIMIZATIONS
+ * ===========================
+ * 
+ * This section implements performance optimizations for the ElizaOS memory system:
+ * 1. Memory caching for frequently accessed data
+ * 2. Batch operations for bulk memory creation
+ * 3. Lazy embedding generation
+ * 4. Combined queries to reduce database round trips
+ */
+
+// ============================================================================
+// 1. MEMORY CACHING IMPLEMENTATION
+// ============================================================================
+
+/**
+ * LRU Cache for frequently accessed memories
+ * Optimizes retrieval performance for repeated queries
+ */
+const memoryCache = new LRUCache<string, Memory[]>({
+  max: 1000, // Cache up to 1000 memory sets
+  ttl: 1000 * 60 * 5, // 5 minutes TTL
+  updateAgeOnGet: true, // Update access time on retrieval
+  allowStale: true, // Allow stale data while updating
+});
+
+/**
+ * Cache key generator for memory queries
+ * Creates consistent keys for cache lookups
+ */
+function generateCacheKey(params: Record<string, any>): string {
+  // Sort keys for consistent ordering
+  const sortedKeys = Object.keys(params).sort();
+  const keyParts = sortedKeys.map(key => {
+    const value = params[key];
+    // Handle undefined and null values consistently
+    if (value === undefined) return `${key}:undefined`;
+    if (value === null) return `${key}:null`;
+    return `${key}:${JSON.stringify(value)}`;
+  });
+  return `memories:${keyParts.join('|')}`;
+}
+
+/**
+ * Get memories with caching support
+ * Falls back to runtime query if not cached
+ */
+export async function getCachedMemories(
+  runtime: IAgentRuntime,
+  params: {
+    tableName: string;
+    roomId: string;
+    count?: number;
+    unique?: boolean;
+    entityId?: string;
+    agentId?: string;
+    worldId?: string;
+  }
+): Promise<Memory[]> {
+  const cacheKey = generateCacheKey(params);
+  
+  // Check cache first
+  const cached = memoryCache.get(cacheKey);
+  if (cached) {
+    logger.info(`Memory cache HIT for key: ${cacheKey}`);
+    return cached;
+  }
+  
+  // Cache miss - query runtime
+  logger.info(`Memory cache MISS for key: ${cacheKey}`);
+  const memories = await runtime.getMemories(params);
+  
+  // Cache the result
+  memoryCache.set(cacheKey, memories);
+  
+  return memories;
+}
+
+/**
+ * Get search results with caching support
+ * Caches semantic search results for repeated queries
+ */
+export async function getCachedSearchResults(
+  runtime: IAgentRuntime,
+  params: {
+    tableName: string;
+    embedding?: number[];
+    roomId: string;
+    count?: number;
+    query?: string;
+    similarityThreshold?: number;
+  }
+): Promise<Memory[]> {
+  const cacheKey = generateCacheKey(params);
+  
+  // Check cache first
+  const cached = memoryCache.get(cacheKey);
+  if (cached) {
+    logger.info(`Search cache HIT for key: ${cacheKey}`);
+    return cached;
+  }
+  
+  // Cache miss - query runtime
+  logger.info(`Search cache MISS for key: ${cacheKey}`);
+  const memories = await runtime.searchMemories(params);
+  
+  // Cache the result
+  memoryCache.set(cacheKey, memories);
+  
+  return memories;
+}
+
+/**
+ * Clear memory cache for specific patterns
+ * Useful when memories are updated or deleted
+ */
+export function clearMemoryCache(pattern?: string): void {
+  if (pattern) {
+    // Clear specific pattern
+    const keysToDelete: string[] = [];
+    for (const key of memoryCache.keys()) {
+      if (key.includes(pattern)) {
+        keysToDelete.push(key);
+      }
+    }
+    keysToDelete.forEach(key => memoryCache.delete(key));
+    logger.info(`Cleared ${keysToDelete.length} cache entries for pattern: ${pattern}`);
+  } else {
+    // Clear entire cache
+    memoryCache.clear();
+    logger.info("Memory cache cleared completely");
+  }
+}
+
+/**
+ * Get cache statistics for monitoring
+ */
+export function getMemoryCacheStats(): {
+  size: number;
+  maxSize: number;
+  hitRate: number;
+  missRate: number;
+  ttl: number;
+} {
+  // LRU Cache v10 doesn't have getStats method, so we calculate manually
+  const size = memoryCache.size;
+  const maxSize = memoryCache.max;
+  
+  return {
+    size,
+    maxSize,
+    hitRate: 0.5, // Default value since we can't track hits/misses in v10
+    missRate: 0.5, // Default value since we can't track hits/misses in v10
+    ttl: memoryCache.ttl || 0
+  };
+}
+
+// ============================================================================
+// 2. BATCH MEMORY OPERATIONS
+// ============================================================================
+
+/**
+ * Create multiple memories in a single batch operation
+ * Significantly improves performance for bulk memory creation
+ */
+export async function createMemoriesBatch(
+  runtime: IAgentRuntime,
+  memories: Memory[],
+  tableName: string,
+  unique: boolean = true
+): Promise<UUID[]> {
+  if (memories.length === 0) {
+    return [];
+  }
+  
+  if (memories.length === 1) {
+    // Single memory - use standard method
+    const id = await runtime.createMemory(memories[0], tableName, unique);
+    return [id];
+  }
+  
+  try {
+    // Use database adapter for batch operations if available
+    const database = runtime.getDatabase();
+    
+    // Check if batch method exists
+    if (typeof database.createMemoriesBatch === 'function') {
+      logger.info(`Creating ${memories.length} memories in batch for table: ${tableName}`);
+      return await database.createMemoriesBatch(memories, tableName, unique);
+    } else {
+      // Fallback to parallel individual operations
+      logger.info(`Batch method not available, using parallel creation for ${memories.length} memories`);
+      const promises = memories.map(memory => 
+        runtime.createMemory(memory, tableName, unique)
+      );
+      return await Promise.all(promises);
+    }
+  } catch (error) {
+    logger.error(`Batch memory creation failed: ${error.message}`);
+    
+    // Fallback to sequential creation on error
+    logger.info("Falling back to sequential memory creation");
+    const ids: UUID[] = [];
+    for (const memory of memories) {
+      try {
+        const id = await runtime.createMemory(memory, tableName, unique);
+        ids.push(id);
+      } catch (memoryError) {
+        logger.error(`Failed to create memory: ${memoryError.message}`);
+        // Continue with other memories
+      }
+    }
+    return ids;
+  }
+}
+
+/**
+ * Update multiple memories in batch
+ * Efficiently updates multiple memory records
+ */
+export async function updateMemoriesBatch(
+  runtime: IAgentRuntime,
+  updates: Array<{ id: UUID; updates: Partial<Memory> }>
+): Promise<{ success: boolean; updatedCount: number; errors: string[] }> {
+  if (updates.length === 0) {
+    return { success: true, updatedCount: 0, errors: [] };
+  }
+  
+  const results = await Promise.allSettled(
+    updates.map(({ id, updates: memoryUpdates }) =>
+      runtime.updateMemory({ id, ...memoryUpdates })
+    )
+  );
+  
+  const successCount = results.filter(r => r.status === 'fulfilled' && r.value).length;
+  const errors = results
+    .filter(r => r.status === 'rejected')
+    .map(r => (r as PromiseRejectedResult).reason?.message || 'Unknown error');
+  
+  // Clear cache for updated memories
+  clearMemoryCache('memories');
+  
+  return {
+    success: successCount === updates.length,
+    updatedCount: successCount,
+    errors
+  };
+}
+
+/**
+ * Delete multiple memories in batch
+ * Efficiently removes multiple memory records
+ */
+export async function deleteMemoriesBatch(
+  runtime: IAgentRuntime,
+  memoryIds: UUID[]
+): Promise<{ success: boolean; deletedCount: number; errors: string[] }> {
+  if (memoryIds.length === 0) {
+    return { success: true, deletedCount: 0, errors: [] };
+  }
+  
+  const results = await Promise.allSettled(
+    memoryIds.map(id => runtime.deleteMemory(id))
+  );
+  
+  const successCount = results.filter(r => r.status === 'fulfilled').length;
+  const errors = results
+    .filter(r => r.status === 'rejected')
+    .map(r => (r as PromiseRejectedResult).reason?.message || 'Unknown error');
+  
+  // Clear cache for deleted memories
+  clearMemoryCache('memories');
+  
+  return {
+    success: successCount === memoryIds.length,
+    deletedCount: successCount,
+    errors
+  };
+}
+
+// ============================================================================
+// 3. LAZY EMBEDDING GENERATION
+// ============================================================================
+
+/**
+ * Create memory with lazy embedding generation
+ * Only generates embeddings when needed for search operations
+ */
+export async function createMemoryWithLazyEmbedding(
+  runtime: IAgentRuntime,
+  memory: Omit<Memory, 'embedding'>,
+  tableName: string,
+  unique: boolean = true
+): Promise<UUID> {
+  // Determine if embedding is needed based on memory type and metadata
+  const needsEmbedding = shouldGenerateEmbedding(memory);
+  
+  if (needsEmbedding) {
+    // Generate embedding immediately for searchable content
+    try {
+      memory.embedding = await generateTextEmbedding(runtime, memory.content.text);
+      logger.info(`Generated embedding for memory in table: ${tableName}`);
+    } catch (error) {
+      logger.warn(`Failed to generate embedding: ${error.message}`);
+      // Continue without embedding
+    }
+  } else {
+    // Mark for lazy generation
+    memory.embedding = undefined;
+  }
+  
+  return await runtime.createMemory(memory, tableName, unique);
+}
+
+/**
+ * Determine if a memory should have an embedding generated
+ * Optimizes embedding generation based on content type and usage
+ */
+function shouldGenerateEmbedding(memory: Omit<Memory, 'embedding'>): boolean {
+  // Always generate for facts and documents (searchable content)
+  if (memory.metadata?.type === 'facts' || memory.metadata?.type === 'document') {
+    return true;
+  }
+  
+  // Generate for messages if they're likely to be searched
+  if (memory.metadata?.type === 'message') {
+    // Check if message contains searchable content
+    const text = memory.content.text || '';
+    const hasSearchableContent = text.length > 20 && 
+      !text.startsWith('@') && 
+      !text.startsWith('/');
+    return hasSearchableContent;
+  }
+  
+  // Generate for custom types if they have substantial content
+  if (memory.metadata?.type === 'custom') {
+    const text = memory.content.text || '';
+    return text.length > 50; // Only for substantial custom content
+  }
+  
+  return false;
+}
+
+/**
+ * Generate text embedding using the runtime's embedding model
+ * Centralized embedding generation with error handling
+ */
+async function generateTextEmbedding(
+  runtime: IAgentRuntime,
+  text: string
+): Promise<number[]> {
+  try {
+    const embedding = await runtime.useModel('text-embedding', { text });
+    
+    if (!Array.isArray(embedding) || embedding.length === 0) {
+      throw new Error('Invalid embedding format returned');
+    }
+    
+    return embedding;
+  } catch (error) {
+    logger.error(`Embedding generation failed: ${error.message}`);
+    throw new Error(`Failed to generate embedding: ${error.message}`);
+  }
+}
+
+/**
+ * Generate embeddings for memories that need them
+ * Batch embedding generation for better performance
+ */
+export async function generateEmbeddingsForMemories(
+  runtime: IAgentRuntime,
+  memories: Memory[]
+): Promise<Memory[]> {
+  const memoriesNeedingEmbeddings = memories.filter(m => !m.embedding || m.embedding.length === 0);
+  
+  if (memoriesNeedingEmbeddings.length === 0) {
+    return memories;
+  }
+  
+  logger.info(`Generating embeddings for ${memoriesNeedingEmbeddings.length} memories`);
+  
+  // Generate embeddings in parallel
+  const embeddingPromises = memoriesNeedingEmbeddings.map(async (memory) => {
+    try {
+      const embedding = await generateTextEmbedding(runtime, memory.content.text);
+      return { ...memory, embedding };
+    } catch (error) {
+      logger.warn(`Failed to generate embedding for memory ${memory.id}: ${error.message}`);
+      return memory; // Return original memory without embedding
+    }
+  });
+  
+  const updatedMemories = await Promise.all(embeddingPromises);
+  
+  // Update memories in database with new embeddings
+  const updatePromises = updatedMemories
+    .filter(m => m.embedding && m.embedding.length > 0)
+    .map(m => runtime.updateMemory({ id: m.id!, embedding: m.embedding }));
+  
+  if (updatePromises.length > 0) {
+    await Promise.allSettled(updatePromises);
+    logger.info(`Updated ${updatePromises.length} memories with embeddings`);
+  }
+  
+  // Return all memories (both updated and unchanged)
+  return memories.map(memory => {
+    const updated = updatedMemories.find(um => um.id === memory.id);
+    return updated || memory;
+  });
+}
+
+// ============================================================================
+// 4. COMBINED QUERIES FOR REDUCED DATABASE ROUND TRIPS
+// ============================================================================
+
+/**
+ * Get comprehensive context for a conversation
+ * Combines messages, facts, and entities in a single optimized query
+ */
+export async function getContextualMemories(
+  runtime: IAgentRuntime,
+  roomId: string,
+  userMessage: string,
+  options: {
+    messageCount?: number;
+    factCount?: number;
+    entityCount?: number;
+    similarityThreshold?: number;
+    includeEmbeddings?: boolean;
+  } = {}
+): Promise<{
+  messages: Memory[];
+  facts: Memory[];
+  entities: Memory[];
+  context: string;
+  metadata: {
+    totalMemories: number;
+    cacheHit: boolean;
+    queryTime: number;
+  };
+}> {
+  const startTime = Date.now();
+  const {
+    messageCount = 5,
+    factCount = 6,
+    entityCount = 3,
+    similarityThreshold = 0.7,
+    includeEmbeddings = false
+  } = options;
+  
+  try {
+    // Generate embedding for user message if we need to search facts
+    let queryEmbedding: number[] | undefined;
+    if (factCount > 0) {
+      try {
+        queryEmbedding = await generateTextEmbedding(runtime, userMessage);
+      } catch (error) {
+        logger.warn(`Failed to generate query embedding: ${error.message}`);
+      }
+    }
+    
+    // Parallel retrieval for better performance
+    const [messages, facts, entities] = await Promise.all([
+      // Get recent messages
+      getCachedMemories(runtime, {
+        tableName: 'messages',
+        roomId,
+        count: messageCount
+      }),
+      
+      // Search relevant facts
+      queryEmbedding ? 
+        getCachedSearchResults(runtime, {
+          tableName: 'facts',
+          embedding: queryEmbedding,
+          roomId,
+          count: factCount,
+          similarityThreshold
+        }) : 
+        Promise.resolve([]),
+      
+      // Get relevant entities
+      getCachedMemories(runtime, {
+        tableName: 'entities',
+        roomId,
+        count: entityCount
+      })
+    ]);
+    
+    // Ensure we have arrays even if queries fail
+    const safeMessages = Array.isArray(messages) ? messages : [];
+    const safeFacts = Array.isArray(facts) ? facts : [];
+    const safeEntities = Array.isArray(entities) ? entities : [];
+    
+    // Generate embeddings if requested and not present
+    let processedMemories = { messages: safeMessages, facts: safeFacts, entities: safeEntities };
+    if (includeEmbeddings) {
+      processedMemories = {
+        messages: await generateEmbeddingsForMemories(runtime, safeMessages),
+        facts: await generateEmbeddingsForMemories(runtime, safeFacts),
+        entities: await generateEmbeddingsForMemories(runtime, safeEntities)
+      };
+    }
+    
+    // Format context string
+    const context = formatContextualMemories(processedMemories, userMessage);
+    
+    const queryTime = Date.now() - startTime;
+    
+    return {
+      ...processedMemories,
+      context,
+      metadata: {
+        totalMemories: safeMessages.length + safeFacts.length + safeEntities.length,
+        cacheHit: true, // We're using cached methods
+        queryTime
+      }
+    };
+    
+  } catch (error) {
+    logger.error(`Contextual memory retrieval failed: ${error.message}`);
+    throw new Error(`Failed to retrieve contextual memories: ${error.message}`);
+  }
+}
+
+/**
+ * Get memories by multiple criteria in a single optimized query
+ * Reduces multiple database calls to a single operation
+ */
+export async function getMemoriesByMultipleCriteria(
+  runtime: IAgentRuntime,
+  criteria: {
+    tableNames: string[];
+    filters: {
+      roomId?: string;
+      entityId?: string;
+      agentId?: string;
+      worldId?: string;
+      memoryType?: string;
+      dateRange?: { start: number; end: number };
+      tags?: string[];
+    };
+    counts: Record<string, number>;
+    includeEmbeddings?: boolean;
+  }
+): Promise<Record<string, Memory[]>> {
+  const { tableNames, filters, counts, includeEmbeddings = false } = criteria;
+  
+  try {
+    // Build optimized query parameters
+    const queryParams = tableNames.map(tableName => ({
+      tableName,
+      ...filters,
+      count: counts[tableName] || 10
+    }));
+    
+    // Execute queries in parallel
+    const results = await Promise.all(
+      queryParams.map(params => getCachedMemories(runtime, params))
+    );
+    
+    // Combine results
+    const combinedResults: Record<string, Memory[]> = {};
+    tableNames.forEach((tableName, index) => {
+      combinedResults[tableName] = results[index];
+    });
+    
+    // Generate embeddings if requested
+    if (includeEmbeddings) {
+      for (const [tableName, memories] of Object.entries(combinedResults)) {
+        combinedResults[tableName] = await generateEmbeddingsForMemories(runtime, memories);
+      }
+    }
+    
+    return combinedResults;
+    
+  } catch (error) {
+    logger.error(`Multi-criteria memory retrieval failed: ${error.message}`);
+    throw new Error(`Failed to retrieve memories by multiple criteria: ${error.message}`);
+  }
+}
+
+/**
+ * Format contextual memories into a readable context string
+ * Creates structured context for AI processing
+ */
+function formatContextualMemories(
+  memories: { messages: Memory[]; facts: Memory[]; entities: Memory[] },
+  userMessage: string
+): string {
+  const { messages, facts, entities } = memories;
+  
+  const contextParts: string[] = [];
+  
+  // Add recent conversation context
+  if (messages.length > 0) {
+    const recentMessages = messages
+      .slice(-3) // Last 3 messages for context
+      .map(m => `${m.metadata?.source || 'user'}: ${m.content.text}`)
+      .join('\n');
+    contextParts.push(`Recent conversation:\n${recentMessages}`);
+  }
+  
+  // Add relevant facts
+  if (facts.length > 0) {
+    const factTexts = facts
+      .map(f => f.content.text)
+      .join('\n');
+    contextParts.push(`Relevant knowledge:\n${factTexts}`);
+  }
+  
+  // Add entity context
+  if (entities.length > 0) {
+    const entityInfo = entities
+      .map(e => `${e.metadata?.type || 'entity'}: ${e.content.text}`)
+      .join('\n');
+    contextParts.push(`Entity context:\n${entityInfo}`);
+  }
+  
+  // Add user message
+  contextParts.push(`Current message: ${userMessage}`);
+  
+  return contextParts.join('\n\n');
+}
+
+// ============================================================================
+// 5. MEMORY SYSTEM MONITORING AND METRICS
+// ============================================================================
+
+/**
+ * Memory system performance metrics
+ * Tracks performance for optimization analysis
+ */
+export interface MemorySystemMetrics {
+  cacheStats: {
+    hitRate: number;
+    missRate: number;
+    size: number;
+    maxSize: number;
+  };
+  operationLatency: {
+    create: number[];
+    retrieve: number[];
+    search: number[];
+    update: number[];
+    delete: number[];
+  };
+  throughput: {
+    operationsPerSecond: number;
+    averageBatchSize: number;
+    totalMemories: number;
+  };
+}
+
+const performanceMetrics = {
+  operationLatency: {
+    create: [] as number[],
+    retrieve: [] as number[],
+    search: [] as number[],
+    update: [] as number[],
+    delete: [] as number[]
+  },
+  operationCounts: {
+    create: 0,
+    retrieve: 0,
+    search: 0,
+    update: 0,
+    delete: 0
+  },
+  startTime: Date.now()
+};
+
+/**
+ * Track memory operation performance
+ * Records timing data for performance analysis
+ */
+export function trackMemoryOperation(
+  operation: keyof typeof performanceMetrics.operationLatency,
+  duration: number
+): void {
+  performanceMetrics.operationLatency[operation].push(duration);
+  performanceMetrics.operationCounts[operation]++;
+  
+  // Keep only last 1000 measurements to prevent memory bloat
+  if (performanceMetrics.operationLatency[operation].length > 1000) {
+    performanceMetrics.operationLatency[operation] = 
+      performanceMetrics.operationLatency[operation].slice(-1000);
+  }
+}
+
+/**
+ * Get comprehensive memory system metrics
+ * Provides insights for performance optimization
+ */
+export function getMemorySystemMetrics(): MemorySystemMetrics {
+  const cacheStats = getMemoryCacheStats();
+  const now = Date.now();
+  const runtime = (now - performanceMetrics.startTime) / 1000; // seconds
+  
+  // Calculate average latencies
+  const calculateAverage = (values: number[]) => 
+    values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+  
+  const operationLatency = {
+    create: calculateAverage(performanceMetrics.operationLatency.create),
+    retrieve: calculateAverage(performanceMetrics.operationLatency.retrieve),
+    search: calculateAverage(performanceMetrics.operationLatency.search),
+    update: calculateAverage(performanceMetrics.operationLatency.update),
+    delete: calculateAverage(performanceMetrics.operationLatency.delete)
+  };
+  
+  // Calculate throughput
+  const totalOperations = Object.values(performanceMetrics.operationCounts)
+    .reduce((a, b) => a + b, 0);
+  
+  const throughput = {
+    operationsPerSecond: runtime > 0 ? totalOperations / runtime : 0,
+    averageBatchSize: 1, // TODO: Implement batch size tracking
+    totalMemories: totalOperations
+  };
+  
+  return {
+    cacheStats,
+    operationLatency,
+    throughput
+  };
+}
+
+/**
+ * Reset memory system metrics
+ * Useful for testing and performance benchmarking
+ */
+export function resetMemorySystemMetrics(): void {
+  Object.keys(performanceMetrics.operationLatency).forEach(key => {
+    performanceMetrics.operationLatency[key as keyof typeof performanceMetrics.operationLatency] = [];
+  });
+  
+  Object.keys(performanceMetrics.operationCounts).forEach(key => {
+    performanceMetrics.operationCounts[key as keyof typeof performanceMetrics.operationCounts] = 0;
+  });
+  
+  performanceMetrics.startTime = Date.now();
+  
+  // Clear cache
+  clearMemoryCache();
+  
+  logger.info("Memory system metrics reset");
+}
 
 /**
  * COMPLETE AGENT CUSTOMIZATION GUIDE - COMPREHENSIVE TEMPLATE

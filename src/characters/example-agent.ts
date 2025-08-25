@@ -54,8 +54,8 @@ export function getExampleAgent(): Character {
       ]
     },
     plugins: [
+      "@elizaos/plugin-sql",       // Database support - MUST be first
       "@elizaos/plugin-bootstrap", // Essential for basic functionality
-      "@elizaos/plugin-sql",       // Database support
       // Add more plugins as needed
     ],
     settings: {
