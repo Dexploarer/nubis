@@ -53,9 +53,7 @@ export class ElizaOSLoggerService extends Service {
   private logCount = 0;
   
   // Override base config property to be compatible with Service base class
-  override get config(): Metadata {
-    return this._config as Metadata;
-  }
+  override config: Metadata = {} as Metadata;
   
   constructor(protected runtime: IAgentRuntime) {
     super(runtime);

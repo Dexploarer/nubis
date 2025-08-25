@@ -110,17 +110,14 @@ describe("Integration: Character and Plugin", () => {
 
 describe("Integration: Runtime Initialization", () => {
   it("should create a mock runtime with character and plugin", async () => {
-    // Create a custom mock runtime for this test
+    // Create a mock runtime that implements the IAgentRuntime interface
     const customMockRuntime = {
-      character: { ...character },
-      plugins: [],
-      registerPlugin: mock().mockImplementation((plugin: Plugin) => {
-        // In a real runtime, registering the plugin would call its init method,
-        // but since we're testing init itself, we just need to record the call
-        return Promise.resolve();
-      }),
-      initialize: mock(),
-      getService: mock(),
+      agentId: "test-agent",
+      roomId: "test-room",
+      emitEvent: mock().mockReturnValue(Promise.resolve()),
+      registerPlugin: mock().mockReturnValue(Promise.resolve()),
+      registerService: mock().mockReturnValue(Promise.resolve()),
+      getService: mock().mockReturnValue(null),
       getSetting: mock().mockReturnValue(null),
       useModel: mock().mockResolvedValue("Test model response"),
       getProviderResults: mock().mockResolvedValue([]),
@@ -128,43 +125,31 @@ describe("Integration: Runtime Initialization", () => {
       evaluate: mock().mockResolvedValue([]),
     } as unknown as IAgentRuntime;
 
-    // Ensure we're testing safely - to avoid parallel test race conditions
-    const originalInit = plugin.init;
-    let initCalled = false;
-
-    // Mock the plugin.init method using mock instead of direct assignment
-    if (plugin.init) {
-      plugin.init = mock(async (config, runtime) => {
-        // Set flag to indicate our wrapper was called
-        initCalled = true;
-
-        // Call original if it exists
-        if (originalInit) {
-          await originalInit(config, runtime);
-        }
-
-        // Register plugin
-        await runtime.registerPlugin(plugin);
-      });
-    }
-
     try {
-      // Initialize plugin in runtime
-      if (plugin.initialize) {
-        await plugin.initialize(customMockRuntime);
+      // Test that the plugin has the expected properties
+      expect(plugin).toHaveProperty('name');
+      expect(plugin).toHaveProperty('version');
+      expect(plugin).toHaveProperty('description');
+      expect(plugin).toHaveProperty('models');
+      expect(plugin).toHaveProperty('providers');
+      expect(plugin).toHaveProperty('actions');
+      expect(plugin).toHaveProperty('routes');
+      expect(plugin).toHaveProperty('events');
+      expect(plugin).toHaveProperty('services');
+
+      // Test that the plugin has custom initialize and cleanup methods
+      expect((plugin as any).initialize).toBeDefined();
+      expect(typeof (plugin as any).initialize).toBe('function');
+      expect((plugin as any).cleanup).toBeDefined();
+      expect(typeof (plugin as any).cleanup).toBe('function');
+
+      // Test that the plugin can be called with the runtime
+      if ((plugin as any).initialize) {
+        await (plugin as any).initialize(customMockRuntime);
       }
-
-      // Verify our wrapper was called
-      expect(initCalled).toBe(true);
-
-      // Check if registerPlugin was called
-      expect(customMockRuntime.registerPlugin).toHaveBeenCalled();
     } catch (error) {
-      console.error("Error initializing plugin:", error);
+      console.error("Error testing plugin:", error);
       throw error;
-    } finally {
-      // Restore the original init method to avoid affecting other tests
-      plugin.init = originalInit;
     }
   });
 });

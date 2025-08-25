@@ -1,0 +1,12 @@
+export * from "./discord-message-handler.template";
+export * from "./discord-service.template";
+export * from "./discord-integration.template";
+export { buildDiscordMessageHandler } from "./discord-message-handler.template";
+export { buildDiscordService } from "./discord-service.template";
+export { buildDiscordIntegration } from "./discord-integration.template";
+export { discordMessageHandlerVariants } from "./discord-message-handler.template";
+export { discordServiceVariants } from "./discord-service.template";
+export { discordIntegrationVariants } from "./discord-integration.template";
+export { default as discordMessageHandlerPlugin } from "./discord-message-handler.template";
+export { default as discordServicePlugin } from "./discord-service.template";
+export { default as discordIntegrationPlugin } from "./discord-integration.template";

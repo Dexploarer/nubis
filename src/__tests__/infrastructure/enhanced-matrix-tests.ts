@@ -15,7 +15,7 @@ import {
   defaultLoadTestConfig,
   defaultIntegrationTestConfig
 } from './enhanced-matrix-runner';
-import { getEnhancedCommunityManager, matrixTestConfig } from '../characters/enhanced-community-manager';
+import { getEnhancedCommunityManager, matrixTestConfig } from '../../characters/enhanced-community-manager';
 import { defaultValidationRules } from './matrix-testing-runner';
 
 /**

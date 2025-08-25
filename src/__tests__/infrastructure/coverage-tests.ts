@@ -6,7 +6,7 @@
  */
 
 import { CoverageAnalysisEngine } from './advanced-testing-framework';
-import { getEnhancedCommunityManager } from '../characters/enhanced-community-manager';
+import { getEnhancedCommunityManager } from '../../characters/enhanced-community-manager';
 
 /**
  * Main coverage testing function

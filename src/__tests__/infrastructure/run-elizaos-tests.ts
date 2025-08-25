@@ -5,9 +5,9 @@
  * Following ElizaOS Bootstrap Testing Guide patterns for comprehensive testing
  */
 
-import { ElizaOSLoggerService } from '../services/logging/elizaos-logger.service';
-import { MatrixTestingRunner } from './matrix-testing-runner';
-import { getEnhancedCommunityManager } from '../characters/enhanced-community-manager';
+import { ElizaOSLoggerService } from '../../services/logging/elizaos-logger.service';
+import { CommunityManagementService } from '../../services/community/community-management.service';
+import { getEnhancedCommunityManager } from '../../characters/enhanced-community-manager';
 
 // Mock runtime for testing
 const createMockRuntime = () => ({

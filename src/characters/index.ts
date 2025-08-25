@@ -2,7 +2,7 @@ import { getExampleAgent } from './example-agent';
 import { getCommunityManager } from './community-manager';
 import { nubiCharacter } from './nubi';
 import { CharacterFactory } from '../factories/character.factory';
-import { CharacterValidator } from '../testing/character.validator';
+import { CharacterValidator } from '../__tests__/infrastructure/character.validator';
 
 /**
  * Characters Index - ElizaOS Standard Structure with Validation

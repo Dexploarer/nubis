@@ -10,7 +10,7 @@ import {
   IntegrationTestConfig,
   AdvancedTestResult 
 } from './advanced-testing-framework';
-import { applyMatrixToScenario } from '../utils/parameter-override';
+import { applyParameterOverride } from '../../utils/parameter-override';
 
 export interface EnhancedMatrixTestConfig {
   baseScenario: any;
@@ -99,7 +99,7 @@ export class EnhancedMatrixTestingRunner {
     const advancedResults: AdvancedTestResult[] = [];
     
     // Select representative scenarios for advanced testing
-    const scenarios = applyMatrixToScenario(this.config.baseScenario, this.config.matrix);
+    const scenarios = applyParameterOverride(this.config.baseScenario, this.config.matrix);
     const testScenarios = this.selectTestScenarios(scenarios);
     
     console.log(`🔍 Selected ${testScenarios.length} scenarios for advanced testing`);

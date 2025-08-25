@@ -6,7 +6,7 @@
  */
 
 import { IntegrationTestingEngine, IntegrationTestConfig } from './advanced-testing-framework';
-import { getEnhancedCommunityManager } from '../characters/enhanced-community-manager';
+import { getEnhancedCommunityManager } from '../../characters/enhanced-community-manager';
 
 /**
  * Main integration testing function

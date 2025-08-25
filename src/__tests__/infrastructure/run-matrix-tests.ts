@@ -6,8 +6,8 @@
  */
 
 import { MatrixTestingRunner, defaultValidationRules } from './matrix-testing-runner';
-import { getEnhancedCommunityManager, matrixTestConfig } from '../characters/enhanced-community-manager';
-import { applyMatrixToScenario } from '../utils/parameter-override';
+import { getEnhancedCommunityManager, matrixTestConfig } from '../../characters/enhanced-community-manager';
+import { applyMatrixToScenario } from '../../utils/parameter-override';
 
 /**
  * Main test runner function
@@ -147,7 +147,7 @@ function demonstrateParameterOverrides() {
   console.log('  Original system prompt length:', baseCharacter.system?.length || 0);
   
   // Apply overrides
-  const { applyParameterOverride } = require('../utils/parameter-override');
+  const { applyParameterOverride } = require('../../utils/parameter-override');
   
   const modifiedCharacter = applyParameterOverride(
     baseCharacter,
@@ -159,7 +159,7 @@ function demonstrateParameterOverrides() {
   console.log('  Original unchanged:', baseCharacter.name);
   
   // Apply multiple overrides
-  const { applyParameterOverrides } = require('../utils/parameter-override');
+  const { applyParameterOverrides } = require('../../utils/parameter-override');
   
   const multiModifiedCharacter = applyParameterOverrides(baseCharacter, [
     { path: 'character.name', value: 'Ultra Enhanced CM' },

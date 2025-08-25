@@ -1,10 +1,6 @@
-import type { Character } from "@elizaos/core";
-import { 
-  CharacterSchema, 
-  ValidatedCharacter, 
-  validateCharacterSafe 
-} from '../schemas/character.schema';
-import { CharacterFactory, CharacterValidationError } from '../factories/character.factory';
+import type { Character } from '@elizaos/core';
+import { CharacterSchema, CharacterSettingsSchema, CharacterStyleSchema, CharacterMessageExampleSchema } from '../../schemas/character.schema';
+import { CharacterFactory, CharacterValidationError } from '../../factories/character.factory';
 
 /**
  * Character Validation Result

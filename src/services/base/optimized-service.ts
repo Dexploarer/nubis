@@ -61,9 +61,7 @@ export abstract class OptimizedService extends Service {
   protected _config: OptimizedServiceConfig;
   
   // Override base config property to be compatible with Service base class
-  get config(): Metadata {
-    return this._config as Metadata;
-  }
+  override config: Metadata = {} as Metadata;
   protected isRunning = false;
   protected isHealthy = true;
   protected restartCount = 0;

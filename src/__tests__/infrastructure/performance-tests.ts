@@ -6,7 +6,7 @@
  */
 
 import { PerformanceTestingEngine } from './advanced-testing-framework';
-import { getEnhancedCommunityManager } from '../characters/enhanced-community-manager';
+import { getEnhancedCommunityManager } from '../../characters/enhanced-community-manager';
 
 /**
  * Main performance testing function

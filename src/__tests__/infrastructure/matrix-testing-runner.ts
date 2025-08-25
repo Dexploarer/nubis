@@ -3,7 +3,7 @@
  * Executes all parameter combinations and validates results
  */
 
-import { applyMatrixToScenario, ParameterOverride } from '../utils/parameter-override';
+import { applyParameterOverride, ParameterOverride } from '../../utils/parameter-override';
 
 export interface MatrixTestResult {
   combination: ParameterOverride[];
@@ -58,7 +58,7 @@ export class MatrixTestingRunner {
     console.log(`🚀 Starting matrix testing with ${this.config.matrix.length} parameters`);
     
     // Generate all parameter combinations
-    const scenarios = applyMatrixToScenario(this.config.baseScenario, this.config.matrix);
+    const scenarios = applyParameterOverride(this.config.baseScenario, this.config.matrix);
     console.log(`📊 Generated ${scenarios.length} test scenarios`);
     
     // Run tests for each combination
