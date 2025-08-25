@@ -37,7 +37,7 @@ export class AppService {
 			if (health.overall) {
 				logger.info("[APP] All database connections successful");
 			} else {
-				logger.warn("[APP] Some database connections failed:", health);
+				logger.warn("[APP] Some database connections failed:", JSON.stringify(health));
 			}
 		} catch (error) {
 			logger.error("[APP] Database initialization error:", error);
@@ -54,9 +54,9 @@ export class AppService {
 				const overallHealth = dbHealth.overall;
 
 				if (!overallHealth) {
-					logger.warn("[APP] Health check failed:", {
+					logger.warn("[APP] Health check failed:", JSON.stringify({
 						database: dbHealth,
-					});
+					}));
 				} else {
 					logger.debug("[APP] Health check passed");
 				}
@@ -69,7 +69,6 @@ export class AppService {
 	public async getStatus() {
 		try {
 			const dbHealth = await this.databaseService.healthCheck();
-			const botHealth = botManager.getBotHealth();
 
 			return {
 				application: {
@@ -80,16 +79,9 @@ export class AppService {
 				},
 				services: {
 					database: dbHealth,
-					bots: botHealth,
-					raids: {
-						enabled: env.RAIDS_ENABLED,
-						autoRaids: env.AUTO_RAIDS,
-						maxConcurrent: env.MAX_CONCURRENT_RAIDS,
-					},
 				},
 				features: {
 					communityMemory: env.ENABLE_COMMUNITY_MEMORY,
-					divineCultSystem: env.ENABLE_DIVINE_CULT_SYSTEM,
 					emotionalIntelligence: env.ENABLE_EMOTIONAL_INTELLIGENCE,
 					antiDetection: env.ENABLE_ANTI_DETECTION,
 				},
@@ -107,9 +99,6 @@ export class AppService {
 		logger.info("[APP] Shutting down NUBI application...");
 
 		try {
-			// Stop bot services via bot manager
-			await botManager.shutdown();
-
 			// Close database connections
 			await this.databaseService.closeConnections();
 
@@ -121,18 +110,6 @@ export class AppService {
 
 	public getDatabaseService() {
 		return this.databaseService;
-	}
-
-	public getDiscordBot() {
-		return botManager.getDiscordBot();
-	}
-
-	public getTelegramBot() {
-		return botManager.getTelegramBot();
-	}
-
-	public getTelegramRaids() {
-		return this.telegramRaids;
 	}
 
 	public isReady() {

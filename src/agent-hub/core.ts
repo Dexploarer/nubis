@@ -3,13 +3,10 @@ import { logger } from "@elizaos/core";
 /**
  * NUBI Agent Hub Core
  *
- * This file exports all the core services, bots, and functionality
+ * This file exports all the core services and functionality
  * that make up the NUBI agent system.
  */
 
-// Bot Services
-export { default as DiscordBotService } from "./bots/discord-bot";
-export { default as TelegramBotService } from "./bots/telegram-bot";
 // Character and Plugin System
 export { character } from "./character";
 // Configuration
@@ -17,11 +14,8 @@ export { default as env } from "./config/environment";
 // Main Project Agent
 export { default as project, projectAgent } from "./index";
 export { default as starterPlugin } from "./plugin";
-// Raid System
-export * from "./raids/telegram-raids";
-export { default as AppService } from "./services/app-service";
-export { BotManager, botManager } from "./services/bot-manager";
 // Core Services
+export { default as AppService } from "./services/app-service";
 export { default as DatabaseService } from "./services/database";
 
 /**
@@ -55,18 +49,8 @@ export class NUBIServiceManager {
 			const dbService = new DatabaseService();
 			this.services.set("database", dbService);
 
-			// Bot services are now managed by the centralized BotManager
-			// No need to initialize them here to prevent conflicts
-			logger.info("[CORE] Bot services will be managed by BotManager");
-
-			// Initialize raid system
-			const { EnhancedTelegramRaidsService } = await import(
-				"./raids/telegram-raids/elizaos-enhanced-telegram-raids"
-			);
-			const raidsService = new EnhancedTelegramRaidsService(
-				{} as Record<string, unknown>,
-			);
-			this.services.set("raids", raidsService);
+			// Bot services are now handled by their respective plugins
+			logger.info("[CORE] Bot services will be managed by their respective plugins");
 
 			this.isInitialized = true;
 		} catch (error) {
@@ -89,11 +73,13 @@ export class NUBIServiceManager {
 	public async shutdown(): Promise<void> {
 		for (const [name, service] of this.services) {
 			try {
-				if (service.stop && typeof service.stop === "function") {
-					await service.stop();
-				}
-				if (service.shutdown && typeof service.shutdown === "function") {
-					await service.shutdown();
+				if (service && typeof service === "object" && service !== null) {
+					if ("stop" in service && typeof (service as any).stop === "function") {
+						await (service as any).stop();
+					}
+					if ("shutdown" in service && typeof (service as any).shutdown === "function") {
+						await (service as any).shutdown();
+					}
 				}
 			} catch (error) {
 				console.error(`Error shutting down service ${name}:`, error);

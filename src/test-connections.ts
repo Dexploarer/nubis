@@ -20,8 +20,8 @@ async function testConnections() {
       logger.warn('⚠️ Some database connections failed');
     }
 
-    // Test bot services
-    logger.info('🤖 Testing bot services...');
+    // Test application services
+    logger.info('🚀 Testing application services...');
     
     try {
       await app.initialize();
@@ -31,39 +31,8 @@ async function testConnections() {
       const status = await app.getStatus();
       console.log('Application Status:', JSON.stringify(status, null, 2));
       
-      // Wait a bit for bots to connect
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      
-      // Check bot status
-      const discordReady = app.getDiscordBot()?.isBotReady?.() ?? false;
-      const telegramReady = app.getTelegramBot()?.isBotReady?.() ?? false;
-      
-      console.log('Bot Status:', {
-        discord: discordReady ? '🟢 Ready' : '🔴 Not Ready',
-        telegram: telegramReady ? '🟢 Ready' : '🔴 Not Ready'
-      });
-      
-      if (discordReady && telegramReady) {
-        logger.info('✅ All bot services are ready');
-      } else {
-        logger.warn('⚠️ Some bot services are not ready');
-      }
-      
     } catch (error) {
       logger.error('❌ Application initialization failed:', error);
-    }
-
-    // Test telegram raids integration
-    logger.info('🚀 Testing Telegram raids integration...');
-    try {
-      const raidsService = app.getTelegramRaids();
-      if (raidsService) {
-        logger.info('✅ Telegram raids service available');
-      } else {
-        logger.warn('⚠️ Telegram raids service not available');
-      }
-    } catch (error) {
-      logger.error('❌ Telegram raids test failed:', error);
     }
 
     // Cleanup

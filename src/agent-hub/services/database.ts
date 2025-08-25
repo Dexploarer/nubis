@@ -4,8 +4,8 @@ import { Pool } from "pg";
 import env from "../config/environment";
 
 export class DatabaseService {
-	private supabaseClient: ReturnType<typeof createClient>;
-	private postgresPool: Pool;
+	private supabaseClient!: ReturnType<typeof createClient>;
+	private postgresPool!: Pool;
 	private isConnected = false;
 
 	constructor() {
@@ -86,7 +86,7 @@ export class DatabaseService {
 					await this.supabaseClient.auth.getSession();
 
 				if (authError) {
-					logger.error("[DATABASE] Supabase connection error:", authError);
+					logger.error("[DATABASE] Supabase connection error:", JSON.stringify(authError));
 					return false;
 				}
 

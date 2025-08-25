@@ -514,8 +514,10 @@ export function buildElizaOSMemoryHelpers(
 
 						if (storedAt < cutoffDate) {
 							try {
-								await this.deleteMemory(memory.id);
-								totalDeleted++;
+								if (memory.id) {
+									await this.deleteMemory(memory.id);
+									totalDeleted++;
+								}
 							} catch (error) {
 								totalErrors++;
 								logger.warn(

@@ -18,7 +18,7 @@ export class DatabasePoolerManager extends Service {
 		"Manages database connection pools for optimized access";
 
 	private pools: Map<PoolType, Pool> = new Map();
-	private runtime: IAgentRuntime;
+	protected runtime: IAgentRuntime;
 
 	constructor(runtime: IAgentRuntime) {
 		super();
@@ -67,6 +67,10 @@ export class DatabasePoolerManager extends Service {
 			);
 			throw error;
 		}
+	}
+
+	async stop(): Promise<void> {
+		await this.cleanup();
 	}
 
 	/**

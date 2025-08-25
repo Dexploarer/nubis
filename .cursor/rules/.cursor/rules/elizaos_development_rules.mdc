@@ -209,5 +209,6 @@ context.eventBus.subscribe('USER_ACTION_COMPLETED', async (payload) => {
 By strictly adhering to these rules, developers can build a robust, scalable, and highly intelligent ElizaOS ecosystem, unleashing the full potential of their AI agents.
 description:
 globs:
-alwaysApply: false
+alwaysApply: true
+
 ---

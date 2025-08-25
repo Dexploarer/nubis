@@ -241,7 +241,7 @@ const plugin: Plugin = {
 			type: "GET",
 			handler: async (
 				_req: Record<string, unknown>,
-				res: Record<string, unknown>,
+				res: { json: (data: any) => void },
 			) => {
 				// send a response
 				res.json({

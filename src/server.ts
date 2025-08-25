@@ -69,43 +69,6 @@ export class NUBIServer {
       }
     });
 
-    // Bot endpoints
-    this.app.get('/bots/discord/status', (req, res) => {
-      const discordBot = this.appService.getDiscordBot();
-      res.json({
-        enabled: env.ENABLE_DISCORD_BOT,
-        ready: discordBot?.isBotReady?.() ?? false,
-        timestamp: new Date().toISOString()
-      });
-    });
-
-    this.app.get('/bots/telegram/status', (req, res) => {
-      const telegramBot = this.appService.getTelegramBot();
-      res.json({
-        enabled: env.ENABLE_TELEGRAM_BOT,
-        ready: telegramBot?.isBotReady?.() ?? false,
-        timestamp: new Date().toISOString()
-      });
-    });
-
-    // Raid endpoints
-    this.app.get('/raids/status', (req, res) => {
-      res.json({
-        enabled: env.RAIDS_ENABLED,
-        autoRaids: env.AUTO_RAIDS,
-        maxConcurrent: env.MAX_CONCURRENT_RAIDS,
-        raidDuration: env.RAID_DURATION_MINUTES,
-        minParticipants: env.MIN_RAID_PARTICIPANTS,
-        pointsPerAction: {
-          like: env.POINTS_PER_LIKE,
-          retweet: env.POINTS_PER_RETWEET,
-          comment: env.POINTS_PER_COMMENT,
-          join: env.POINTS_PER_JOIN
-        },
-        timestamp: new Date().toISOString()
-      });
-    });
-
     // Root endpoint
     this.app.get('/', (req, res) => {
       res.json({
@@ -114,12 +77,7 @@ export class NUBIServer {
         version: '1.0.0',
         endpoints: {
           health: '/health',
-          status: '/status',
-          bots: {
-            discord: '/bots/discord/status',
-            telegram: '/bots/telegram/status'
-          },
-          raids: '/raids/status'
+          status: '/status'
         },
         timestamp: new Date().toISOString()
       });
