@@ -1,9 +1,5 @@
 import { describe, expect, it, mock, beforeEach, afterEach } from 'bun:test';
-import {
-  type IAgentRuntime,
-  type Memory,
-  type State,
-} from '@elizaos/core';
+import { type IAgentRuntime, type Memory, type State } from '@elizaos/core';
 
 // Import plugin components
 import { socialRaidsPlugin } from '../index';
@@ -46,9 +42,11 @@ describe('Social Raids Plugin Integration', () => {
 
   describe('Plugin Structure', () => {
     it('should have correct plugin structure', () => {
-      expect(socialRaidsPlugin.name).toBe('SOCIAL_RAIDS_PLUGIN');
-      expect(socialRaidsPlugin.description).toBe('Manages Twitter/Telegram raids, engagement tracking, and community memory.');
-      
+      expect(socialRaidsPlugin.name).toBe('social-raids');
+      expect(socialRaidsPlugin.description).toBe(
+        'Manages Twitter/Telegram raids, engagement tracking, and community memory.',
+      );
+
       expect(socialRaidsPlugin.services).toBeDefined();
       expect(socialRaidsPlugin.actions).toBeDefined();
       expect(socialRaidsPlugin.providers).toBeDefined();
@@ -57,14 +55,14 @@ describe('Social Raids Plugin Integration', () => {
     });
 
     it('should have all required services', () => {
-      const serviceNames = socialRaidsPlugin.services.map(service => service.name);
+      const serviceNames = socialRaidsPlugin.services?.map((service) => service.name);
       expect(serviceNames).toContain('TWITTER_RAID_SERVICE');
       expect(serviceNames).toContain('TELEGRAM_RAID_MANAGER');
       expect(serviceNames).toContain('COMMUNITY_MEMORY_SERVICE');
     });
 
     it('should have all required actions', () => {
-      const actionNames = socialRaidsPlugin.actions.map(action => action.name);
+      const actionNames = (socialRaidsPlugin.actions ?? []).map((action) => action.name);
       expect(actionNames).toContain('START_RAID');
       expect(actionNames).toContain('JOIN_RAID');
       expect(actionNames).toContain('SUBMIT_ENGAGEMENT');
@@ -73,19 +71,21 @@ describe('Social Raids Plugin Integration', () => {
     });
 
     it('should have all required providers', () => {
-      const providerNames = socialRaidsPlugin.providers.map(provider => provider.name);
+      const providerNames = (socialRaidsPlugin.providers ?? []).map((provider) => provider.name);
       expect(providerNames).toContain('RAID_STATUS');
       expect(providerNames).toContain('USER_STATS');
       expect(providerNames).toContain('COMMUNITY_MEMORY');
     });
 
     it('should have all required evaluators', () => {
-      const evaluatorNames = socialRaidsPlugin.evaluators.map(evaluator => evaluator.name);
+      const evaluatorNames = (socialRaidsPlugin.evaluators ?? []).map(
+        (evaluator) => evaluator.name,
+      );
       expect(evaluatorNames).toContain('ENGAGEMENT_QUALITY');
     });
 
     it('should have required configuration', () => {
-      const configKeys = Object.keys(socialRaidsPlugin.config);
+      const configKeys = Object.keys(socialRaidsPlugin.config ?? ({} as any));
       expect(configKeys).toContain('TELEGRAM_BOT_TOKEN');
       expect(configKeys).toContain('TELEGRAM_CHANNEL_ID');
       expect(configKeys).toContain('TWITTER_USERNAME');
@@ -178,12 +178,12 @@ describe('Social Raids Plugin Integration', () => {
         startRaidMessage as Memory,
         {} as State,
         {},
-        callbackFn
+        callbackFn,
       );
 
-      expect(startResult.success).toBe(true);
+      expect(startResult?.success).toBe(true);
       expect(callbackFn).toHaveBeenCalledWith(
-        expect.objectContaining({ text: expect.stringContaining('RAID INITIATED') })
+        expect.objectContaining({ text: expect.stringContaining('RAID INITIATED') }),
       );
       expect(mockRuntime.getService).toHaveBeenCalledWith('COMMUNITY_MEMORY_SERVICE');
       expect(mockMemoryService.recordInteraction).toHaveBeenCalled();
@@ -217,10 +217,10 @@ describe('Social Raids Plugin Integration', () => {
         engagementMessage as unknown as Memory,
         {} as State,
         {},
-        callbackFn
+        callbackFn,
       );
 
-      expect(result.success).toBe(true);
+      expect(result?.success).toBe(true);
       expect(mockMemoryService.recordInteraction).toHaveBeenCalled();
     });
 
@@ -249,10 +249,10 @@ describe('Social Raids Plugin Integration', () => {
         scrapeMessage as Memory,
         {} as State,
         {},
-        callbackFn
+        callbackFn,
       );
 
-      expect(result.success).toBe(true);
+      expect(result?.success).toBe(true);
       expect(mockTwitterService.exportTweets).toHaveBeenCalledWith('testuser', 50, 0);
     });
   });
@@ -380,12 +380,14 @@ describe('Social Raids Plugin Integration', () => {
       const twitterService = new TwitterRaidService(mockRuntime as IAgentRuntime);
       twitterService.supabase = mockSupabase;
 
-      await expect(twitterService.createRaid({
-        targetUrl: 'https://twitter.com/testuser/status/1234567890123456789',
-        targetPlatform: 'twitter',
-        platform: 'telegram',
-        createdBy: 'test-user',
-      })).rejects.toThrow('Database error');
+      await expect(
+        twitterService.createRaid({
+          targetUrl: 'https://twitter.com/testuser/status/1234567890123456789',
+          targetPlatform: 'twitter',
+          platform: 'telegram',
+          createdBy: 'test-user',
+        }),
+      ).rejects.toThrow('Database error');
     });
   });
 
@@ -402,11 +404,13 @@ describe('Social Raids Plugin Integration', () => {
           retweetCount: 50,
           replyCount: 10,
           quoteCount: 3,
-        })
+        }),
       } as any;
       (twitterService as any).isAuthenticated = true;
 
-      const result = await twitterService.scrapeEngagement('https://twitter.com/testuser/status/1234567890123456789');
+      const result = await twitterService.scrapeEngagement(
+        'https://twitter.com/testuser/status/1234567890123456789',
+      );
 
       expect(result).toBeDefined();
       expect(result.id).toBe('1234567890123456789');
@@ -422,7 +426,7 @@ describe('Social Raids Plugin Integration', () => {
       (twitterService as any).isAuthenticated = true;
 
       await expect(
-        twitterService.scrapeEngagement('https://twitter.com/testuser/status/1234567890123456789')
+        twitterService.scrapeEngagement('https://twitter.com/testuser/status/1234567890123456789'),
       ).rejects.toThrow('Tweet scraping failed');
     });
   });
@@ -492,13 +496,13 @@ describe('Social Raids Plugin Integration', () => {
         startRaidMessage as Memory,
         {} as State,
         {},
-        callbackFn
+        callbackFn,
       );
 
       // Missing memory service should not fail raid start; it simply skips recording
-      expect(result.success).toBe(true);
+      expect(result?.success).toBe(true);
       expect(callbackFn).toHaveBeenCalledWith(
-        expect.objectContaining({ text: expect.stringContaining('RAID INITIATED') })
+        expect.objectContaining({ text: expect.stringContaining('RAID INITIATED') }),
       );
     });
 
@@ -510,7 +514,7 @@ describe('Social Raids Plugin Integration', () => {
       (twitterService as any).isAuthenticated = true;
 
       await expect(
-        twitterService.scrapeEngagement('https://twitter.com/testuser/status/1234567890123456789')
+        twitterService.scrapeEngagement('https://twitter.com/testuser/status/1234567890123456789'),
       ).rejects.toThrow('Tweet scraping failed');
     });
 
@@ -530,14 +534,14 @@ describe('Social Raids Plugin Integration', () => {
         invalidMessage as Memory,
         {} as State,
         {},
-        callbackFn
+        callbackFn,
       );
 
-      expect(result.success).toBe(false);
+      expect(result?.success).toBe(false);
       expect(callbackFn).toHaveBeenCalledWith(
         expect.objectContaining({
           text: expect.stringContaining('Twitter/X URL'),
-        })
+        }),
       );
     });
   });
@@ -572,19 +576,19 @@ describe('Social Raids Plugin Integration', () => {
           startRaidMessage as Memory,
           {} as State,
           {},
-          callbackFn
-        )
+          callbackFn,
+        ),
       );
 
       const results = await Promise.all(promises);
 
-      expect(results.every(r => r.success === true)).toBe(true);
+      expect(results.every((r) => r?.success === true)).toBe(true);
       expect(callbackFn).toHaveBeenCalled();
     });
 
     it('should handle large datasets efficiently', async () => {
       const largeTweetSet = Array.from({ length: 1000 }, (_, i) =>
-        TestData.createTweetData({ id: `tweet-${i}` })
+        TestData.createTweetData({ id: `tweet-${i}` }),
       );
 
       const mockTwitterService = {
@@ -609,11 +613,11 @@ describe('Social Raids Plugin Integration', () => {
         scrapeMessage as Memory,
         {} as State,
         {},
-        callbackFn
+        callbackFn,
       );
       const endTime = Date.now();
 
-      expect(result.success).toBe(true);
+      expect(result?.success).toBe(true);
       expect(endTime - startTime).toBeLessThan(5000); // Should complete within 5 seconds
     });
   });
@@ -631,7 +635,7 @@ describe('Social Raids Plugin Integration', () => {
       };
 
       mockRuntime.getService = mock().mockImplementation((name: string) =>
-        name === 'COMMUNITY_MEMORY_SERVICE' ? mockMemoryService : null
+        name === 'COMMUNITY_MEMORY_SERVICE' ? mockMemoryService : null,
       );
 
       const callbackFn = mock().mockResolvedValue([]);
@@ -641,7 +645,7 @@ describe('Social Raids Plugin Integration', () => {
         startRaidMessage as Memory,
         {} as State,
         {},
-        callbackFn
+        callbackFn,
       );
 
       expect(mockRuntime.getService).toHaveBeenCalledWith('COMMUNITY_MEMORY_SERVICE');
@@ -670,7 +674,7 @@ describe('Social Raids Plugin Integration', () => {
       };
 
       mockRuntime.getService = mock().mockImplementation((name: string) =>
-        name === 'COMMUNITY_MEMORY_SERVICE' ? mockMemoryService : null
+        name === 'COMMUNITY_MEMORY_SERVICE' ? mockMemoryService : null,
       );
 
       const callbackFn = mock().mockResolvedValue([]);
@@ -680,7 +684,7 @@ describe('Social Raids Plugin Integration', () => {
         startRaidMessage as Memory,
         {} as State,
         {},
-        callbackFn
+        callbackFn,
       );
       expect(mockRuntime.getService).toHaveBeenCalledWith('COMMUNITY_MEMORY_SERVICE');
       expect(mockMemoryService.recordInteraction).toHaveBeenCalled();

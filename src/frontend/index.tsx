@@ -33,9 +33,9 @@ function ExampleRoute() {
 
   if (!agentId) {
     return (
-      <div className="p-4 text-center">
-        <div className="text-red-600 font-medium">Error: Agent ID not found</div>
-        <div className="text-sm text-gray-600 mt-2">
+      <div className='p-4 text-center'>
+        <div className='text-red-600 font-medium'>Error: Agent ID not found</div>
+        <div className='text-sm text-gray-600 mt-2'>
           The server should inject the agent ID configuration.
         </div>
       </div>

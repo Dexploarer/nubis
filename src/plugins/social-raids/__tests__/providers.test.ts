@@ -1,9 +1,5 @@
 import { describe, expect, it, mock, beforeEach, afterEach } from 'bun:test';
-import {
-  type IAgentRuntime,
-  type Memory,
-  type State,
-} from '@elizaos/core';
+import { type IAgentRuntime, type Memory, type State } from '@elizaos/core';
 
 // Import providers
 import { RaidStatusProvider } from '../providers/raid-status-provider';
@@ -67,7 +63,7 @@ describe('Social Raids Providers', () => {
         const result = await provider.get(
           mockRuntime as IAgentRuntime,
           { id: 'test-memory' } as Memory,
-          {} as State
+          {} as State,
         );
 
         expect(result).toBeDefined();
@@ -91,7 +87,7 @@ describe('Social Raids Providers', () => {
         const result = await provider.get(
           mockRuntime as IAgentRuntime,
           { id: 'test-memory' } as Memory,
-          {} as State
+          {} as State,
         );
 
         expect(result).toBeDefined();
@@ -100,10 +96,14 @@ describe('Social Raids Providers', () => {
 
       it('should handle database errors', async () => {
         const mockSupabase = createMockSupabaseClient();
-        mockSupabase.from().select().eq().single.mockResolvedValue({
-          data: null,
-          error: { message: 'Database error' },
-        });
+        mockSupabase
+          .from()
+          .select()
+          .eq()
+          .single.mockResolvedValue({
+            data: null,
+            error: { message: 'Database error' },
+          });
 
         const mockService = {
           supabase: mockSupabase,
@@ -114,7 +114,7 @@ describe('Social Raids Providers', () => {
         const result = await provider.get(
           mockRuntime as IAgentRuntime,
           { id: 'test-memory' } as Memory,
-          {} as State
+          {} as State,
         );
 
         expect(result).toBeDefined();
@@ -180,7 +180,7 @@ describe('Social Raids Providers', () => {
         const result = await provider.get(
           mockRuntime as IAgentRuntime,
           { id: 'test-memory' } as Memory,
-          {} as State
+          {} as State,
         );
 
         expect(result).toBeDefined();
@@ -205,7 +205,7 @@ describe('Social Raids Providers', () => {
         const result = await provider.get(
           mockRuntime as IAgentRuntime,
           { id: 'test-memory' } as Memory,
-          {} as State
+          {} as State,
         );
 
         expect(result).toBeDefined();
@@ -215,10 +215,14 @@ describe('Social Raids Providers', () => {
 
       it('should handle database errors gracefully', async () => {
         const mockSupabase = createMockSupabaseClient();
-        mockSupabase.from().select().eq().single.mockResolvedValue({
-          data: null,
-          error: { message: 'Database error' },
-        });
+        mockSupabase
+          .from()
+          .select()
+          .eq()
+          .single.mockResolvedValue({
+            data: null,
+            error: { message: 'Database error' },
+          });
 
         const mockService = {
           supabase: mockSupabase,
@@ -229,7 +233,7 @@ describe('Social Raids Providers', () => {
         const result = await provider.get(
           mockRuntime as IAgentRuntime,
           { id: 'test-memory' } as Memory,
-          {} as State
+          {} as State,
         );
 
         expect(result).toBeDefined();
@@ -278,30 +282,39 @@ describe('Social Raids Providers', () => {
     describe('Data Retrieval', () => {
       it('should return community memory insights', async () => {
         const mockSupabase = createMockSupabaseClient();
-        
+
         // Mock personality data
-        mockSupabase.from().select().eq().single.mockResolvedValue({
-          data: {
-            userId: 'test-user-id',
-            traits: ['active', 'helpful'],
-            engagementStyle: 'supportive',
-            lastUpdated: new Date(),
-          },
-          error: null,
-        });
+        mockSupabase
+          .from()
+          .select()
+          .eq()
+          .single.mockResolvedValue({
+            data: {
+              userId: 'test-user-id',
+              traits: ['active', 'helpful'],
+              engagementStyle: 'supportive',
+              lastUpdated: new Date(),
+            },
+            error: null,
+          });
 
         // Mock memory fragments
-        mockSupabase.from().select().eq().order().limit.mockResolvedValue({
-          data: [
-            {
-              id: 'fragment-1',
-              content: 'User helped organize a successful raid',
-              category: 'leadership',
-              weight: 0.8,
-            },
-          ],
-          error: null,
-        });
+        mockSupabase
+          .from()
+          .select()
+          .eq()
+          .order()
+          .limit.mockResolvedValue({
+            data: [
+              {
+                id: 'fragment-1',
+                content: 'User helped organize a successful raid',
+                category: 'leadership',
+                weight: 0.8,
+              },
+            ],
+            error: null,
+          });
 
         const mockService = {
           supabase: mockSupabase,
@@ -312,7 +325,7 @@ describe('Social Raids Providers', () => {
         const result = await provider.get(
           mockRuntime as IAgentRuntime,
           { id: 'test-memory' } as Memory,
-          {} as State
+          {} as State,
         );
 
         expect(result).toBeDefined();
@@ -338,7 +351,7 @@ describe('Social Raids Providers', () => {
         const result = await provider.get(
           mockRuntime as IAgentRuntime,
           { id: 'test-memory' } as Memory,
-          {} as State
+          {} as State,
         );
 
         expect(result).toBeDefined();
@@ -348,17 +361,21 @@ describe('Social Raids Providers', () => {
 
       it('should handle empty memory fragments', async () => {
         const mockSupabase = createMockSupabaseClient();
-        
+
         // Mock personality data
-        mockSupabase.from().select().eq().single.mockResolvedValue({
-          data: {
-            userId: 'test-user-id',
-            traits: ['active'],
-            engagementStyle: 'neutral',
-            lastUpdated: new Date(),
-          },
-          error: null,
-        });
+        mockSupabase
+          .from()
+          .select()
+          .eq()
+          .single.mockResolvedValue({
+            data: {
+              userId: 'test-user-id',
+              traits: ['active'],
+              engagementStyle: 'neutral',
+              lastUpdated: new Date(),
+            },
+            error: null,
+          });
 
         // Mock empty memory fragments
         mockSupabase.from().select().eq().order().limit.mockResolvedValue({
@@ -375,7 +392,7 @@ describe('Social Raids Providers', () => {
         const result = await provider.get(
           mockRuntime as IAgentRuntime,
           { id: 'test-memory' } as Memory,
-          {} as State
+          {} as State,
         );
 
         expect(result).toBeDefined();
@@ -456,17 +473,22 @@ describe('Social Raids Providers', () => {
       const memoryProvider = new CommunityMemoryProvider();
 
       const mockSupabase = createMockSupabaseClient();
-      
+
       // Mock all provider data
       mockSupabase.from().select().eq().single.mockResolvedValue({
         data: TestData.createRaidData(),
         error: null,
       });
 
-      mockSupabase.from().select().eq().order().limit.mockResolvedValue({
-        data: [TestData.createUserStats()],
-        error: null,
-      });
+      mockSupabase
+        .from()
+        .select()
+        .eq()
+        .order()
+        .limit.mockResolvedValue({
+          data: [TestData.createUserStats()],
+          error: null,
+        });
 
       const mockService = {
         supabase: mockSupabase,
@@ -475,9 +497,21 @@ describe('Social Raids Providers', () => {
       mockRuntime.getService = mock().mockReturnValue(mockService);
 
       // Test all providers
-      const raidResult = await raidProvider.get(mockRuntime as IAgentRuntime, {} as Memory, {} as State);
-      const userResult = await userProvider.get(mockRuntime as IAgentRuntime, {} as Memory, {} as State);
-      const memoryResult = await memoryProvider.get(mockRuntime as IAgentRuntime, {} as Memory, {} as State);
+      const raidResult = await raidProvider.get(
+        mockRuntime as IAgentRuntime,
+        {} as Memory,
+        {} as State,
+      );
+      const userResult = await userProvider.get(
+        mockRuntime as IAgentRuntime,
+        {} as Memory,
+        {} as State,
+      );
+      const memoryResult = await memoryProvider.get(
+        mockRuntime as IAgentRuntime,
+        {} as Memory,
+        {} as State,
+      );
 
       expect(raidResult).toBeDefined();
       expect(userResult).toBeDefined();
@@ -490,11 +524,7 @@ describe('Social Raids Providers', () => {
       const provider = new RaidStatusProvider();
       mockRuntime.getService = mock().mockReturnValue(null);
 
-      const result = await provider.get(
-        mockRuntime as IAgentRuntime,
-        {} as Memory,
-        {} as State
-      );
+      const result = await provider.get(mockRuntime as IAgentRuntime, {} as Memory, {} as State);
 
       expect(result).toBeDefined();
       expect(result.text).toContain('Service not available');
@@ -511,11 +541,7 @@ describe('Social Raids Providers', () => {
 
       mockRuntime.getService = mock().mockReturnValue(mockService);
 
-      const result = await provider.get(
-        mockRuntime as IAgentRuntime,
-        {} as Memory,
-        {} as State
-      );
+      const result = await provider.get(mockRuntime as IAgentRuntime, {} as Memory, {} as State);
 
       expect(result).toBeDefined();
       expect(result.text).toContain('Error retrieving user stats');
@@ -524,10 +550,14 @@ describe('Social Raids Providers', () => {
     it('should handle malformed data', async () => {
       const provider = new CommunityMemoryProvider();
       const mockSupabase = createMockSupabaseClient();
-      mockSupabase.from().select().eq().single.mockResolvedValue({
-        data: { invalid: 'data' },
-        error: null,
-      });
+      mockSupabase
+        .from()
+        .select()
+        .eq()
+        .single.mockResolvedValue({
+          data: { invalid: 'data' },
+          error: null,
+        });
 
       const mockService = {
         supabase: mockSupabase,
@@ -535,11 +565,7 @@ describe('Social Raids Providers', () => {
 
       mockRuntime.getService = mock().mockReturnValue(mockService);
 
-      const result = await provider.get(
-        mockRuntime as IAgentRuntime,
-        {} as Memory,
-        {} as State
-      );
+      const result = await provider.get(mockRuntime as IAgentRuntime, {} as Memory, {} as State);
 
       expect(result).toBeDefined();
       expect(result.data).toBeDefined();
@@ -550,7 +576,7 @@ describe('Social Raids Providers', () => {
     it('should handle large datasets efficiently', async () => {
       const provider = new CommunityMemoryProvider();
       const mockSupabase = createMockSupabaseClient();
-      
+
       // Mock large dataset
       const largeFragments = Array.from({ length: 1000 }, (_, i) => ({
         id: `fragment-${i}`,
@@ -570,11 +596,7 @@ describe('Social Raids Providers', () => {
 
       mockRuntime.getService = mock().mockReturnValue(mockService);
 
-      const result = await provider.get(
-        mockRuntime as IAgentRuntime,
-        {} as Memory,
-        {} as State
-      );
+      const result = await provider.get(mockRuntime as IAgentRuntime, {} as Memory, {} as State);
 
       expect(result).toBeDefined();
       expect(result.data.memoryFragments.length).toBe(1000);
@@ -583,7 +605,7 @@ describe('Social Raids Providers', () => {
     it('should implement proper caching', async () => {
       const provider = new RaidStatusProvider();
       const mockSupabase = createMockSupabaseClient();
-      
+
       // Mock the same data multiple times
       mockSupabase.from().select().eq().single.mockResolvedValue({
         data: TestData.createRaidData(),

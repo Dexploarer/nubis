@@ -8,10 +8,12 @@ auto_execution_mode: 3
 Create an Action, Provider, or Route inside an existing plugin with input validation and example tests.
 
 ## Slash usage
+
 - Invoke: `/new_plugin_action`
 - Example: `/new_plugin_action id=my-analytics kind=action name=analyze-metrics similes=analyze,metrics`
 
 ## Inputs
+
 - id (required): plugin id (file: `src/plugins/<id>-plugin.ts`)
 - kind (required): `action` | `provider` | `route`
 - name (required): exported symbol name (e.g., `analyzeMetricsAction`)
@@ -21,10 +23,12 @@ Create an Action, Provider, or Route inside an existing plugin with input valida
 - routeMethod (optional): `GET` | `POST` (default: `GET`)
 
 ## Steps
-1) Open plugin: `src/plugins/<id>-plugin.ts`
-2) Add Zod schema
+
+1. Open plugin: `src/plugins/<id>-plugin.ts`
+2. Add Zod schema
+
 ```ts
-import { z } from "zod";
+import { z } from 'zod';
 
 const Payload = z.object({
   // add fields, e.g.:
@@ -33,13 +37,15 @@ const Payload = z.object({
   // verbose: z.boolean().default(false),
 });
 ```
-3) Action (if kind=action)
+
+3. Action (if kind=action)
+
 ```ts
-import type { Action } from "@elizaos/core";
+import type { Action } from '@elizaos/core';
 
 export const analyzeMetricsAction: Action = {
-  name: "analyzeMetrics",
-  similes: ["analyze", "metrics"],
+  name: 'analyzeMetrics',
+  similes: ['analyze', 'metrics'],
   validate: async (runtime, message) => {
     const input = message.content?.text ? JSON.parse(message.content.text) : {};
     return Payload.parse(input);
@@ -57,46 +63,53 @@ export const analyzeMetricsAction: Action = {
   ],
 };
 ```
-4) Provider (if kind=provider)
+
+4. Provider (if kind=provider)
+
 ```ts
-import type { Provider } from "@elizaos/core";
+import type { Provider } from '@elizaos/core';
 
 export const analyticsProvider: Provider = {
   get: async (runtime, message, state) => {
     // Validate inputs if present
     const input = message.content?.text ? JSON.parse(message.content.text) : {};
     const parsed = Payload.safeParse(input);
-    if (!parsed.success) return { text: "Invalid input", values: {}, data: null };
+    if (!parsed.success) return { text: 'Invalid input', values: {}, data: null };
     // return values/data for templating
-    return { text: "ok", values: { count: 1 }, data: { ok: true } };
+    return { text: 'ok', values: { count: 1 }, data: { ok: true } };
   },
 };
 ```
-5) Route (if kind=route)
+
+5. Route (if kind=route)
+
 ```ts
-import type { RouteDefinition } from "@elizaos/server";
+import type { RouteDefinition } from '@elizaos/server';
 
 export const routes: RouteDefinition[] = [
   {
-    name: "status",
-    path: "/api/my-analytics/status",
-    type: "GET",
+    name: 'status',
+    path: '/api/my-analytics/status',
+    type: 'GET',
     handler: async (req, res) => {
       res.json({ ok: true });
     },
   },
 ];
 ```
-6) Register in plugin export
+
+6. Register in plugin export
+
 - Ensure `actions`, `providers`, or `routes` include the new item, e.g. `actions: [analyzeMetricsAction]`.
 
-7) Tests: `src/plugins/<id>/__tests__/`
-```ts
-import { describe, it, expect } from "bun:test";
-import { analyzeMetricsAction } from "../../<id>-plugin";
+7. Tests: `src/plugins/<id>/__tests__/`
 
-describe("analyzeMetricsAction", () => {
-  it("validates and runs", async () => {
+```ts
+import { describe, it, expect } from 'bun:test';
+import { analyzeMetricsAction } from '../../<id>-plugin';
+
+describe('analyzeMetricsAction', () => {
+  it('validates and runs', async () => {
     const message = { content: { text: JSON.stringify({ verbose: true }) } } as any;
     const valid = await analyzeMetricsAction.validate?.({} as any, message);
     expect(valid).toBeTruthy();
@@ -105,27 +118,34 @@ describe("analyzeMetricsAction", () => {
 ```
 
 ## Turbo steps (safe to auto-run)
+
 // turbo
+
 1. Type-check and lint
+
 ```bash
 bun run check
 ```
-// turbo
-2. Build
+
+// turbo 2. Build
+
 ```bash
 bun run build
 ```
-// turbo
-3. Run unit tests
+
+// turbo 3. Run unit tests
+
 ```bash
 bun test
 ```
 
 ## References
+
 - Zod intro: https://zod.dev/
 - Server routes (example type): `@elizaos/server` RouteDefinition
 
 ### Core internal references
+
 - `../rules/elizaos_development_workflow.md`
 - `../rules/elizaos_coding_standards.md`
 - `../rules/elizaos-architecture-patterns.md`

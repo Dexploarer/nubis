@@ -1,0 +1,20 @@
+{
+  "name": "@elizaos/plugin-twitter-enhanced",
+  "version": "1.0.0",
+  "description": "Enhanced Twitter plugin with credential-based authentication and real-time notification monitoring for ElizaOS",
+  "type": "module",
+  "main": "index.ts",
+  "dependencies": {
+    "@elizaos/core": "^1.2.5",
+    "agent-twitter-client": "^1.2.29",
+    "@supabase/supabase-js": "^2.39.1"
+  },
+  "keywords": [
+    "elizaos",
+    "twitter",
+    "plugin",
+    "authentication",
+    "notifications",
+    "raid-monitoring"
+  ]
+}

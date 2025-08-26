@@ -31,71 +31,71 @@ const AccessibleForm: React.FC<{ onSubmit: (data: any) => void }> = ({ onSubmit 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4">
-      <h1 className="text-2xl font-bold">Contact Agent</h1>
+    <form onSubmit={handleSubmit} className='space-y-4 p-4'>
+      <h1 className='text-2xl font-bold'>Contact Agent</h1>
 
       <div>
-        <label htmlFor="name" className="block text-sm font-medium mb-1">
+        <label htmlFor='name' className='block text-sm font-medium mb-1'>
           Name{' '}
-          <span className="text-red-500" aria-label="required">
+          <span className='text-red-500' aria-label='required'>
             *
           </span>
         </label>
         <input
-          id="name"
-          type="text"
+          id='name'
+          type='text'
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           aria-invalid={!!errors.name}
           aria-describedby={errors.name ? 'name-error' : undefined}
-          className="w-full px-3 py-2 border rounded-md"
+          className='w-full px-3 py-2 border rounded-md'
         />
         {errors.name && (
-          <p id="name-error" role="alert" className="text-red-500 text-sm mt-1">
+          <p id='name-error' role='alert' className='text-red-500 text-sm mt-1'>
             {errors.name}
           </p>
         )}
       </div>
 
       <div>
-        <label htmlFor="email" className="block text-sm font-medium mb-1">
+        <label htmlFor='email' className='block text-sm font-medium mb-1'>
           Email{' '}
-          <span className="text-red-500" aria-label="required">
+          <span className='text-red-500' aria-label='required'>
             *
           </span>
         </label>
         <input
-          id="email"
-          type="email"
+          id='email'
+          type='email'
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           aria-invalid={!!errors.email}
           aria-describedby={errors.email ? 'email-error' : undefined}
-          className="w-full px-3 py-2 border rounded-md"
+          className='w-full px-3 py-2 border rounded-md'
         />
         {errors.email && (
-          <p id="email-error" role="alert" className="text-red-500 text-sm mt-1">
+          <p id='email-error' role='alert' className='text-red-500 text-sm mt-1'>
             {errors.email}
           </p>
         )}
       </div>
 
       <div>
-        <label htmlFor="message" className="block text-sm font-medium mb-1">
+        <label htmlFor='message' className='block text-sm font-medium mb-1'>
           Message
         </label>
         <textarea
-          id="message"
+          id='message'
           value={formData.message}
           onChange={(e) => setFormData({ ...formData, message: e.target.value })}
           rows={4}
-          className="w-full px-3 py-2 border rounded-md"
+          className='w-full px-3 py-2 border rounded-md'
         />
       </div>
 
       <button
-        type="submit"
-        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        type='submit'
+        className='px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500'
       >
         Send Message
       </button>
@@ -182,11 +182,11 @@ describe('Accessibility Tests', () => {
   describe('Color Contrast', () => {
     it('should maintain readable contrast in dark mode', () => {
       cy.mount(
-        <div className="dark bg-gray-900 p-4">
-          <h1 className="text-white">High Contrast Title</h1>
-          <p className="text-gray-300">Body text with good contrast</p>
-          <button className="bg-blue-600 text-white px-4 py-2">Action Button</button>
-        </div>
+        <div className='dark bg-gray-900 p-4'>
+          <h1 className='text-white'>High Contrast Title</h1>
+          <p className='text-gray-300'>Body text with good contrast</p>
+          <button className='bg-blue-600 text-white px-4 py-2'>Action Button</button>
+        </div>,
       );
 
       // Visual check - in real tests you might use cypress-axe
@@ -206,7 +206,7 @@ describe('Accessibility Tests', () => {
             <h3>Subsection</h3>
             <p>More content</p>
           </section>
-        </article>
+        </article>,
       );
 
       // Check heading hierarchy
@@ -217,16 +217,16 @@ describe('Accessibility Tests', () => {
 
     it('should use semantic HTML elements', () => {
       cy.mount(
-        <nav aria-label="Main navigation">
+        <nav aria-label='Main navigation'>
           <ul>
             <li>
-              <a href="#home">Home</a>
+              <a href='#home'>Home</a>
             </li>
             <li>
-              <a href="#about">About</a>
+              <a href='#about'>About</a>
             </li>
           </ul>
-        </nav>
+        </nav>,
       );
 
       cy.get('nav').should('have.attr', 'aria-label', 'Main navigation');

@@ -44,7 +44,7 @@ describe('PanelComponent Tests', () => {
     });
 
     it('should render without crashing with empty agent ID', () => {
-      cy.mount(<PanelComponent agentId="" />);
+      cy.mount(<PanelComponent agentId='' />);
       cy.contains('Helllo !').should('be.visible');
     });
   });

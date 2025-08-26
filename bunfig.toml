@@ -1,13 +1,16 @@
 [test]
 timeout = 60000
 coverage = true
+# Support for ElizaOS testing standards
 
 [test.env]
 NODE_ENV = "test"
+LOG_LEVEL = "error"
 
 coverage-exclude = [
   "**/dist/**",
   "**/build/**",
+  "**/out/**",
   "**/chunk-*.js",
   "**/*.chunk.js",
   "**/node_modules/**",
@@ -15,4 +18,15 @@ coverage-exclude = [
   "**/*.bundle.js",
   "**/coverage/**",
   "**/.turbo/**",
+  "**/.claude/**",
+  "**/cypress/**",
+  "**/*.d.ts",
 ]
+
+# Coverage thresholds following ElizaOS standards
+coverage-threshold = 80
+
+[install]
+cache = true
+# Support for ElizaOS plugin patterns
+production = false

@@ -2,7 +2,7 @@
 
 /**
  * Test Runner for Social Raids Plugin
- * 
+ *
  * This script runs all tests for the social-raids plugin following ElizaOS testing standards.
  * It provides detailed reporting and handles test execution in the correct order.
  */
@@ -60,7 +60,7 @@ class TestRunner {
 
   constructor() {
     // Initialize category stats
-    Object.keys(TEST_CATEGORIES).forEach(category => {
+    Object.keys(TEST_CATEGORIES).forEach((category) => {
       this.stats.categories[category] = {
         total: 0,
         passed: 0,
@@ -75,28 +75,27 @@ class TestRunner {
    */
   async runAllTests(): Promise<TestStats> {
     const startTime = Date.now();
-    
+
     logger.info('🚀 Starting Social Raids Plugin Test Suite');
     logger.info(`📋 Test Configuration: ${JSON.stringify(TEST_CONFIG, null, 2)}`);
-    
+
     try {
       // Run unit tests first
       await this.runUnitTests();
-      
+
       // Run integration tests
       await this.runIntegrationTests();
-      
+
       // Run utility tests
       await this.runUtilityTests();
-      
     } catch (error) {
       logger.error('❌ Test suite failed:', error);
       this.stats.failed++;
     }
-    
+
     this.stats.duration = Date.now() - startTime;
     this.generateReport();
-    
+
     return this.stats;
   }
 
@@ -105,11 +104,11 @@ class TestRunner {
    */
   private async runUnitTests(): Promise<void> {
     logger.info('🧪 Running Unit Tests...');
-    
+
     try {
       // Import and run unit test files
       const unitTestFiles = TEST_CATEGORIES.unit.files;
-      
+
       for (const testFile of unitTestFiles) {
         try {
           logger.info(`  📄 Running ${testFile}...`);
@@ -125,9 +124,10 @@ class TestRunner {
           this.stats.failed++;
         }
       }
-      
-      logger.info(`✅ Unit Tests completed: ${this.stats.categories.unit.passed}/${this.stats.categories.unit.total} passed`);
-      
+
+      logger.info(
+        `✅ Unit Tests completed: ${this.stats.categories.unit.passed}/${this.stats.categories.unit.total} passed`,
+      );
     } catch (error) {
       logger.error('❌ Unit tests failed:', error);
       throw error;
@@ -139,10 +139,10 @@ class TestRunner {
    */
   private async runIntegrationTests(): Promise<void> {
     logger.info('🔗 Running Integration Tests...');
-    
+
     try {
       const integrationTestFiles = TEST_CATEGORIES.integration.files;
-      
+
       for (const testFile of integrationTestFiles) {
         try {
           logger.info(`  📄 Running ${testFile}...`);
@@ -157,9 +157,10 @@ class TestRunner {
           this.stats.failed++;
         }
       }
-      
-      logger.info(`✅ Integration Tests completed: ${this.stats.categories.integration.passed}/${this.stats.categories.integration.total} passed`);
-      
+
+      logger.info(
+        `✅ Integration Tests completed: ${this.stats.categories.integration.passed}/${this.stats.categories.integration.total} passed`,
+      );
     } catch (error) {
       logger.error('❌ Integration tests failed:', error);
       throw error;
@@ -171,10 +172,10 @@ class TestRunner {
    */
   private async runUtilityTests(): Promise<void> {
     logger.info('🛠️  Running Utility Tests...');
-    
+
     try {
       const utilityTestFiles = TEST_CATEGORIES.utils.files;
-      
+
       for (const testFile of utilityTestFiles) {
         try {
           logger.info(`  📄 Running ${testFile}...`);
@@ -189,9 +190,10 @@ class TestRunner {
           this.stats.failed++;
         }
       }
-      
-      logger.info(`✅ Utility Tests completed: ${this.stats.categories.utils.passed}/${this.stats.categories.utils.total} passed`);
-      
+
+      logger.info(
+        `✅ Utility Tests completed: ${this.stats.categories.utils.passed}/${this.stats.categories.utils.total} passed`,
+      );
     } catch (error) {
       logger.error('❌ Utility tests failed:', error);
       throw error;
@@ -204,31 +206,31 @@ class TestRunner {
   private generateReport(): void {
     logger.info('\n📊 Test Report');
     logger.info('='.repeat(50));
-    
+
     // Overall stats
     logger.info(`Total Tests: ${this.stats.total}`);
     logger.info(`Passed: ${this.stats.passed} ✅`);
     logger.info(`Failed: ${this.stats.failed} ❌`);
     logger.info(`Skipped: ${this.stats.skipped} ⏭️`);
     logger.info(`Duration: ${this.stats.duration}ms ⏱️`);
-    
+
     // Category breakdown
     logger.info('\n📋 Category Breakdown:');
     Object.entries(this.stats.categories).forEach(([category, stats]) => {
       const status = stats.failed > 0 ? '❌' : '✅';
       logger.info(`  ${category}: ${stats.passed}/${stats.total} passed ${status}`);
     });
-    
+
     // Coverage estimate (following ElizaOS standards)
     const coverage = this.stats.total > 0 ? (this.stats.passed / this.stats.total) * 100 : 0;
     logger.info(`\n📈 Coverage: ${coverage.toFixed(1)}%`);
-    
+
     if (coverage >= 80) {
       logger.info('🎉 Coverage meets ElizaOS standards (≥80%)');
     } else {
       logger.warn('⚠️  Coverage below ElizaOS standards (<80%)');
     }
-    
+
     // Final status
     if (this.stats.failed === 0) {
       logger.info('\n🎉 All tests passed!');
@@ -242,7 +244,8 @@ class TestRunner {
 // Main execution
 if (import.meta.main) {
   const runner = new TestRunner();
-  runner.runAllTests()
+  runner
+    .runAllTests()
     .then((stats) => {
       logger.info('🏁 Test suite completed');
     })

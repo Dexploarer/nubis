@@ -59,7 +59,7 @@ describe('Complete User Workflow E2E Tests', () => {
 
       // Look for settings or configuration
       cy.get(
-        'a[href*="settings"], button:contains("settings"), a[href*="config"], button:contains("config")'
+        'a[href*="settings"], button:contains("settings"), a[href*="config"], button:contains("config")',
       )
         .first()
         .then(($elem) => {
@@ -89,7 +89,7 @@ describe('Complete User Workflow E2E Tests', () => {
         // Verify response received
         cy.get('[data-testid*="message"], [class*="message"], [role="article"]').should(
           'have.length.greaterThan',
-          index * 2
+          index * 2,
         );
       });
     });

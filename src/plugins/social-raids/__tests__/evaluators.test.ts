@@ -1,9 +1,5 @@
 import { describe, expect, it, mock, beforeEach, afterEach } from 'bun:test';
-import {
-  type IAgentRuntime,
-  type Memory,
-  type State,
-} from '@elizaos/core';
+import { type IAgentRuntime, type Memory, type State } from '@elizaos/core';
 
 // Import evaluators
 import { EngagementQualityEvaluator } from '../evaluators/engagement-quality-evaluator';
@@ -70,7 +66,7 @@ describe('Social Raids Evaluators', () => {
         const isValid = await evaluator.validate(
           mockRuntime as IAgentRuntime,
           mockMessage as Memory,
-          {} as State
+          {} as State,
         );
 
         expect(isValid).toBe(true);
@@ -87,7 +83,7 @@ describe('Social Raids Evaluators', () => {
         const isValid = await evaluator.validate(
           mockRuntime as IAgentRuntime,
           mockMessage as Memory,
-          {} as State
+          {} as State,
         );
 
         expect(isValid).toBe(false);
@@ -95,7 +91,7 @@ describe('Social Raids Evaluators', () => {
 
       it('should validate with different engagement types', async () => {
         const engagementTypes = ['like', 'retweet', 'quote', 'comment', 'verify'];
-        
+
         for (const actionType of engagementTypes) {
           const mockMessage = {
             id: 'test-memory',
@@ -112,7 +108,7 @@ describe('Social Raids Evaluators', () => {
           const isValid = await evaluator.validate(
             mockRuntime as IAgentRuntime,
             mockMessage as Memory,
-            {} as State
+            {} as State,
           );
 
           expect(isValid).toBe(true);
@@ -142,7 +138,7 @@ describe('Social Raids Evaluators', () => {
           mockRuntime as IAgentRuntime,
           mockMessage as Memory,
           {} as State,
-          {}
+          {},
         );
 
         expect(mockRuntime.createMemory).toHaveBeenCalledWith(
@@ -151,7 +147,7 @@ describe('Social Raids Evaluators', () => {
               text: expect.stringContaining('High-quality engagement'),
             }),
           }),
-          'engagement_evaluations'
+          'engagement_evaluations',
         );
       });
 
@@ -176,7 +172,7 @@ describe('Social Raids Evaluators', () => {
           mockRuntime as IAgentRuntime,
           mockMessage as Memory,
           {} as State,
-          {}
+          {},
         );
 
         expect(mockRuntime.createMemory).toHaveBeenCalledWith(
@@ -185,7 +181,7 @@ describe('Social Raids Evaluators', () => {
               text: expect.stringContaining('Low-quality engagement'),
             }),
           }),
-          'engagement_evaluations'
+          'engagement_evaluations',
         );
       });
 
@@ -211,7 +207,7 @@ describe('Social Raids Evaluators', () => {
           mockRuntime as IAgentRuntime,
           mockMessage as Memory,
           {} as State,
-          {}
+          {},
         );
 
         expect(mockRuntime.createMemory).toHaveBeenCalledWith(
@@ -220,7 +216,7 @@ describe('Social Raids Evaluators', () => {
               text: expect.stringContaining('Suspicious engagement detected'),
             }),
           }),
-          'engagement_evaluations'
+          'engagement_evaluations',
         );
       });
 
@@ -239,7 +235,7 @@ describe('Social Raids Evaluators', () => {
           mockRuntime as IAgentRuntime,
           mockMessage as Memory,
           {} as State,
-          {}
+          {},
         );
 
         expect(mockRuntime.createMemory).toHaveBeenCalledWith(
@@ -248,7 +244,7 @@ describe('Social Raids Evaluators', () => {
               text: expect.stringContaining('Unable to evaluate engagement'),
             }),
           }),
-          'engagement_evaluations'
+          'engagement_evaluations',
         );
       });
     });
@@ -421,11 +417,11 @@ describe('Social Raids Evaluators', () => {
           mockRuntime as IAgentRuntime,
           mockMessage as Memory,
           {} as State,
-          {}
+          {},
         );
 
         const memoryCall = (mockRuntime.createMemory as any).mock.calls[0][0];
-        
+
         expect(memoryCall.content).toMatchObject({
           text: expect.any(String),
           evaluationType: 'engagement_quality',
@@ -456,7 +452,7 @@ describe('Social Raids Evaluators', () => {
           mockRuntime as IAgentRuntime,
           mockMessage as Memory,
           {} as State,
-          {}
+          {},
         );
 
         const memoryCall = (mockRuntime.createMemory as any).mock.calls[0][0];
@@ -481,12 +477,9 @@ describe('Social Raids Evaluators', () => {
         mockRuntime.createMemory = mock().mockRejectedValue(new Error('Runtime error'));
 
         // Should not throw error
-        await expect(evaluator.evaluate(
-          mockRuntime as IAgentRuntime,
-          mockMessage as Memory,
-          {} as State,
-          {}
-        )).resolves.not.toThrow();
+        await expect(
+          evaluator.evaluate(mockRuntime as IAgentRuntime, mockMessage as Memory, {} as State, {}),
+        ).resolves.not.toThrow();
       });
 
       it('should handle invalid engagement data', async () => {
@@ -508,7 +501,7 @@ describe('Social Raids Evaluators', () => {
           mockRuntime as IAgentRuntime,
           mockMessage as Memory,
           {} as State,
-          {}
+          {},
         );
 
         expect(mockRuntime.createMemory).toHaveBeenCalledWith(
@@ -517,7 +510,7 @@ describe('Social Raids Evaluators', () => {
               text: expect.stringContaining('Invalid engagement type'),
             }),
           }),
-          'engagement_evaluations'
+          'engagement_evaluations',
         );
       });
     });
@@ -559,7 +552,7 @@ describe('Social Raids Evaluators', () => {
           mockRuntime as IAgentRuntime,
           mockMessage as Memory,
           {} as State,
-          {}
+          {},
         );
 
         // Second evaluation with same data
@@ -567,7 +560,7 @@ describe('Social Raids Evaluators', () => {
           mockRuntime as IAgentRuntime,
           mockMessage as Memory,
           {} as State,
-          {}
+          {},
         );
 
         // Should create memory twice (no caching implemented yet)

@@ -36,7 +36,7 @@ afterAll(() => {
  */
 const runCoreModelTests = async (
   modelType: keyof typeof ModelType,
-  modelFn: (runtime: IAgentRuntime, params: TestGenerateParams) => Promise<string>
+  modelFn: (runtime: IAgentRuntime, params: TestGenerateParams) => Promise<string>,
 ) => {
   // Create a mock runtime for model testing
   const mockRuntime = createMockRuntime();
@@ -122,7 +122,7 @@ describe('Plugin Models', () => {
       if (plugin.models && plugin.models[ModelType.TEXT_SMALL]) {
         const results = await runCoreModelTests(
           ModelType.TEXT_SMALL,
-          plugin.models[ModelType.TEXT_SMALL]
+          plugin.models[ModelType.TEXT_SMALL],
         );
 
         documentTestResult('TEXT_SMALL core model tests', results);
@@ -142,7 +142,7 @@ describe('Plugin Models', () => {
       if (plugin.models && plugin.models[ModelType.TEXT_LARGE]) {
         const results = await runCoreModelTests(
           ModelType.TEXT_LARGE,
-          plugin.models[ModelType.TEXT_LARGE]
+          plugin.models[ModelType.TEXT_LARGE],
         );
 
         documentTestResult('TEXT_LARGE core model tests', results);

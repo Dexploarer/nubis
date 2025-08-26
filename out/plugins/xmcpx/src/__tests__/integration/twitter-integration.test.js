@@ -2,16 +2,20 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const bun_test_1 = require("bun:test");
 const dotenv_1 = require("dotenv");
-// Load environment variables early
-dotenv_1.default.config();
+// Load environment variables early (CommonJS default)
+dotenv_1.config();
 // Skip these tests unless specifically enabled. Avoid importing heavy deps unless running.
-const runIntegrationTests = process.env.RUN_INTEGRATION_TESTS === 'true';
-(runIntegrationTests ? bun_test_1.describe : bun_test_1.describe.skip)('Twitter Integration Tests', () => {
+const runIntegrationTests = process.env.RUN_INTEGRATION_TESTS === 'true' || process.env.INTEGRATION_TESTS_ENABLED === 'true';
+if (!runIntegrationTests) {
+    // Intentionally do not register tests unless enabled
+}
+else {
+    (0, bun_test_1.describe)('Twitter Integration Tests', () => {
     let client;
     let authConfig;
     (0, bun_test_1.beforeAll)(async () => {
         // Set up auth config from environment variables
-        const authMethod = process.env.AUTH_METHOD || 'cookies';
+        const authMethod = process.env.AUTH_METHOD || 'credentials';
         if (authMethod === 'cookies') {
             const cookiesStr = process.env.TWITTER_COOKIES;
             if (!cookiesStr) {
@@ -81,10 +85,13 @@ const runIntegrationTests = process.env.RUN_INTEGRATION_TESTS === 'true';
     }, 30000);
     // Only run write tests if explicitly enabled
     const runWriteTests = process.env.RUN_WRITE_TESTS === 'true';
-    (runWriteTests ? bun_test_1.it : bun_test_1.it.skip)('can post a tweet', async () => {
-        const testText = `Test tweet from Twitter MCP ${Date.now()}`;
-        const tweet = await client.sendTweet(authConfig, testText);
-        (0, bun_test_1.expect)(tweet).toBeDefined();
-        (0, bun_test_1.expect)(tweet.text).toBe(testText);
-    }, 30000);
-});
+    if (runWriteTests) {
+        (0, bun_test_1.it)('can post a tweet', async () => {
+            const testText = `Test tweet from Twitter MCP ${Date.now()}`;
+            const tweet = await client.sendTweet(authConfig, testText);
+            (0, bun_test_1.expect)(tweet).toBeDefined();
+            (0, bun_test_1.expect)(tweet.text).toBe(testText);
+        }, 30000);
+    }
+    });
+}

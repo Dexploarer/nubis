@@ -30,18 +30,22 @@ const DataFetchingComponent: React.FC<{ agentId: string }> = ({ agentId }) => {
     fetchData();
   }, [agentId]);
 
-  if (isLoading) return <div data-testid="loading">Loading agent data...</div>;
+  if (isLoading) return <div data-testid='loading'>Loading agent data...</div>;
   if (error)
     return (
-      <div data-testid="error" className="text-red-500">
+      <div data-testid='error' className='text-red-500'>
         Error: {error.message}
       </div>
     );
 
   return (
-    <div data-testid="data-display">
+    <div data-testid='data-display'>
       <h2>Agent: {agentId}</h2>
-      <ul>{data?.items?.map((item: string, index: number) => <li key={index}>{item}</li>)}</ul>
+      <ul>
+        {data?.items?.map((item: string, index: number) => (
+          <li key={index}>{item}</li>
+        ))}
+      </ul>
     </div>
   );
 };
@@ -54,7 +58,7 @@ describe('API Integration Tests', () => {
         body: { items: [] },
       });
 
-      cy.mount(<DataFetchingComponent agentId="test-123" />);
+      cy.mount(<DataFetchingComponent agentId='test-123' />);
       cy.get('[data-testid="loading"]').should('be.visible');
       cy.get('[data-testid="loading"]').should('contain', 'Loading agent data...');
     });
@@ -69,7 +73,7 @@ describe('API Integration Tests', () => {
         body: mockData,
       }).as('getAgentData');
 
-      cy.mount(<DataFetchingComponent agentId="test-123" />);
+      cy.mount(<DataFetchingComponent agentId='test-123' />);
 
       // Wait for the API call
       cy.wait('@getAgentData');
@@ -88,7 +92,7 @@ describe('API Integration Tests', () => {
         body: { error: 'Internal Server Error' },
       }).as('getAgentDataError');
 
-      cy.mount(<DataFetchingComponent agentId="test-123" />);
+      cy.mount(<DataFetchingComponent agentId='test-123' />);
 
       // Wait for the failed API call
       cy.wait('@getAgentDataError');
@@ -104,7 +108,7 @@ describe('API Integration Tests', () => {
         forceNetworkError: true,
       }).as('networkError');
 
-      cy.mount(<DataFetchingComponent agentId="test-123" />);
+      cy.mount(<DataFetchingComponent agentId='test-123' />);
 
       // Network errors might not trigger the wait, so we check for error directly
       cy.get('[data-testid="error"]', { timeout: 10000 }).should('be.visible');
@@ -128,7 +132,7 @@ describe('API Integration Tests', () => {
 
         return (
           <>
-            <button onClick={() => setAgentId('agent-2')} data-testid="change-agent">
+            <button onClick={() => setAgentId('agent-2')} data-testid='change-agent'>
               Change Agent
             </button>
             <DataFetchingComponent agentId={agentId} />
@@ -155,7 +159,7 @@ describe('API Integration Tests', () => {
         req.reply({ items: [] });
       }).as('checkHeaders');
 
-      cy.mount(<DataFetchingComponent agentId="test-123" />);
+      cy.mount(<DataFetchingComponent agentId='test-123' />);
       cy.wait('@checkHeaders');
     });
 
@@ -164,7 +168,7 @@ describe('API Integration Tests', () => {
       cy.intercept('GET', '/api/agent/empty/data', {
         body: {},
       }).as('emptyResponse');
-      cy.mount(<DataFetchingComponent agentId="empty" />);
+      cy.mount(<DataFetchingComponent agentId='empty' />);
       cy.wait('@emptyResponse');
       cy.get('[data-testid="data-display"]').should('be.visible');
 
@@ -174,7 +178,7 @@ describe('API Integration Tests', () => {
       }).as('nullResponse');
       // Create a new mount point for the second test
       cy.then(() => {
-        cy.mount(<DataFetchingComponent agentId="null" />);
+        cy.mount(<DataFetchingComponent agentId='null' />);
         cy.wait('@nullResponse');
         cy.get('[data-testid="data-display"]').should('be.visible');
       });

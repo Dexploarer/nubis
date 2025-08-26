@@ -22,7 +22,7 @@ describe('Agent Chat E2E Tests', () => {
     it('should display the chat interface', () => {
       // Look for chat-related elements
       cy.get('[data-testid="chat-container"], .chat-container, #chat, [role="main"]').should(
-        'be.visible'
+        'be.visible',
       );
     });
 

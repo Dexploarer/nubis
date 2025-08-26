@@ -43,7 +43,7 @@ describe('Plugin Events', () => {
       expect(logger.info).toHaveBeenCalledWith('MESSAGE_RECEIVED event received');
       expect(logger.info).toHaveBeenCalledWith(
         { keys: expect.any(Array) },
-        'MESSAGE_RECEIVED param keys'
+        'MESSAGE_RECEIVED param keys',
       );
     }
   });
@@ -73,7 +73,7 @@ describe('Plugin Events', () => {
       expect(logger.info).toHaveBeenCalledWith('VOICE_MESSAGE_RECEIVED event received');
       expect(logger.info).toHaveBeenCalledWith(
         { keys: expect.any(Array) },
-        'VOICE_MESSAGE_RECEIVED param keys'
+        'VOICE_MESSAGE_RECEIVED param keys',
       );
     }
   });
@@ -105,7 +105,7 @@ describe('Plugin Events', () => {
       expect(logger.info).toHaveBeenCalledWith('WORLD_CONNECTED event received');
       expect(logger.info).toHaveBeenCalledWith(
         { keys: expect.any(Array) },
-        'WORLD_CONNECTED param keys'
+        'WORLD_CONNECTED param keys',
       );
     }
   });
@@ -141,7 +141,7 @@ describe('Plugin Events', () => {
       expect(logger.info).toHaveBeenCalledWith('WORLD_JOINED event received');
       expect(logger.info).toHaveBeenCalledWith(
         { keys: expect.any(Array) },
-        'WORLD_JOINED param keys'
+        'WORLD_JOINED param keys',
       );
     }
   });

@@ -131,7 +131,9 @@ describe('Social Raids Services', () => {
         service.scraper = mockScraper as any;
         (service as any).isAuthenticated = true;
 
-        const result = await service.scrapeEngagement('https://twitter.com/testuser/status/1234567890123456789');
+        const result = await service.scrapeEngagement(
+          'https://twitter.com/testuser/status/1234567890123456789',
+        );
 
         expect(result).toBeDefined();
         expect(result.id).toBe('1234567890123456789');
@@ -147,16 +149,31 @@ describe('Social Raids Services', () => {
         service.scraper = mockScraper as any;
         (service as any).isAuthenticated = true;
 
-        await expect(service.scrapeEngagement('https://twitter.com/testuser/status/1234567890123456789'))
-          .rejects.toThrow('Tweet scraping failed');
+        await expect(
+          service.scrapeEngagement('https://twitter.com/testuser/status/1234567890123456789'),
+        ).rejects.toThrow('Tweet scraping failed');
       });
     });
 
     describe('Tweet Export', () => {
       it('should export tweets using local scraper', async () => {
         async function* tweetGen() {
-          yield { id: '1', text: 'Tweet 1', username: 'testuser', createdAt: Date.now(), likeCount: 10, retweetCount: 5 };
-          yield { id: '2', text: 'Tweet 2', username: 'testuser', createdAt: Date.now(), likeCount: 20, retweetCount: 10 };
+          yield {
+            id: '1',
+            text: 'Tweet 1',
+            username: 'testuser',
+            createdAt: Date.now(),
+            likeCount: 10,
+            retweetCount: 5,
+          };
+          yield {
+            id: '2',
+            text: 'Tweet 2',
+            username: 'testuser',
+            createdAt: Date.now(),
+            likeCount: 20,
+            retweetCount: 10,
+          };
         }
 
         const mockScraper = {
@@ -175,7 +192,9 @@ describe('Social Raids Services', () => {
 
       it('should handle export errors', async () => {
         const mockScraper = {
-          getTweets: mock().mockImplementation(() => { throw new Error('Export failed'); }),
+          getTweets: mock().mockImplementation(() => {
+            throw new Error('Export failed');
+          }),
         };
 
         service.scraper = mockScraper as any;
@@ -245,7 +264,7 @@ describe('Social Raids Services', () => {
         await service.handleCommand(mockCtx as any);
 
         expect(mockCtx.reply).toHaveBeenCalledWith(
-          expect.stringContaining('Welcome to the Social Raids Bot')
+          expect.stringContaining('Welcome to the Social Raids Bot'),
         );
       });
 
@@ -260,9 +279,7 @@ describe('Social Raids Services', () => {
 
         await service.handleCommand(mockCtx as any);
 
-        expect(mockCtx.reply).toHaveBeenCalledWith(
-          expect.stringContaining('Raid started')
-        );
+        expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Raid started'));
       });
 
       it('should handle join command', async () => {
@@ -278,9 +295,7 @@ describe('Social Raids Services', () => {
 
         await service.handleCommand(mockCtx as any);
 
-        expect(mockCtx.reply).toHaveBeenCalledWith(
-          expect.stringContaining('Joined raid')
-        );
+        expect(mockCtx.reply).toHaveBeenCalledWith(expect.stringContaining('Joined raid'));
       });
     });
 
@@ -299,7 +314,7 @@ describe('Social Raids Services', () => {
 
         expect(mockBot.telegram.sendMessage).toHaveBeenCalledWith(
           'test-channel',
-          expect.stringContaining('NEW RAID STARTED')
+          expect.stringContaining('NEW RAID STARTED'),
         );
       });
     });
@@ -373,10 +388,14 @@ describe('Social Raids Services', () => {
 
       it('should get leaderboard', async () => {
         const mockSupabase = createMockSupabaseClient();
-        mockSupabase.from().select().order().limit.mockResolvedValue({
-          data: [TestData.createUserStats()],
-          error: null,
-        });
+        mockSupabase
+          .from()
+          .select()
+          .order()
+          .limit.mockResolvedValue({
+            data: [TestData.createUserStats()],
+            error: null,
+          });
 
         service.supabase = mockSupabase as any;
 
@@ -407,18 +426,23 @@ describe('Social Raids Services', () => {
 
       it('should retrieve memory fragments', async () => {
         const mockSupabase = createMockSupabaseClient();
-        mockSupabase.from().select().eq().order().limit.mockResolvedValue({
-          data: [
-            {
-              id: 'fragment-1',
-              userId: 'test-user-id',
-              content: 'Memory fragment 1',
-              category: 'engagement',
-              weight: 0.7,
-            },
-          ],
-          error: null,
-        });
+        mockSupabase
+          .from()
+          .select()
+          .eq()
+          .order()
+          .limit.mockResolvedValue({
+            data: [
+              {
+                id: 'fragment-1',
+                userId: 'test-user-id',
+                content: 'Memory fragment 1',
+                category: 'engagement',
+                weight: 0.7,
+              },
+            ],
+            error: null,
+          });
 
         service.supabase = mockSupabase as any;
 
@@ -432,13 +456,17 @@ describe('Social Raids Services', () => {
     describe('Community Insights', () => {
       it('should generate community insights', async () => {
         const mockSupabase = createMockSupabaseClient();
-        mockSupabase.from().select().gte().mockResolvedValue({
-          data: [
-            TestData.createEngagementData(),
-            TestData.createEngagementData({ actionType: 'retweet' }),
-          ],
-          error: null,
-        });
+        mockSupabase
+          .from()
+          .select()
+          .gte()
+          .mockResolvedValue({
+            data: [
+              TestData.createEngagementData(),
+              TestData.createEngagementData({ actionType: 'retweet' }),
+            ],
+            error: null,
+          });
 
         service.supabase = mockSupabase as any;
 
@@ -477,10 +505,13 @@ describe('Social Raids Services', () => {
     it('should handle database connection errors', async () => {
       const service = new CommunityMemoryService(mockRuntime as IAgentRuntime);
       const mockSupabase = createMockSupabaseClient();
-      mockSupabase.from().select().mockResolvedValue({
-        data: null,
-        error: { message: 'Database connection failed' },
-      });
+      mockSupabase
+        .from()
+        .select()
+        .mockResolvedValue({
+          data: null,
+          error: { message: 'Database connection failed' },
+        });
 
       service.supabase = mockSupabase as any;
 
@@ -493,8 +524,9 @@ describe('Social Raids Services', () => {
       service.scraper = { getTweet: mock().mockRejectedValue(new Error('Network error')) } as any;
       (service as any).isAuthenticated = true;
 
-      await expect(service.scrapeEngagement('https://twitter.com/testuser/status/1234567890123456789'))
-        .rejects.toThrow('Tweet scraping failed');
+      await expect(
+        service.scrapeEngagement('https://twitter.com/testuser/status/1234567890123456789'),
+      ).rejects.toThrow('Tweet scraping failed');
     });
 
     it('should handle invalid data gracefully', async () => {
@@ -516,10 +548,10 @@ describe('Social Raids Services', () => {
     it('should handle large datasets efficiently', async () => {
       const service = new CommunityMemoryService(mockRuntime as IAgentRuntime);
       const mockSupabase = createMockSupabaseClient();
-      
+
       // Mock large dataset
-      const largeDataset = Array.from({ length: 1000 }, (_, i) => 
-        TestData.createEngagementData({ id: `engagement-${i}` })
+      const largeDataset = Array.from({ length: 1000 }, (_, i) =>
+        TestData.createEngagementData({ id: `engagement-${i}` }),
       );
 
       mockSupabase.from().select().limit.mockResolvedValue({

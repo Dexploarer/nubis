@@ -8,6 +8,7 @@ auto_execution_mode: 3
 This workflow helps you verify that our local rules, knowledge, and workflows reflect the current upstream ElizaOS templates (message, character, and action templates).
 
 ## What this covers
+
 - Message templates (shouldRespond, messageHandler, postCreation, imageDescription, booleanFooter)
 - Action-specific templates (replyTemplate, imageGenerationTemplate)
 - Character agent templates (discord/telegram/slack/twitter/github/instagram, none)
@@ -15,6 +16,7 @@ This workflow helps you verify that our local rules, knowledge, and workflows re
 - Built-in actions list and Action interface shape
 
 ## Upstream reference paths
+
 - `packages/core/src/prompts.ts`
 - `packages/plugin-bootstrap/src/actions/reply.ts`
 - `packages/plugin-bootstrap/src/actions/imageGeneration.ts`
@@ -24,6 +26,7 @@ This workflow helps you verify that our local rules, knowledge, and workflows re
 - `packages/cli/src/characters/eliza.ts`
 
 ## Steps
+
 1. Collect upstream facts
    - Open the files listed in Upstream reference paths and confirm:
      - Template names, XML output formats, and provider/action rules
@@ -55,6 +58,7 @@ This workflow helps you verify that our local rules, knowledge, and workflows re
    - Commit changes with a clear message, e.g.: `docs: sync templates list with upstream`
 
 ## Handy commands (read-only)
+
 - Search for template names:
   ```bash
   grep -R "shouldRespondTemplate\|messageHandlerTemplate\|postCreationTemplate\|imageDescriptionTemplate\|booleanFooter" -n packages/core/src
@@ -70,6 +74,7 @@ This workflow helps you verify that our local rules, knowledge, and workflows re
   ```
 
 ## Success criteria
+
 - Knowledge page `eliza_templates_complete_list.md` matches upstream accurately
 - Workflows README lists `/templates_audit`
 - Optional: Rules quick-reference includes new entries if allowed
@@ -77,6 +82,7 @@ This workflow helps you verify that our local rules, knowledge, and workflows re
 ## References
 
 ### Core internal references
+
 - `../rules/elizaos_development_workflow.md`
 - `../rules/elizaos_coding_standards.md`
 - `../rules/elizaos-architecture-patterns.md`

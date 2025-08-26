@@ -132,7 +132,7 @@ function createRealMemory(): Memory {
 describe('Provider Tests', () => {
   // Find the HELLO_WORLD_PROVIDER from the providers array
   const helloWorldProvider = plugin.providers?.find(
-    (provider) => provider.name === 'HELLO_WORLD_PROVIDER'
+    (provider) => provider.name === 'HELLO_WORLD_PROVIDER',
   );
 
   describe('HELLO_WORLD_PROVIDER', () => {
@@ -308,7 +308,7 @@ describe('Provider Tests', () => {
         const uniqueNames = new Set(providerNames);
 
         const duplicates = providerNames.filter(
-          (name, index) => providerNames.indexOf(name) !== index
+          (name, index) => providerNames.indexOf(name) !== index,
         );
 
         // There should be no duplicate provider names

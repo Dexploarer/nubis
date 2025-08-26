@@ -147,7 +147,7 @@ describe('Project Starter Character Plugin Ordering', () => {
           '@elizaos/plugin-openrouter',
           '@elizaos/plugin-ollama',
           '@elizaos/plugin-google-genai',
-        ].includes(plugin)
+        ].includes(plugin),
       );
     });
 
@@ -192,7 +192,7 @@ describe('Project Starter Character Plugin Ordering', () => {
       // If embedding plugins are present, at least one should be at the end
       if (embeddingPluginsPresent.length > 0) {
         const hasEmbeddingAtEnd = lastThreePlugins.some((plugin) =>
-          embeddingPlugins.includes(plugin)
+          embeddingPlugins.includes(plugin),
         );
         expect(hasEmbeddingAtEnd).toBe(true);
       }
@@ -270,7 +270,7 @@ describe('Project Starter Character Plugin Ordering', () => {
       // In a complete setup, at least one AI provider should be present
       // Test the logical structure based on current environment
       const hasOtherAiProviders = character.plugins.some((plugin) =>
-        allAiProviders.includes(plugin)
+        allAiProviders.includes(plugin),
       );
 
       // At least one AI provider should be present
@@ -288,7 +288,7 @@ describe('Project Starter Character Plugin Ordering', () => {
 
       // Verify our categorization is complete and mutually exclusive
       const intersection = embeddingCapablePlugins.filter((plugin) =>
-        textOnlyPlugins.includes(plugin)
+        textOnlyPlugins.includes(plugin),
       );
 
       expect(intersection.length).toBe(0); // No overlap
@@ -312,7 +312,7 @@ describe('Project Starter Character Plugin Ordering', () => {
           '@elizaos/plugin-openrouter',
           '@elizaos/plugin-ollama',
           '@elizaos/plugin-google-genai',
-        ].includes(plugin)
+        ].includes(plugin),
       );
 
       // Should have at least one AI provider

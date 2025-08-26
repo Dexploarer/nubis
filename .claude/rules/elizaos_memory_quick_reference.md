@@ -1,0 +1,494 @@
+---
+trigger: model_decision
+description: ElizaOS Memory System: Quick Reference Guide
+globs:
+---
+# ElizaOS Memory System: Quick Reference Guide
+
+## Core Memory Interface
+
+### Basic Memory Structure
+```typescript
+interface Memory {
+  id?: UUID;                    // Auto-generated if not provided
+  entityId: UUID;              // REQUIRED - Associated user ID
+  agentId?: UUID;              // Associated agent ID
+  createdAt?: number;          // Auto-set if not provided
+  content: Content;            // REQUIRED - Memory content
+  embedding?: number[];        // Vector for semantic search
+  roomId: UUID;               // REQUIRED - Associated room ID
+  worldId?: UUID;             // Optional world ID
+  unique?: boolean;           // Prevents duplicates (default: true)
+  similarity?: number;        // Set during search operations
+  metadata?: MemoryMetadata;  // Rich metadata
+}
+```
+
+### Memory Types
+```typescript
+enum MemoryType {
+  DOCUMENT = 'document',      // Whole documents
+  FRAGMENT = 'fragment',      // Document chunks
+  MESSAGE = 'message',        // Conversational messages
+  DESCRIPTION = 'description', // Entity descriptions
+  CUSTOM = 'custom'           // Application-specific
+}
+```
+
+### Memory Scopes
+```typescript
+type MemoryScope = 'shared' | 'private' | 'room';
+```
+
+## Runtime Methods Quick Reference
+
+### Create Memory
+```typescript
+// Basic creation
+const memoryId = await runtime.createMemory(memory, 'table_name');
+
+// With uniqueness control
+const memoryId = await runtime.createMemory(memory, 'table_name', true);
+
+// Using factory function for messages
+const messageMemory = createMessageMemory({
+  entityId: userId,
+  agentId: agentId,
+  roomId: roomId,
+  content: { text: messageText, source: 'user' }
+});
+```
+
+### Retrieve Memories
+```typescript
+// Get memories by criteria
+const memories = await runtime.getMemories({
+  tableName: 'messages',      // REQUIRED
+  roomId: roomId,            // Filter by room
+  entityId: userId,          // Filter by entity
+  count: 10,                 // Limit results
+  unique: false,             // Include duplicates
+  start: startTime,          // Time range start
+  end: endTime               // Time range end
+});
+
+// Get memory by ID
+const memory = await runtime.getMemoryById(memoryId);
+
+// Get memories by IDs
+const memories = await runtime.getMemoriesByIds([id1, id2, id3], 'table_name');
+```
+
+### Search Memories
+```typescript
+// Semantic search with embeddings
+const results = await runtime.searchMemories({
+  tableName: 'facts',         // REQUIRED
+  embedding: queryEmbedding,  // REQUIRED - Vector for similarity
+  roomId: roomId,            // Filter by room
+  worldId: worldId,          // Filter by world
+  entityId: userId,          // Filter by entity
+  count: 5,                  // Limit results
+  match_threshold: 0.8,      // Similarity threshold (0-1)
+  query: searchText,         // For BM25 re-ranking
+  unique: true               // Only unique memories
+});
+```
+
+### Update Memory
+```typescript
+// Partial update
+const success = await runtime.updateMemory({
+  id: memoryId,              // REQUIRED
+  content: { text: "Updated text" },
+  metadata: { tags: ['updated'] }
+});
+
+// Update with embedding
+const success = await runtime.updateMemory({
+  id: memoryId,
+  embedding: newEmbedding
+});
+```
+
+### Delete Memory
+```typescript
+// Delete single memory
+await runtime.deleteMemory(memoryId);
+
+// Delete multiple memories
+await runtime.deleteManyMemories([id1, id2, id3]);
+
+// Delete all memories in room
+await runtime.deleteAllMemories(roomId, 'table_name');
+```
+
+### Count Memories
+```typescript
+const count = await runtime.countMemories(roomId, true, 'table_name');
+```
+
+## Content and Metadata Patterns
+
+### Content Structure
+```typescript
+// Basic content
+const content: Content = {
+  text: "Primary text content",
+  source: "user_input"
+};
+
+// Rich content with additional fields
+const richContent: Content = {
+  text: "Main text",
+  source: "action_result",
+  thought: "Internal reasoning",
+  actions: ["ACTION_1", "ACTION_2"],
+  result: { success: true, data: "result" }
+};
+```
+
+### Metadata Implementation
+```typescript
+// Base metadata
+const baseMetadata: BaseMetadata = {
+  type: MemoryType.CUSTOM,
+  source: 'user_input',
+  timestamp: Date.now(),
+  scope: 'shared',
+  tags: ['important', 'user_data']
+};
+
+// Custom metadata
+const customMetadata: CustomMetadata = {
+  type: MemoryType.CUSTOM,
+  source: 'action_execution',
+  timestamp: Date.now(),
+  scope: 'private',
+  tags: ['action', 'result'],
+  customField: 'value',
+  confidence: 0.95
+};
+
+// Message metadata
+const messageMetadata: MessageMetadata = {
+  type: MemoryType.MESSAGE,
+  source: 'user',
+  timestamp: Date.now(),
+  scope: 'room'
+};
+```
+
+## Provider Integration Patterns
+
+### Basic Memory Provider
+```typescript
+const memoryProvider: Provider = {
+  name: 'MEMORY_DATA',
+  description: 'Retrieves relevant memory data',
+  dynamic: true,
+  get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
+    const memories = await runtime.searchMemories({
+      tableName: 'relevant_data',
+      embedding: await runtime.useModel(ModelType.TEXT_EMBEDDING, { 
+        text: message.content.text 
+      }),
+      roomId: message.roomId,
+      count: 5
+    });
+    
+    return {
+      values: { data: formatMemories(memories) },
+      data: { memories },
+      text: formatMemories(memories)
+    };
+  }
+};
+```
+
+### Facts Provider Pattern
+```typescript
+const factsProvider: Provider = {
+  name: 'FACTS',
+  description: 'Key facts that the agent knows',
+  dynamic: true,
+  get: async (runtime: IAgentRuntime, message: Memory) => {
+    const relevantFacts = await runtime.searchMemories({
+      tableName: 'facts',
+      embedding: await runtime.useModel(ModelType.TEXT_EMBEDDING, { 
+        text: message.content.text 
+      }),
+      roomId: message.roomId,
+      worldId: message.worldId,
+      count: 6,
+      query: message.content.text
+    });
+    
+    return {
+      values: { facts: formatFacts(relevantFacts) },
+      data: { facts: relevantFacts },
+      text: `Key facts that ${runtime.character.name} knows:\n${formatFacts(relevantFacts)}`
+    };
+  }
+};
+```
+
+## Embedding Generation
+
+### Generate Embeddings
+```typescript
+// For memory content
+if (memory.content.text) {
+  const embedding = await runtime.useModel(ModelType.TEXT_EMBEDDING, {
+    text: memory.content.text
+  });
+  memory.embedding = embedding;
+}
+
+// For search queries
+const queryEmbedding = await runtime.useModel(ModelType.TEXT_EMBEDDING, {
+  text: searchQuery
+});
+```
+
+### Embedding Dimensions
+```typescript
+const VECTOR_DIMS = {
+  SMALL: 384,    // Basic similarity
+  MEDIUM: 512,   // Balanced performance
+  LARGE: 768,    // High quality
+  XL: 1024,      // Very high quality
+  XXL: 1536,     // Maximum quality
+  XXXL: 3072     // Ultra quality
+};
+```
+
+## Table Naming Conventions
+
+### Standard Tables
+```typescript
+const TABLE_NAMES = {
+  MESSAGES: 'messages',           // Conversational messages
+  FACTS: 'facts',                // Knowledge facts
+  DOCUMENTS: 'documents',        // Large documents
+  FRAGMENTS: 'fragments',        // Document chunks
+  DESCRIPTIONS: 'descriptions',   // Entity descriptions
+  CUSTOM: 'custom_memories'      // Application-specific
+};
+```
+
+### Custom Table Examples
+```typescript
+// Action results
+await runtime.createMemory(actionMemory, 'action_results');
+
+// User preferences
+await runtime.createMemory(prefMemory, 'user_preferences');
+
+// System logs
+await runtime.createMemory(logMemory, 'system_logs');
+```
+
+## Error Handling Patterns
+
+### Try-Catch with Fallbacks
+```typescript
+try {
+  const memories = await runtime.searchMemories({
+    tableName: 'facts',
+    embedding: queryEmbedding,
+    roomId: message.roomId,
+    count: 5
+  });
+  
+  return {
+    values: { facts: formatFacts(memories) },
+    data: { facts: memories },
+    text: formatFacts(memories)
+  };
+} catch (error) {
+  logger.error('Memory search failed:', error);
+  return {
+    values: { facts: '' },
+    data: { facts: [] },
+    text: 'Unable to retrieve facts at this time.'
+  };
+}
+```
+
+### Validation Before Storage
+```typescript
+const validateMemory = (memory: Memory): boolean => {
+  if (!memory.content?.text) return false;
+  if (!memory.entityId || !memory.roomId) return false;
+  if (memory.embedding && !Array.isArray(memory.embedding)) return false;
+  return true;
+};
+
+if (!validateMemory(memory)) {
+  throw new Error('Invalid memory data');
+}
+await runtime.createMemory(memory, 'table_name');
+```
+
+## Performance Optimization
+
+### Query Limits
+```typescript
+// Always use count limits
+const memories = await runtime.getMemories({
+  tableName: 'messages',
+  roomId: roomId,
+  count: 20,        // Reasonable limit
+  start: startTime, // Time-based filtering
+  end: endTime
+});
+```
+
+### Batch Operations
+```typescript
+// Use batch deletion
+if (memoryIds.length > 0) {
+  await runtime.deleteManyMemories(memoryIds);
+}
+
+// Avoid individual operations in loops
+// ❌ Bad
+for (const id of memoryIds) {
+  await runtime.deleteMemory(id);
+}
+
+// ✅ Good
+await runtime.deleteManyMemories(memoryIds);
+```
+
+## Testing Utilities
+
+### Mock Memory Creation
+```typescript
+import { createMockMemory, createMockUserMessage, createMockFact } from '@elizaos/test-utils';
+
+// Basic mock
+const mockMemory = createMockMemory({
+  content: { text: 'Test content' },
+  metadata: { type: MemoryType.MESSAGE }
+});
+
+// User message mock
+const mockUserMessage = createMockUserMessage('Hello world');
+
+// Fact mock
+const mockFact = createMockFact('Test fact', 0.9);
+```
+
+### Memory Testing
+```typescript
+describe('Memory Operations', () => {
+  it('should create and retrieve memory', async () => {
+    const memory = createMockMemory({
+      metadata: { type: MemoryType.CUSTOM, tags: ['test'] }
+    });
+    
+    const id = await runtime.createMemory(memory, 'test_table');
+    expect(id).toBeDefined();
+    
+    const retrieved = await runtime.getMemoryById(id);
+    expect(retrieved?.metadata?.tags).toContain('test');
+  });
+});
+```
+
+## API Integration
+
+### REST API Client
+```typescript
+import { MemoryService } from '@elizaos/api-client';
+
+const memoryService = new MemoryService(baseUrl);
+
+// Get agent memories
+const { memories } = await memoryService.getAgentMemories(agentId, {
+  tableName: 'messages',
+  count: 10
+});
+
+// Update memory
+await memoryService.updateMemory(agentId, memoryId, {
+  content: { text: 'Updated content' }
+});
+```
+
+## Common Use Cases
+
+### Store User Message
+```typescript
+const userMessage: Memory = {
+  entityId: userId,
+  roomId: roomId,
+  content: { text: userInput, source: 'user' },
+  metadata: {
+    type: MemoryType.MESSAGE,
+    source: 'user',
+    scope: 'room'
+  }
+};
+
+await runtime.createMemory(userMessage, 'messages');
+```
+
+### Store Action Result
+```typescript
+const actionMemory: Memory = {
+  entityId: message.entityId,
+  agentId: runtime.agentId,
+  roomId: message.roomId,
+  content: {
+    text: `Action ${actionName} executed`,
+    source: 'action_result',
+    actions: [actionName],
+    result: actionResult
+  },
+  metadata: {
+    type: MemoryType.CUSTOM,
+    source: 'action_execution',
+    tags: ['action', actionName]
+  }
+};
+
+await runtime.createMemory(actionMemory, 'action_results');
+```
+
+### Retrieve Conversation Context
+```typescript
+const recentMessages = await runtime.getMemories({
+  tableName: 'messages',
+  roomId: roomId,
+  count: 10,
+  unique: false
+});
+
+const context = recentMessages
+  .map(msg => msg.content.text)
+  .join('\n');
+```
+
+### Search Relevant Knowledge
+```typescript
+const queryEmbedding = await runtime.useModel(ModelType.TEXT_EMBEDDING, {
+  text: userQuery
+});
+
+const relevantFacts = await runtime.searchMemories({
+  tableName: 'facts',
+  embedding: queryEmbedding,
+  roomId: roomId,
+  count: 5,
+  match_threshold: 0.8
+});
+```
+
+This quick reference provides the essential patterns and syntax for working with the ElizaOS Memory System. For detailed explanations and advanced patterns, refer to the comprehensive Memory System guide.
+description:
+globs:
+
+---

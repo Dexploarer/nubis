@@ -172,24 +172,24 @@ export const DEFAULT_ENGAGEMENT_POINTS: EngagementPoints = {
   retweet: 2,
   quote: 3,
   comment: 5,
-  share: 2
+  share: 2,
 };
 
 export const RAID_STRATEGIES = {
-  WAVE: 'wave',      // Gradual engagement over time
-  BURST: 'burst',    // Immediate mass engagement
-  STEALTH: 'stealth' // Slow, organic-looking engagement
+  WAVE: 'wave', // Gradual engagement over time
+  BURST: 'burst', // Immediate mass engagement
+  STEALTH: 'stealth', // Slow, organic-looking engagement
 } as const;
 
 export const RAID_STATUS = {
   PENDING: 'pending',
   ACTIVE: 'active',
   COMPLETED: 'completed',
-  CANCELLED: 'cancelled'
+  CANCELLED: 'cancelled',
 } as const;
 
 export const USER_ROLES = {
   PARTICIPANT: 'participant',
   LEADER: 'leader',
-  MODERATOR: 'moderator'
+  MODERATOR: 'moderator',
 } as const;

@@ -81,7 +81,7 @@ export function setupTest(
     messageOverrides?: Partial<Memory>;
     runtimeOverrides?: Partial<IAgentRuntime>;
     stateOverrides?: Partial<State>;
-  } = {}
+  } = {},
 ) {
   // Create mock callback function
   const callbackFn = mock();
@@ -89,7 +89,7 @@ export function setupTest(
   // Create a message
   const mockMessage = createMockMessage(
     options.messageText || 'Test message',
-    options.messageOverrides || {}
+    options.messageOverrides || {},
   );
 
   // Create a state object

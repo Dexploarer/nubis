@@ -146,7 +146,7 @@ describe('Plugin Configuration', () => {
           success: !error,
           configValue: process.env.EXAMPLE_PLUGIN_VARIABLE,
         },
-        error
+        error,
       );
     } finally {
       process.env.EXAMPLE_PLUGIN_VARIABLE = originalEnv;
@@ -175,7 +175,7 @@ describe('Plugin Configuration', () => {
           errorThrown: !!error,
           errorMessage: error?.message || 'No error message',
         },
-        error
+        error,
       );
     }
   });
@@ -265,7 +265,7 @@ describe('StarterService', () => {
         success: !!startResult,
         serviceType: startResult?.constructor.name,
       },
-      error
+      error,
     );
   });
 
@@ -293,7 +293,7 @@ describe('StarterService', () => {
         errorThrown: !!startupError,
         errorMessage: startupError?.message || 'No error message',
       },
-      startupError
+      startupError,
     );
   });
 
@@ -324,7 +324,7 @@ describe('StarterService', () => {
       {
         success: !error,
       },
-      error
+      error,
     );
   });
 
@@ -357,7 +357,7 @@ describe('StarterService', () => {
         errorThrown: !!error,
         errorMessage: error?.message || 'No error message',
       },
-      error
+      error,
     );
   });
 
@@ -387,7 +387,27 @@ describe('StarterService', () => {
         errorThrown: !!stopError,
         errorMessage: stopError instanceof Error ? stopError.message : String(stopError),
       },
-      stopError instanceof Error ? stopError : null
+      stopError instanceof Error ? stopError : null,
     );
+  });
+
+  it('should performOperation when running and then cleanup on stop', async () => {
+    const runtime = createRealRuntime();
+    // Start service to ensure isRunning === true
+    const service = await StarterService.start(runtime as any);
+
+    const payload = { foo: 'bar' };
+    const result = await service.performOperation(payload);
+
+    // Covers performOperation success path and logger lines in plugin.ts (~lines 93–99)
+    expect(result).toEqual({ success: true, data: payload });
+
+    // Stop service to exercise cleanup logging (~line 88)
+    await service.stop();
+
+    documentTestResult('StarterService performOperation + cleanup', {
+      performed: true,
+      stopped: true,
+    });
   });
 });

@@ -323,7 +323,7 @@ export const ProjectStarterTestSuite: TestSuite = {
         let responseReceived = false;
         const callback: HandlerCallback = async (
           response: Content,
-          files?: any
+          files?: any,
         ): Promise<Memory[]> => {
           if (response.text === 'hello world!' && response.action === 'HELLO_WORLD') {
             responseReceived = true;
@@ -354,7 +354,7 @@ export const ProjectStarterTestSuite: TestSuite = {
 
         // Find the HELLO_WORLD_PROVIDER if it exists
         const helloWorldProvider = runtime.providers.find(
-          (p: Provider) => p.name === 'HELLO_WORLD_PROVIDER'
+          (p: Provider) => p.name === 'HELLO_WORLD_PROVIDER',
         );
 
         if (!helloWorldProvider) {

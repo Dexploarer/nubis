@@ -1,11 +1,6 @@
 /// <reference path="../../../../types/bun-test.d.ts" />
 import { describe, expect, it, mock, beforeEach, afterEach } from 'bun:test';
-import {
-  type IAgentRuntime,
-  type Memory,
-  type State,
-  type HandlerCallback,
-} from '@elizaos/core';
+import { type IAgentRuntime, type Memory, type State, type HandlerCallback } from '@elizaos/core';
 
 // Import actions
 import { startRaidAction } from '../actions/start-raid';
@@ -50,7 +45,7 @@ describe('Social Raids Actions', () => {
       const isValid = await startRaidAction.validate(
         setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
-        setup.mockState as State
+        setup.mockState as State,
       );
 
       expect(isValid).toBe(true);
@@ -66,7 +61,7 @@ describe('Social Raids Actions', () => {
       const isValid = await startRaidAction.validate(
         setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
-        setup.mockState as State
+        setup.mockState as State,
       );
 
       expect(isValid).toBe(false);
@@ -91,7 +86,7 @@ describe('Social Raids Actions', () => {
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as unknown as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback,
       );
 
       expect(result.success).toBe(true);
@@ -111,7 +106,7 @@ describe('Social Raids Actions', () => {
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as unknown as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback,
       );
 
       expect(result.success).toBe(false);
@@ -135,7 +130,7 @@ describe('Social Raids Actions', () => {
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as unknown as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback,
       );
 
       expect(result.success).toBe(false);
@@ -154,7 +149,7 @@ describe('Social Raids Actions', () => {
       const isValid = await joinRaidAction.validate(
         setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
-        setup.mockState as State
+        setup.mockState as State,
       );
 
       expect(isValid).toBe(true);
@@ -182,7 +177,7 @@ describe('Social Raids Actions', () => {
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as unknown as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback,
       );
 
       expect(result.success).toBe(true);
@@ -201,7 +196,7 @@ describe('Social Raids Actions', () => {
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as unknown as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback,
       );
 
       expect(result.success).toBe(false);
@@ -220,7 +215,7 @@ describe('Social Raids Actions', () => {
       const isValid = await submitEngagementAction.validate(
         setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
-        setup.mockState as State
+        setup.mockState as State,
       );
 
       expect(isValid).toBe(true);
@@ -249,7 +244,7 @@ describe('Social Raids Actions', () => {
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as unknown as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback,
       );
 
       expect(result.success).toBe(true);
@@ -268,7 +263,7 @@ describe('Social Raids Actions', () => {
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as unknown as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback,
       );
 
       // Current handler defaults unknown types to 'like' and succeeds
@@ -288,7 +283,7 @@ describe('Social Raids Actions', () => {
       const isValid = await viewLeaderboardAction.validate(
         setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
-        setup.mockState as State
+        setup.mockState as State,
       );
 
       expect(isValid).toBe(true);
@@ -319,7 +314,7 @@ describe('Social Raids Actions', () => {
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as unknown as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback,
       );
 
       expect(result.success).toBe(true);
@@ -345,7 +340,7 @@ describe('Social Raids Actions', () => {
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as unknown as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback,
       );
 
       expect(result.success).toBe(true);
@@ -364,7 +359,7 @@ describe('Social Raids Actions', () => {
       const isValid = await scrapeTweetsAction.validate(
         setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
-        setup.mockState as State
+        setup.mockState as State,
       );
 
       expect(isValid).toBe(true);
@@ -392,7 +387,7 @@ describe('Social Raids Actions', () => {
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as unknown as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback,
       );
 
       expect(result.success).toBe(true);
@@ -411,7 +406,7 @@ describe('Social Raids Actions', () => {
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as unknown as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback,
       );
 
       expect(result.success).toBe(false);
@@ -436,7 +431,7 @@ describe('Social Raids Actions', () => {
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as unknown as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback,
       );
 
       expect(result.success).toBe(false);
@@ -462,7 +457,7 @@ describe('Social Raids Actions', () => {
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as unknown as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback,
       );
 
       expect(result.success).toBe(true);
@@ -479,7 +474,7 @@ describe('Social Raids Actions', () => {
       const isValid = await startRaidAction.validate(
         setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
-        setup.mockState as State
+        setup.mockState as State,
       );
 
       expect(isValid).toBe(false);
@@ -492,7 +487,7 @@ describe('Social Raids Actions', () => {
       const isValid = await startRaidAction.validate(
         setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
-        setup.mockState as State
+        setup.mockState as State,
       );
 
       expect(isValid).toBe(false);
@@ -505,7 +500,7 @@ describe('Social Raids Actions', () => {
       const isValid = await startRaidAction.validate(
         setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
-        setup.mockState as State
+        setup.mockState as State,
       );
 
       expect(isValid).toBe(false);
@@ -515,7 +510,7 @@ describe('Social Raids Actions', () => {
   describe('Service Integration', () => {
     it('should call correct services for each action', async () => {
       const setup = setupActionTest();
-      
+
       // Test startRaid calls TWITTER_RAID_SERVICE
       setup.mockMessage.content = {
         text: 'Start a raid on https://twitter.com/testuser/status/1234567890123456789',
@@ -527,7 +522,7 @@ describe('Social Raids Actions', () => {
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as unknown as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback,
       );
 
       // startRaidAction uses COMMUNITY_MEMORY_SERVICE to record interactions
@@ -555,7 +550,7 @@ describe('Social Raids Actions', () => {
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as unknown as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback,
       );
 
       expect(result.success).toBe(false);

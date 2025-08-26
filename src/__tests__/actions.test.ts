@@ -134,7 +134,7 @@ describe('Actions', () => {
             mockState,
             {},
             mockCallback as HandlerCallback,
-            []
+            [],
           );
 
           // Verify callback was called with the right content

@@ -58,8 +58,16 @@ function mockFn() {
   fn.toHaveBeenCalled = () => true;
   fn.toHaveBeenCalledWith = (..._args: any[]) => true;
   fn.toHaveBeenCalledTimes = (_times: number) => true;
-  fn.mockClear = () => { if (fn.mock) fn.mock.calls = []; return fn; };
-  fn.mockReset = () => { fn._impl = undefined; delete fn._returnValue; if (fn.mock) fn.mock.calls = []; return fn; };
+  fn.mockClear = () => {
+    if (fn.mock) fn.mock.calls = [];
+    return fn;
+  };
+  fn.mockReset = () => {
+    fn._impl = undefined;
+    delete fn._returnValue;
+    if (fn.mock) fn.mock.calls = [];
+    return fn;
+  };
   return fn;
 }
 
@@ -129,7 +137,7 @@ export function setupActionTest(
     runtimeOverrides?: Partial<MockRuntime>;
     messageOverrides?: Partial<Memory>;
     stateOverrides?: Partial<State>;
-  } = {}
+  } = {},
 ) {
   const mockRuntime = createMockRuntime(options.runtimeOverrides);
   const mockMessage = createMockMemory(options.messageOverrides);
@@ -297,7 +305,7 @@ export const Assertions = {
       expect.objectContaining({
         text: expectedText ? expect.stringContaining(expectedText) : expect.any(String),
         content: expect.any(Object),
-      })
+      }),
     );
   },
 
@@ -310,7 +318,7 @@ export const Assertions = {
       expect.objectContaining({
         content: expectedContent || expect.any(Object),
       }),
-      expect.any(String)
+      expect.any(String),
     );
   },
 };
@@ -326,7 +334,11 @@ export function setupTestEnvironment() {
   process.env.TELEGRAM_BOT_TOKEN = 'test-bot-token';
   process.env.TWEET_SCRAPER_URL = 'https://test.supabase.co/functions/v1/tweet-scraper';
   // Default global.fetch mock returns success; tests can override per-case
-  global.fetch = mockFetch({ success: true, raidId: TEST_CONSTANTS.RAID_ID, targetUrl: 'https://twitter.com/test/status/1' });
+  global.fetch = mockFetch({
+    success: true,
+    raidId: TEST_CONSTANTS.RAID_ID,
+    targetUrl: 'https://twitter.com/test/status/1',
+  });
 }
 
 // Test Cleanup
