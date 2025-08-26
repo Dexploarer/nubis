@@ -107,3 +107,16 @@ for v in SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY; do
 - Supabase advisors: performance issues reported for your project (see `/supabase_advisors`).
 - RLS best practices: https://supabase.com/docs/guides/database/postgres/row-level-security
 - Indexing FKs: https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys
+
+### Core internal references
+- `../rules/elizaos_development_workflow.md`
+- `../rules/elizaos_coding_standards.md`
+- `../rules/elizaos-architecture-patterns.md`
+- `../rules/testing_standards.md`
+- `../rules/elizaos_security_protocols.md`
+- `../rules/elizaos_template-quick-reference.md`
+- `../rules/elizaos_template_system.md`
+- `../rules/elizaos_interface_system.md`
+- `../rules/elizaos_memory_operational_rules.md`
+- `../rules/elizaos_memory_quick_reference.md`
+- `../knowledge/README.md`

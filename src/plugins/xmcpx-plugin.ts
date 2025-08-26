@@ -17,7 +17,7 @@ import type {
   ProviderResult 
 } from '@elizaos/core';
 import { Service, logger } from '@elizaos/core';
-import { z } from 'zod';
+import * as z from 'zod';
 
 /**
  * Configuration schema for XMCPX plugin
@@ -146,7 +146,7 @@ const postTweetAction: Action = {
       }
 
       // Extract tweet content from the message or state
-      let tweetContent = state?.responseText || message.content.text || '';
+      let tweetContent = state?.responseText || message.content?.text || '';
       
       // Truncate to Twitter's character limit
       if (tweetContent.length > 280) {
@@ -159,7 +159,7 @@ const postTweetAction: Action = {
         await callback({
           text: success ? 'Tweet posted successfully!' : 'Failed to post tweet',
           actions: ['POST_TWEET'],
-          source: message.content.source,
+          source: message.content?.source,
         });
       }
 
@@ -269,18 +269,21 @@ export const xmcpxPlugin: Plugin = {
   async init(config: Record<string, string>) {
     logger.debug('XMCPX plugin initialized');
     try {
-      const validatedConfig = await xmcpxConfigSchema.parseAsync(config);
+      const result = xmcpxConfigSchema.safeParse(config);
+      if (!result.success) {
+        const err: any = (result as any).error;
+        const issues = Array.isArray(err?.issues)
+          ? err.issues.map((e: any) => e.message).join(', ')
+          : 'Invalid configuration';
+        throw new Error(`Invalid XMCPX configuration: ${issues}`);
+      }
+      const validatedConfig = result.data;
       
       // Set environment variables
       for (const [key, value] of Object.entries(validatedConfig)) {
         if (value) process.env[key] = String(value);
       }
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new Error(
-          `Invalid XMCPX configuration: ${error.errors.map((e: any) => e.message).join(', ')}`
-        );
-      }
       throw error;
     }
   },

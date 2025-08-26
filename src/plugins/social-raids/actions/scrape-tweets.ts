@@ -7,7 +7,7 @@ import {
   elizaLogger,
   ActionResult,
 } from "@elizaos/core";
-import { TwitterRaidService } from "../services/TwitterRaidService";
+import { TwitterRaidService } from "../services/twitter-raid-service";
 
 export const scrapeTweetsAction: Action = {
   name: "SCRAPE_TWEETS",
@@ -19,7 +19,7 @@ export const scrapeTweetsAction: Action = {
     "EXTRACT_TWEETS"
   ],
   validate: async (runtime: IAgentRuntime, message: Memory) => {
-    const text = message.content.text?.toLowerCase() || '';
+    const text = message.content?.text?.toLowerCase() || '';
     return text.includes("scrape") || 
            text.includes("export") ||
            text.includes("download") ||
@@ -38,10 +38,13 @@ export const scrapeTweetsAction: Action = {
       elizaLogger.info("Processing tweet scraping request");
 
       // Extract username from message
-      const text = message.content.text?.toLowerCase() || '';
-      const usernameMatch = text.match(/(?:from|of|@)?(\w+)/);
-      
-      if (!usernameMatch) {
+      const text = message.content?.text?.toLowerCase() || '';
+      // Prefer explicit @handle, otherwise look for 'from/of <handle>'
+      const handleMatch = text.match(/@([a-z0-9_]{1,15})/i);
+      const fromMatch = text.match(/(?:from|of)\s+@?([a-z0-9_]{1,15})/i);
+      const username = (handleMatch?.[1] || fromMatch?.[1])?.toLowerCase();
+
+      if (!username) {
         if (callback) {
           callback({
             text: "🎯 I need a Twitter username to scrape tweets from!\n\n" +
@@ -60,8 +63,7 @@ export const scrapeTweetsAction: Action = {
         }
         return { success: false, text: "Missing username" };
       }
-
-      const username = usernameMatch[1];
+      
       
       // Extract count if specified
       const countMatch = text.match(/(\d+)\s*tweets?/);
@@ -80,11 +82,11 @@ export const scrapeTweetsAction: Action = {
       if (callback) {
         callback({
           text: `🔄 **SCRAPING TWEETS** 🔄\n\n` +
-                `**Target:** @${username}\n` +
-                `**Count:** ${count} tweets\n` +
-                `**Skip:** ${skipCount} tweets\n\n` +
-                `**Status:** Initializing scraping process...\n` +
-                `**Method:** Using Edge Function for optimal performance\n\n` +
+                `Target: @${username}\n` +
+                `Count: ${count}\n` +
+                `Skip: ${skipCount}\n\n` +
+                `Status: Initializing scraping process...\n` +
+                `Method: Using Edge Function for optimal performance\n\n` +
                 `This may take a few moments. I'll notify you when complete! ⏳`,
           content: {
             action: 'scrape_tweets_started',

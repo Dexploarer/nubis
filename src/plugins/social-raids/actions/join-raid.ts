@@ -7,7 +7,7 @@ import {
   elizaLogger,
   ActionResult,
 } from "@elizaos/core";
-import { CommunityMemoryService } from "../services/CommunityMemoryService";
+import { CommunityMemoryService } from "../services/community-memory-service";
 
 export const joinRaidAction: Action = {
   name: "JOIN_RAID",
@@ -19,7 +19,7 @@ export const joinRaidAction: Action = {
     "COUNT_ME_IN"
   ],
   validate: async (runtime: IAgentRuntime, message: Memory) => {
-    const text = message.content.text.toLowerCase();
+    const text = message.content?.text?.toLowerCase() || '';
     return text.includes("join raid") || 
            text.includes("participate") ||
            text.includes("count me in") ||
@@ -37,6 +37,21 @@ export const joinRaidAction: Action = {
     try {
       elizaLogger.info("Processing join raid action");
 
+      // Extract session id from message (expects patterns like "session-123")
+      const text = message.content?.text?.toLowerCase() || '';
+      const sessionMatch = text.match(/session-([a-z0-9_-]+)/i);
+      const sessionId = sessionMatch ? `session-${sessionMatch[1]}` : null;
+
+      if (!sessionId) {
+        if (callback) {
+          callback({
+            text: "⚠️ Session ID required to join a raid. Example: 'Join raid session-123'",
+            content: { action: 'join_raid_missing_session', hint: 'Session ID required' }
+          });
+        }
+        return { success: false, text: 'Session ID required' };
+      }
+
       const raidCoordinatorUrl = runtime.getSetting("RAID_COORDINATOR_URL");
       if (!raidCoordinatorUrl) {
         throw new Error("Raid coordinator URL not configured");
@@ -47,9 +62,10 @@ export const joinRaidAction: Action = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'join_raid',
-          userId: message.id,
-          username: message.content.source || "user",
-          platform: 'elizaos'
+          userId: message.entityId,
+          username: message.content?.source || "user",
+          platform: 'elizaos',
+          sessionId,
         })
       });
 
@@ -58,11 +74,11 @@ export const joinRaidAction: Action = {
       if (result.success) {
         // Record participation in community memory
         const memoryService = runtime.getService<CommunityMemoryService>("COMMUNITY_MEMORY_SERVICE");
-        if (memoryService) {
-          await memoryService.recordInteraction({
+        if (memoryService && typeof (memoryService as any).recordInteraction === 'function') {
+          await (memoryService as any).recordInteraction({
             id: crypto.randomUUID(),
-            userId: message.id,
-            username: message.content.source || "user",
+            userId: message.entityId,
+            username: message.content?.source || "user",
             interactionType: 'raid_participation',
             content: 'Joined active raid',
             context: { raidId: result.raidId, participantNumber: result.participantNumber },
@@ -75,7 +91,8 @@ export const joinRaidAction: Action = {
 
         if (callback) {
           callback({
-            text: `⚡ **WELCOME TO THE BATTLEFIELD!** ⚡\n\n` +
+            text: `✅ **JOINED RAID** ✅\n\n` +
+                  `⚡ **WELCOME TO THE BATTLEFIELD!** ⚡\n\n` +
                   `🎖️ **Soldier #${result.participantNumber}** - You're officially enlisted! 🎖️\n\n` +
                   `**🎯 YOUR MISSION:**\n` +
                   `1️⃣ Hit the target: [${result.targetUrl}](${result.targetUrl})\n` +

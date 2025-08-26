@@ -41,7 +41,7 @@ This workflow helps you verify that our local rules, knowledge, and workflows re
      - Optionally add a short note to `./.windsurf/knowledge/template_system.md` pointing to the complete list
 
 4. Rules quick-reference (if writable)
-   - If `./.windsurf/rules/` is writable, ensure `elizaos_template-quick-reference.md` includes:
+   - If `../rules/` is writable, ensure `elizaos_template-quick-reference.md` includes:
      - imageGenerationTemplate
      - booleanFooter
      - Built-in actions list
@@ -73,3 +73,18 @@ This workflow helps you verify that our local rules, knowledge, and workflows re
 - Knowledge page `eliza_templates_complete_list.md` matches upstream accurately
 - Workflows README lists `/templates_audit`
 - Optional: Rules quick-reference includes new entries if allowed
+
+## References
+
+### Core internal references
+- `../rules/elizaos_development_workflow.md`
+- `../rules/elizaos_coding_standards.md`
+- `../rules/elizaos-architecture-patterns.md`
+- `../rules/testing_standards.md`
+- `../rules/elizaos_security_protocols.md`
+- `../rules/elizaos_template-quick-reference.md`
+- `../rules/elizaos_template_system.md`
+- `../rules/elizaos_interface_system.md`
+- `../rules/elizaos_memory_operational_rules.md`
+- `../rules/elizaos_memory_quick_reference.md`
+- `../knowledge/README.md`

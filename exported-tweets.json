@@ -1,0 +1,20 @@
+[
+  {
+    "id": "1",
+    "text": "Tweet 1",
+    "username": "@testuser",
+    "isRetweet": false,
+    "createdAt": null,
+    "favoriteCount": 0,
+    "retweetCount": 0
+  },
+  {
+    "id": "2",
+    "text": "Tweet 2",
+    "username": "@testuser",
+    "isRetweet": false,
+    "createdAt": null,
+    "favoriteCount": 0,
+    "retweetCount": 0
+  }
+]

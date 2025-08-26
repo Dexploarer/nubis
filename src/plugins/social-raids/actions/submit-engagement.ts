@@ -7,7 +7,7 @@ import {
   elizaLogger,
   ActionResult,
 } from "@elizaos/core";
-import { CommunityMemoryService } from "../services/CommunityMemoryService";
+import { CommunityMemoryService } from "../services/community-memory-service";
 
 const getPointsForAction = (action: string): number => {
   const pointsMap: Record<string, number> = {
@@ -41,18 +41,21 @@ export const submitEngagementAction: Action = {
     "ENGAGEMENT_DONE"
   ],
   validate: async (runtime: IAgentRuntime, message: Memory) => {
-    const text = message.content.text?.toLowerCase() || '';
-    
+    const text = message.content?.text?.toLowerCase() || '';
+
+    // direct command phrasing from tests: "submit engagement like for raid session-123"
+    const directSubmit = text.includes('submit engagement');
+
     // Check for engagement keywords
-    const hasEngagementWords = text.includes("liked") || text.includes("retweeted") || 
+    const hasEngagementWords = directSubmit || text.includes("liked") || text.includes("retweeted") || 
             text.includes("quoted") || text.includes("commented") ||
             text.includes("engaged") || text.includes("done") ||
             text.includes("shared") || text.includes("replied");
     
-    // Check for context (tweet/post/it reference)
+    // Check for context (tweet/post/it reference) or explicit raid mention
     const hasContext = text.includes("tweet") || text.includes("post") || 
                       text.includes("it") || text.includes("that") ||
-                      text.includes("link");
+                      text.includes("link") || text.includes('for raid') || text.includes('raid ');
     
     return hasEngagementWords && hasContext;
   },
@@ -68,7 +71,7 @@ export const submitEngagementAction: Action = {
       elizaLogger.info("Processing engagement submission");
 
       // Detect engagement type from message
-      const text = message.content.text?.toLowerCase() || '';
+      const text = message.content?.text?.toLowerCase() || '';
       let engagementType = 'like'; // default
       
       if (text.includes('retweeted') || text.includes('retweet')) engagementType = 'retweet';
@@ -86,8 +89,8 @@ export const submitEngagementAction: Action = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'submit_engagement',
-          userId: message.userId,
-          username: message.content.source || "user",
+          userId: message.entityId,
+          username: message.content?.source || "user",
           engagementType: engagementType,
           platform: 'elizaos'
         })
@@ -104,8 +107,8 @@ export const submitEngagementAction: Action = {
         if (memoryService) {
           await memoryService.recordInteraction({
             id: crypto.randomUUID(),
-            userId: message.userId!,
-            username: message.content.source || "user",
+            userId: message.entityId,
+            username: message.content?.source || "user",
             interactionType: 'quality_engagement',
             content: `Submitted ${engagementType} engagement`,
             context: { engagementType, points, raidId: result.raidId },

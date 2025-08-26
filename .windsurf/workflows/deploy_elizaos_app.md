@@ -57,3 +57,16 @@ bun run check && bun run build && bun test
 - `../knowledge/documentation-guidelines.md`
 - `../knowledge/architecture_patterns.md`
 - `../knowledge/performance_guidelines.md`
+
+Core internal references:
+- `../rules/elizaos_development_workflow.md`
+- `../rules/elizaos-architecture-patterns.md`
+- `../rules/elizaos_coding_standards.md`
+- `../rules/testing_standards.md`
+- `../rules/elizaos_security_protocols.md`
+- `../rules/elizaos_template-quick-reference.md`
+- `../rules/elizaos_template_system.md`
+- `../rules/elizaos_interface_system.md`
+- `../rules/elizaos_memory_operational_rules.md`
+- `../rules/elizaos_memory_quick_reference.md`
+- `../knowledge/README.md`

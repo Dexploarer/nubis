@@ -11,6 +11,7 @@ declare module "bun:test" {
   export const afterAll: (...args: any[]) => any;
   export const beforeEach: (...args: any[]) => any;
   export const afterEach: (...args: any[]) => any;
+  export const mock: any;
 }
 
 declare module "bun" {

@@ -1,0 +1,29 @@
+{
+  "note": "Partial snapshot for audit; full advisor output is large.",
+  "lints_sample": [
+    {
+      "name": "auth_rls_initplan",
+      "title": "Auth RLS Initialization Plan",
+      "level": "WARN",
+      "metadata": { "schema": "public", "name": "worlds", "type": "table" },
+      "detail": "Table `public.worlds` has a row level security policy `Service role full access` that re-evaluates current_setting() or auth.<function>() for each row.",
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan"
+    },
+    {
+      "name": "auth_rls_initplan",
+      "title": "Auth RLS Initialization Plan",
+      "level": "WARN",
+      "metadata": { "schema": "public", "name": "channels", "type": "table" },
+      "detail": "Table `public.channels` has a row level security policy `Service role full access` that re-evaluates current_setting() or auth.<function>() for each row.",
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan"
+    },
+    {
+      "name": "unused_index",
+      "title": "Unused Index",
+      "level": "INFO",
+      "metadata": { "schema": "public", "name": "scraping_stats", "type": "table" },
+      "detail": "Index `idx_scraping_stats_recorded_at` on table `public.scraping_stats` has not been used",
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index"
+    }
+  ]
+}

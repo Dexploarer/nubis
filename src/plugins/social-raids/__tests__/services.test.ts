@@ -2,9 +2,9 @@ import { describe, expect, it, mock, beforeEach, afterEach } from 'bun:test';
 import { type IAgentRuntime } from '@elizaos/core';
 
 // Import services
-import { TwitterRaidService } from '../services/TwitterRaidService';
-import { TelegramRaidManager } from '../services/TelegramRaidManager';
-import { CommunityMemoryService } from '../services/CommunityMemoryService';
+import { TwitterRaidService } from '../services/twitter-raid-service';
+import { TelegramRaidManager } from '../services/telegram-raid-manager';
+import { CommunityMemoryService } from '../services/community-memory-service';
 
 // Import test utilities
 import {

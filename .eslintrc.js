@@ -7,6 +7,7 @@ module.exports = {
   extends: [
     'eslint:recommended',
     '@typescript-eslint/recommended',
+    'plugin:react/recommended',
     'prettier',
   ],
   parser: '@typescript-eslint/parser',
@@ -14,10 +15,21 @@ module.exports = {
     ecmaVersion: 2022,
     sourceType: 'module',
     project: './tsconfig.json',
+    ecmaFeatures: {
+      jsx: true,
+    },
+  },
+  settings: {
+    react: {
+      version: 'detect',
+    },
   },
   plugins: [
     '@typescript-eslint',
     'prettier',
+    'react',
+    'unicorn',
+    'filenames',
   ],
   rules: {
     // TypeScript specific rules
@@ -117,6 +129,44 @@ module.exports = {
 
     // Prettier integration
     'prettier/prettier': 'error',
+
+    // Naming conventions
+    '@typescript-eslint/naming-convention': [
+      'error',
+      // Enforce Props suffix for interfaces is handled in TSX override below
+      {
+        selector: 'typeLike',
+        format: ['PascalCase'],
+      },
+      {
+        selector: 'function',
+        format: ['camelCase'],
+        leadingUnderscore: 'allow',
+      },
+      {
+        selector: 'variableLike',
+        format: ['camelCase', 'UPPER_CASE'],
+        leadingUnderscore: 'allow',
+      },
+      {
+        selector: 'enumMember',
+        format: ['PascalCase', 'UPPER_CASE'],
+      },
+    ],
+
+    // Filenames should be kebab-case
+    'unicorn/filename-case': [
+      'error',
+      {
+        case: 'kebabCase',
+      },
+    ],
+
+    // Filename should match default export (transform to kebab)
+    'filenames/match-exported': ['error', 'kebab'],
+
+    // React components in JSX must be PascalCase
+    'react/jsx-pascal-case': 'error',
   },
   overrides: [
     {
@@ -132,6 +182,38 @@ module.exports = {
         '@typescript-eslint/no-unsafe-member-access': 'off',
         '@typescript-eslint/no-unsafe-return': 'off',
         '@typescript-eslint/require-await': 'off',
+      },
+    },
+    {
+      files: ['**/*.tsx'],
+      rules: {
+        // Enforce Props interfaces to end with `Props` in TSX files
+        '@typescript-eslint/naming-convention': [
+          'error',
+          {
+            selector: 'interface',
+            format: ['PascalCase'],
+            custom: {
+              regex: '^[A-Z][a-zA-Z0-9]*Props$',
+              match: true,
+            },
+          },
+          {
+            selector: 'typeLike',
+            format: ['PascalCase'],
+          },
+          {
+            selector: 'function',
+            format: ['camelCase'],
+            leadingUnderscore: 'allow',
+          },
+          {
+            selector: 'variableLike',
+            format: ['camelCase', 'UPPER_CASE'],
+            leadingUnderscore: 'allow',
+          },
+        ],
+        'react/jsx-pascal-case': 'error',
       },
     },
     {

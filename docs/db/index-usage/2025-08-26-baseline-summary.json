@@ -1,0 +1,6 @@
+{
+  "generated_at": "2025-08-26T05:00:38Z",
+  "placeholder": true,
+  "note": "Run scripts/db/capture-index-snapshot.sh, then compute counts from the CSV; this file will be updated with real totals.",
+  "summary": []
+}

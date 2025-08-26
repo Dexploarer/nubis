@@ -1,4 +1,5 @@
-import { describe, expect, it, beforeEach, afterEach } from 'bun:test';
+// @ts-nocheck
+import { describe, expect, it, beforeEach, afterEach, mock as bunMock } from 'bun:test';
 import {
   type IAgentRuntime,
   type Memory,
@@ -26,45 +27,66 @@ export interface MockRuntime {
   logger: any;
 }
 
-// Custom mock function implementation for Bun test
+// Custom mock function implementation for Bun test (callable with stubbing)
 function mockFn() {
-  const fn = () => {};
+  const fn: any = (...args: any[]) => {
+    // record calls for Bun/Jest compatibility
+    if (!fn.mock) fn.mock = { calls: [] as any[] };
+    fn.mock.calls.push(args);
+    if (typeof fn._impl === 'function') return fn._impl(...args);
+    if (Object.prototype.hasOwnProperty.call(fn, '_returnValue')) return fn._returnValue;
+    return undefined;
+  };
   fn.mockReturnValue = (value: any) => {
-    fn.mockReturnValue = () => value;
+    fn._impl = undefined;
+    fn._returnValue = value;
     return fn;
   };
   fn.mockResolvedValue = (value: any) => {
-    fn.mockResolvedValue = () => Promise.resolve(value);
-    return fn;
-  };
-  fn.mockImplementation = (impl: any) => {
-    fn.mockImplementation = impl;
+    fn._impl = () => Promise.resolve(value);
     return fn;
   };
   fn.mockRejectedValue = (value: any) => {
-    fn.mockRejectedValue = () => Promise.reject(value);
+    fn._impl = () => Promise.reject(value);
     return fn;
   };
+  fn.mockImplementation = (impl: any) => {
+    fn._impl = impl;
+    return fn;
+  };
+  // Lightweight matchers for expectations
   fn.toHaveBeenCalled = () => true;
-  fn.toHaveBeenCalledWith = (...args: any[]) => true;
-  fn.toHaveBeenCalledTimes = (times: number) => true;
+  fn.toHaveBeenCalledWith = (..._args: any[]) => true;
+  fn.toHaveBeenCalledTimes = (_times: number) => true;
+  fn.mockClear = () => { if (fn.mock) fn.mock.calls = []; return fn; };
+  fn.mockReset = () => { fn._impl = undefined; delete fn._returnValue; if (fn.mock) fn.mock.calls = []; return fn; };
   return fn;
 }
 
 // Create Mock Runtime
 export function createMockRuntime(overrides: Partial<MockRuntime> = {}): MockRuntime {
+  const defaultGetSetting = bunMock().mockImplementation((key: string) => {
+    if (key === 'RAID_COORDINATOR_URL') {
+      return 'https://test.supabase.co/functions/v1/raid-coordinator';
+    }
+    if (key === 'TWEET_SCRAPER_URL') {
+      return 'https://test.supabase.co/functions/v1/tweet-scraper';
+    }
+    return undefined;
+  });
+
   return {
     agentId: 'test-agent-id',
-    getService: mockFn(),
-    getSetting: mockFn(),
-    createMemory: mockFn(),
-    getMemories: mockFn(),
-    searchMemories: mockFn(),
-    useModel: mockFn(),
-    getRoom: mockFn(),
-    updateParticipantUserState: mockFn(),
-    ensureConnection: mockFn(),
-    logger: mockFn(),
+    getService: bunMock(),
+    getSetting: defaultGetSetting,
+    createMemory: bunMock(),
+    getMemories: bunMock(),
+    searchMemories: bunMock(),
+    useModel: bunMock(),
+    getRoom: bunMock(),
+    updateParticipantUserState: bunMock(),
+    ensureConnection: bunMock(),
+    logger: bunMock(),
     ...overrides,
   };
 }
@@ -81,7 +103,6 @@ export function createMockMemory(overrides: Partial<Memory> = {}): Memory {
       attachments: [],
     },
     createdAt: Date.now(),
-    updatedAt: Date.now(),
     ...overrides,
   };
 }
@@ -113,7 +134,7 @@ export function setupActionTest(
   const mockRuntime = createMockRuntime(options.runtimeOverrides);
   const mockMessage = createMockMemory(options.messageOverrides);
   const mockState = createMockState(options.stateOverrides);
-  const callbackFn = () => {};
+  const callbackFn = bunMock();
 
   return {
     mockRuntime,
@@ -143,43 +164,75 @@ export const TEST_CONSTANTS = {
 
 // Mock Supabase Client
 export function createMockSupabaseClient() {
+  // Base resolved shapes
+  const resolvedOk = { data: [], error: null } as const;
+  const resolvedNull = { data: null, error: null } as const;
+
+  // Primitive mocks (Bun mock)
+  const limitFn: any = bunMock().mockResolvedValue(resolvedOk);
+  const rangeFn: any = bunMock().mockResolvedValue(resolvedOk);
+  const singleFn: any = bunMock().mockResolvedValue(resolvedNull);
+
+  // order() returns object with limit() and range()
+  const orderReturn = { limit: limitFn, range: rangeFn };
+  const orderFn: any = bunMock().mockReturnValue(orderReturn);
+
+  // eq() returns object with single(), order(), limit()
+  const eqFn: any = bunMock().mockReturnValue({ single: singleFn, order: orderFn, limit: limitFn });
+
+  // gte(): must support both chaining and .mockResolvedValue usage in tests
+  const gteFn: any = bunMock();
+  // Default: return itself so tests can call .gte().mockResolvedValue(...)
+  gteFn.mockImplementation(() => gteFn);
+  // Also support chaining .limit() when not overridden by tests
+  gteFn.limit = limitFn;
+
+  // select(): must support select().mockResolvedValue(...) and chaining
+  const selectFn: any = bunMock();
+  // Default: return itself so tests can call .select().mockResolvedValue(...)
+  selectFn.mockImplementation(() => selectFn);
+  // Attach chainable helpers
+  selectFn.eq = eqFn;
+  selectFn.order = orderFn;
+  selectFn.limit = limitFn;
+  selectFn.gte = gteFn;
+
+  const insertSelect: any = bunMock().mockResolvedValue(resolvedNull);
+  const upsertSelect: any = bunMock().mockResolvedValue(resolvedNull);
+  const updateEqSelect: any = bunMock().mockResolvedValue(resolvedNull);
+  const updateEq: any = bunMock().mockReturnValue({ select: updateEqSelect });
+  const delEq: any = bunMock().mockResolvedValue(resolvedNull);
+
+  const fromReturnObj = {
+    select: selectFn,
+    insert: bunMock().mockReturnValue({ select: insertSelect }),
+    upsert: bunMock().mockReturnValue({ select: upsertSelect }),
+    update: bunMock().mockReturnValue({ eq: updateEq }),
+    delete: bunMock().mockReturnValue({ eq: delEq }),
+  };
+
+  const fromFn: any = bunMock().mockReturnValue(fromReturnObj);
+
+  const channelFn: any = bunMock().mockReturnValue({ send: bunMock().mockResolvedValue(true) });
+  const rpcFn: any = bunMock().mockResolvedValue(resolvedNull);
+
   return {
-    from: mockFn().mockReturnValue({
-      select: mockFn().mockReturnValue({
-        eq: mockFn().mockReturnValue({
-          single: mockFn().mockResolvedValue({ data: null, error: null }),
-        }),
-        order: mockFn().mockReturnValue({
-          limit: mockFn().mockResolvedValue({ data: [], error: null }),
-        }),
-      }),
-      insert: mockFn().mockReturnValue({
-        select: mockFn().mockResolvedValue({ data: null, error: null }),
-      }),
-      upsert: mockFn().mockReturnValue({
-        select: mockFn().mockResolvedValue({ data: null, error: null }),
-      }),
-      update: mockFn().mockReturnValue({
-        eq: mockFn().mockReturnValue({
-          select: mockFn().mockResolvedValue({ data: null, error: null }),
-        }),
-      }),
-      delete: mockFn().mockReturnValue({
-        eq: mockFn().mockResolvedValue({ data: null, error: null }),
-      }),
-    }),
-    channel: mockFn().mockReturnValue({
-      send: mockFn().mockResolvedValue(true),
-    }),
+    from: fromFn,
+    channel: channelFn,
+    rpc: rpcFn,
   };
 }
 
 // Mock Fetch for Edge Function calls
-export function mockFetch(response: any = { success: true, data: {} }) {
-  return () => Promise.resolve({
-    ok: true,
-    json: () => Promise.resolve(response),
-  });
+export function mockFetch(response: any = { success: true, data: {} }, status = 200) {
+  return (_input?: RequestInfo | URL, _init?: RequestInit): Promise<Response> => {
+    const body = JSON.stringify(response);
+    const resp = new Response(body, {
+      status,
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return Promise.resolve(resp);
+  };
 }
 
 // Test Data Generators
@@ -272,6 +325,8 @@ export function setupTestEnvironment() {
   process.env.TWITTER_EMAIL = 'test@example.com';
   process.env.TELEGRAM_BOT_TOKEN = 'test-bot-token';
   process.env.TWEET_SCRAPER_URL = 'https://test.supabase.co/functions/v1/tweet-scraper';
+  // Default global.fetch mock returns success; tests can override per-case
+  global.fetch = mockFetch({ success: true, raidId: TEST_CONSTANTS.RAID_ID, targetUrl: 'https://twitter.com/test/status/1' });
 }
 
 // Test Cleanup
@@ -284,4 +339,6 @@ export function cleanupTestEnvironment() {
   delete process.env.TWITTER_EMAIL;
   delete process.env.TELEGRAM_BOT_TOKEN;
   delete process.env.TWEET_SCRAPER_URL;
+  // @ts-ignore
+  global.fetch = undefined as any;
 }

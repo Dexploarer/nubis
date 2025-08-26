@@ -20,7 +20,7 @@ export const viewLeaderboardAction: Action = {
     "STANDINGS"
   ],
   validate: async (runtime: IAgentRuntime, message: Memory) => {
-    const text = message.content.text.toLowerCase();
+    const text = message.content.text?.toLowerCase() || "";
     return text.includes("leaderboard") || 
            text.includes("ranking") || 
            text.includes("rankings") ||
@@ -119,7 +119,9 @@ export const viewLeaderboardAction: Action = {
         // Empty leaderboard case
         if (callback) {
           callback({
-            text: "📊 **LEADERBOARD: AWAITING CHAMPIONS** 📊\n\n" +
+            text: "📊 **LEADERBOARD** 📊\n\n" +
+                  "No leaderboard data available yet.\n\n" +
+                  "📊 **LEADERBOARD: AWAITING CHAMPIONS** 📊\n\n" +
                   "🌟 The battlefield is empty, but that means **UNLIMITED OPPORTUNITY!** 🌟\n\n" +
                   "**🥇 BE THE FIRST LEGEND:**\n" +
                   "🎯 Start a raid by sharing a Twitter URL\n" +
