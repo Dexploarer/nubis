@@ -1,4 +1,5 @@
-import { Provider, IAgentRuntime, Memory, State, elizaLogger } from "@elizaos/core";
+import type { Provider, IAgentRuntime, Memory, State} from "@elizaos/core";
+import { elizaLogger } from "@elizaos/core";
 export class UserStatsProvider implements Provider {
   static async get(runtime: IAgentRuntime, message: Memory, state?: State) {
     // Allow class-level invocation by delegating to an instance method
@@ -10,7 +11,7 @@ export class UserStatsProvider implements Provider {
     try {
       const userId = (message as any)?.entityId;
       const service: any = runtime.getService?.("COMMUNITY_MEMORY_SERVICE");
-      if (!service || !service.supabase) {
+      if (!service?.supabase) {
         return { text: "Service not available", data: null };
       }
 

@@ -1,13 +1,13 @@
-import {
+import type {
   Action,
   IAgentRuntime,
   Memory,
   State,
   HandlerCallback,
-  elizaLogger,
-  ActionResult,
+  ActionResult
 } from "@elizaos/core";
-import { TwitterRaidService } from "../services/twitter-raid-service";
+import { elizaLogger } from "@elizaos/core";
+import type { TwitterRaidService } from "../services/twitter-raid-service";
 
 export const scrapeTweetsAction: Action = {
   name: "SCRAPE_TWEETS",

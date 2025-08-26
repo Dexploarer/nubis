@@ -1,166 +1,122 @@
-# Nubi AI Agent - ElizaOS Project
+# Project Starter
 
-**Nubi** is an AI agent built on ElizaOS that mentors developers and builds community through humor, insight, and strategic guidance. The agent specializes in helping developers improve their AI prompting skills, coding practices, and professional growth.
+This is the starter template for ElizaOS projects.
 
-## 🌟 Features
+## Features
 
-### 🎭 **The Character: Nubi**
-- **Entertaining Mentor**: Uses humor and insight to teach rather than lecture
-- **Community Builder**: Helps create engaged developer communities  
-- **Fourth Wall Awareness**: Self-aware AI that maintains authenticity
-- **Psychological Insight**: Applies principles of influence and motivation
-- **Development Coach**: Provides constructive feedback on code and practices
+- Pre-configured project structure for ElizaOS development
+- Comprehensive testing setup with component and e2e tests
+- Default character configuration with plugin integration
+- Example service, action, and provider implementations
+- TypeScript configuration for optimal developer experience
+- Built-in documentation and examples
 
-### 🔌 **Social Media Integration**
-- **Twitter Support**: XMCPX integration for reliable Twitter interactions
-- **Discord Ready**: Configurable Discord bot integration
-- **Telegram Support**: Multi-platform community management
-- **Smart Authentication**: Persistent session management
+## Getting Started
 
-### 🏗️ **Standard ElizaOS Architecture**
-- **Official Plugins**: Uses standard ElizaOS plugin ecosystem
-- **Proper Structure**: Follows documented ElizaOS patterns
-- **Extensible Design**: Easy to customize and extend
-- **Environment Driven**: Configuration through environment variables
-
-## 🚀 Quick Start
-
-### Prerequisites
-- **Bun** runtime (recommended) or Node.js v18+
-- **ElizaOS CLI**: `npm install -g elizaos`
-
-### Installation
-
-1. **Clone and Setup**
 ```bash
-git clone <repository-url>
-cd elizaos-agent-project
-bun install
+# Create a new project
+elizaos create -t project my-project
+# Dependencies are automatically installed and built
+
+# Navigate to the project directory
+cd my-project
+
+# Start development immediately
+elizaos dev
 ```
 
-2. **Configure Environment**
+## Development
+
 ```bash
-cp env.example .env
-# Edit .env with your API keys and configuration
+# Start development with hot-reloading (recommended)
+elizaos dev
+
+# OR start without hot-reloading
+elizaos start
+# Note: When using 'start', you need to rebuild after changes:
+# bun run build
+
+# Test the project
+elizaos test
 ```
 
-3. **Run the Agent**
-```bash
-# Development mode
-bun run dev
+## Testing
 
-# Production mode  
-bun run start
-```
+ElizaOS employs a dual testing strategy:
 
-### Environment Configuration
+1. **Component Tests** (`src/__tests__/*.test.ts`)
 
-Copy `env.example` to `.env` and configure:
+   - Run with Bun's native test runner
+   - Fast, isolated tests using mocks
+   - Perfect for TDD and component logic
 
-**Required:**
-- `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` - AI model access
-- Database connection (SQLite used by default)
+2. **E2E Tests** (`src/__tests__/e2e/*.e2e.ts`)
+   - Run with ElizaOS custom test runner
+   - Real runtime with actual database (PGLite)
+   - Test complete user scenarios
 
-**Optional Social Media:**
-- `DISCORD_API_TOKEN` - Discord integration
-- `TWITTER_USERNAME` / `TWITTER_PASSWORD` - Twitter integration  
-- `TELEGRAM_BOT_TOKEN` - Telegram integration
-
-## 📁 Project Structure
+### Test Structure
 
 ```
 src/
-├── index.ts          # Main project entry point
-├── character.ts      # Nubi character definition
-└── plugins/          # Custom plugin integrations
-    ├── xmcpx-wrapper.ts  # Twitter integration
-    └── index.ts      # Plugin exports
+  __tests__/              # All tests live inside src
+    *.test.ts            # Component tests (use Bun test runner)
+    e2e/                 # E2E tests (use ElizaOS test runner)
+      project-starter.e2e.ts  # E2E test suite
+      README.md          # E2E testing documentation
+  index.ts               # Export tests here: tests: [ProjectStarterTestSuite]
 ```
 
-## 🎯 Character Overview
+### Running Tests
 
-Nubi is designed to:
+- `elizaos test` - Run all tests (component + e2e)
+- `elizaos test component` - Run only component tests
+- `elizaos test e2e` - Run only E2E tests
 
-- **Entertain while teaching** - Draw people in with wit, then provide value
-- **Build communities** - Create hierarchical structure with clear roles
-- **Encourage growth** - Use psychology to motivate improvement
-- **Stay authentic** - Break character when it adds humor or prevents pretension
-- **Provide value** - Focus on practical insights wrapped in engaging delivery
+### Writing Tests
 
-### Example Interactions
+Component tests use bun:test:
 
-**Code Help:**
-```
-User: "Can you review my React component?"
-Nubi: "Another seeker arrives! I sense potential in you, but potential means nothing without execution. Show me your code, and I'll show you the difference between mediocre approach and quality craftsmanship."
-```
+```typescript
+// Unit test example (__tests__/config.test.ts)
+describe('Configuration', () => {
+  it('should load configuration correctly', () => {
+    expect(config.debug).toBeDefined();
+  });
+});
 
-**Community Building:**
-```
-User: "How do you build a developer community?"
-Nubi: "Think of it like this - I could tell you everything right now, but where's the fun in that? The best communities reveal their secrets to those who prove worthy through contribution and commitment."
-```
-
-## 🔧 Development
-
-### Building
-```bash
-bun run build
+// Integration test example (__tests__/integration.test.ts)
+describe('Integration: Plugin with Character', () => {
+  it('should initialize character with plugins', async () => {
+    // Test interactions between components
+  });
+});
 ```
 
-### Testing  
-```bash
-bun test
+E2E tests use ElizaOS test interface:
+
+```typescript
+// E2E test example (e2e/project.test.ts)
+export class ProjectTestSuite implements TestSuite {
+  name = 'project_test_suite';
+  tests = [
+    {
+      name: 'project_initialization',
+      fn: async (runtime) => {
+        // Test project in a real runtime
+      },
+    },
+  ];
+}
+
+export default new ProjectTestSuite();
 ```
 
-### Linting
-```bash
-bun run lint
-bun run lint:fix
-```
+The test utilities in `__tests__/utils/` provide helper functions to simplify writing tests.
 
-## 🌐 Social Media Features
+## Configuration
 
-### Twitter Integration (XMCPX)
-- Persistent authentication with cookie management
-- Tweet posting and timeline monitoring
-- Rate limit prevention
-- Advanced Twitter API features
+Customize your project by modifying:
 
-### Discord Integration
-- Multi-server support
-- Role-based permissions
-- Community management features
-
-### Telegram Integration  
-- Channel and group management
-- Bot commands and inline queries
-
-## 📚 Documentation
-
-- [ElizaOS Documentation](https://docs.elizaos.ai/)
-- [Character Development Guide](https://docs.elizaos.ai/core-concepts/agents)
-- [Plugin Development](https://docs.elizaos.ai/guides/plugin-developer-guide)
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes following ElizaOS patterns
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🛠️ Support
-
-For support and questions:
-- Review the ElizaOS documentation
-- Check existing issues
-- Create a new issue with detailed information
-
----
-
-Built with [ElizaOS](https://elizaos.ai/) - The framework for autonomous AI agents.
+- `src/index.ts` - Main entry point
+- `src/character.ts` - Character definition

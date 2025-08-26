@@ -49,7 +49,7 @@ interface TestStats {
 }
 
 class TestRunner {
-  private stats: TestStats = {
+  private readonly stats: TestStats = {
     total: 0,
     passed: 0,
     failed: 0,

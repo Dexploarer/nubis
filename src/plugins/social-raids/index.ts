@@ -4,7 +4,7 @@
  * community memory, and leaderboards system
  */
 
-import { Plugin } from "@elizaos/core";
+import type { Plugin } from "@elizaos/core";
 
 // Services
 import { TwitterRaidService } from "./services/twitter-raid-service";

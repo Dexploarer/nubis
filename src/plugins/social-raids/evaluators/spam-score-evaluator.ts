@@ -1,4 +1,4 @@
-import { Evaluator, IAgentRuntime, Memory, elizaLogger } from "@elizaos/core";
+import { elizaLogger, type Evaluator, type IAgentRuntime, type Memory } from "@elizaos/core";
 
 export const SpamScoreEvaluator: Evaluator = {
   name: "SPAM_SCORE",

@@ -4,10 +4,9 @@ import {
   Memory,
   State,
   HandlerCallback,
-  elizaLogger,
-  ActionResult,
-} from "@elizaos/core";
-import { CommunityMemoryService } from "../services/community-memory-service";
+  ActionResult, elizaLogger} from "@elizaos/core";
+import type { CommunityMemoryService } from "../services/community-memory-service";
+import type { SubmitEngagementResponse } from "../types";
 
 const getPointsForAction = (action: string): number => {
   const pointsMap: Record<string, number> = {
@@ -96,7 +95,7 @@ export const submitEngagementAction: Action = {
         })
       });
 
-      const result = await response.json();
+      const result = await response.json() as SubmitEngagementResponse;
 
       if (result.success) {
         const points = getPointsForAction(engagementType);

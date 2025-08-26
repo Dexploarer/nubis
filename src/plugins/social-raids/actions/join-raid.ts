@@ -1,13 +1,14 @@
 import {
-  Action,
-  IAgentRuntime,
-  Memory,
-  State,
-  HandlerCallback,
   elizaLogger,
-  ActionResult,
+  type Action,
+  type IAgentRuntime,
+  type Memory,
+  type State,
+  type HandlerCallback,
+  type ActionResult
 } from "@elizaos/core";
-import { CommunityMemoryService } from "../services/community-memory-service";
+import type { CommunityMemoryService } from "../services/community-memory-service";
+import type { JoinRaidResponse } from "../types";
 
 export const joinRaidAction: Action = {
   name: "JOIN_RAID",
@@ -69,7 +70,7 @@ export const joinRaidAction: Action = {
         })
       });
 
-      const result = await response.json();
+      const result = await response.json() as JoinRaidResponse;
 
       if (result.success) {
         // Record participation in community memory

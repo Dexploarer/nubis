@@ -104,6 +104,62 @@ export interface ApiResponse {
   message?: string;
 }
 
+// Coordinator API response shapes
+export interface StartRaidResponse {
+  success: boolean;
+  raidId?: string;
+  error?: string;
+}
+
+export interface JoinRaidResponse {
+  success: boolean;
+  raidId?: string;
+  participantNumber?: number;
+  targetUrl?: string;
+  error?: string;
+}
+
+export interface SubmitEngagementResponse {
+  success: boolean;
+  raidId?: string;
+  totalPoints?: number;
+  rank?: number;
+  rankChange?: number;
+  streak?: number;
+  bonusPoints?: number;
+  error?: string;
+}
+
+export interface LeaderboardEntry {
+  username: string;
+  total_points: number;
+  raids_participated?: number;
+  streak?: number;
+}
+
+export interface LeaderboardResponse {
+  success: boolean;
+  leaderboard: LeaderboardEntry[];
+  userRank?: number;
+  totalUsers?: number;
+  error?: string;
+}
+
+export interface RaidDetails {
+  created_at: string;
+  target_url: string;
+  status: string;
+  participant_count: number;
+  total_engagements: number;
+  points_distributed: number;
+}
+
+export interface RaidStatusResponse {
+  success: boolean;
+  raid?: RaidDetails;
+  error?: string;
+}
+
 export interface TelegramCallbackData {
   action: string;
   raidId?: string;

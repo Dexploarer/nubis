@@ -1,4 +1,4 @@
-import { Evaluator, IAgentRuntime, Memory, elizaLogger } from "@elizaos/core";
+import { Evaluator, IAgentRuntime, Memory, logger} from "@elizaos/core";
 
 function tokenize(text: string): string[] {
   return text
@@ -69,10 +69,10 @@ export const ContentRelevanceEvaluator: Evaluator = {
         }
       };
 
-      elizaLogger.debug(`Content relevance score: ${relevance.toFixed(2)}`);
+      logger.debug(`Content relevance score: ${relevance.toFixed(2)}`);
       return;
     } catch (err) {
-      elizaLogger.error("ContentRelevanceEvaluator error:", err);
+      logger.error("ContentRelevanceEvaluator error:", err);
       return;
     }
   },

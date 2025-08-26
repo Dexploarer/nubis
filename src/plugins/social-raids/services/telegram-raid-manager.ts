@@ -1,7 +1,15 @@
-import { Service, ServiceType, IAgentRuntime, elizaLogger } from "@elizaos/core";
-import { Telegraf, Context, Markup } from "telegraf";
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/prefer-readonly-parameter-types */
+import { IAgentRuntime, Service, elizaLogger} from "@elizaos/core";
+import { Context, Telegraf, Markup } from "telegraf";
 import { createClient } from "@supabase/supabase-js";
-import type { RaidStatus, TelegramCallbackData, RaidParticipant, ApiResponse } from "../types";
+import type {
+  StartRaidResponse,
+  JoinRaidResponse,
+  SubmitEngagementResponse,
+  LeaderboardResponse,
+  RaidStatusResponse
+} from "../types";
 
 interface TelegramRaidContext extends Context {
   raidData?: {
@@ -23,10 +31,10 @@ export class TelegramRaidManager extends Service {
   
   public bot: any = null;
   public supabase: any;
-  private botToken: string | null = null;
-  private channelId: string | null = null;
-  private testChannelId: string | null = null;
-  private raidCoordinatorUrl: string;
+  private readonly botToken: string | null = null;
+  private readonly channelId: string | null = null;
+  private readonly testChannelId: string | null = null;
+  private readonly raidCoordinatorUrl: string;
   private isInitialized = false;
   private passiveMode = false;
 
@@ -34,7 +42,7 @@ export class TelegramRaidManager extends Service {
     super(runtime);
     
     const supabaseUrl = runtime.getSetting("SUPABASE_URL") || process.env.SUPABASE_URL;
-    const supabaseServiceKey = runtime.getSetting("SUPABASE_SERVICE_ROLE_KEY") || process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseServiceKey = (Boolean(runtime.getSetting("SUPABASE_SERVICE_ROLE_KEY"))) || process.env.SUPABASE_SERVICE_ROLE_KEY;
     
     this.supabase = (supabaseUrl && supabaseServiceKey)
       ? createClient(supabaseUrl, supabaseServiceKey)
@@ -67,7 +75,7 @@ export class TelegramRaidManager extends Service {
     try {
       // If no bot token configured, do not initialize (graceful no-op)
       const token =
-        runtime.getSetting("TELEGRAM_RAID_BOT_TOKEN") ||
+        (Boolean(runtime.getSetting("TELEGRAM_RAID_BOT_TOKEN"))) ||
         runtime.getSetting("TELEGRAM_BOT_TOKEN");
       if (!token) {
         elizaLogger.warn(
@@ -157,7 +165,8 @@ export class TelegramRaidManager extends Service {
   // Public start method expected by tests
   async start(): Promise<void> {
     // If tests inject a mock bot with launch(), use it directly
-    if (this.bot && typeof this.bot.launch === 'function') {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if ((Boolean(this.bot)) && typeof this.bot.launch === 'function') {
       await this.bot.launch();
       this.isInitialized = true;
       return;
@@ -187,10 +196,10 @@ export class TelegramRaidManager extends Service {
       // If tests stub createRaid, prefer calling it
       const maybeCreateRaid = (this as any).createRaid;
       if (typeof maybeCreateRaid === 'function') {
-        try { await maybeCreateRaid(twitterUrl); } catch {}
+        try { await maybeCreateRaid(twitterUrl); } catch { /* empty */ }
       } else {
         // Fallback to internal handler
-        try { await this.startRaid(ctx, twitterUrl); } catch {}
+        try { await this.startRaid(ctx, twitterUrl); } catch { /* empty */ }
       }
       await ctx.reply('Raid started ✅');
       return;
@@ -202,9 +211,9 @@ export class TelegramRaidManager extends Service {
       // If tests stub joinRaid, call it; otherwise use internal join
       const maybeJoinRaid = (this as any).joinRaid;
       if (typeof maybeJoinRaid === 'function') {
-        try { await maybeJoinRaid({ sessionId }); } catch {}
+        try { await maybeJoinRaid({ sessionId }); } catch { /* empty */ }
       } else {
-        try { await this.joinRaid(ctx); } catch {}
+        try { await this.joinRaid(ctx); } catch { /* empty */ }
       }
       await ctx.reply('Joined raid ✅');
       return;
@@ -216,7 +225,7 @@ export class TelegramRaidManager extends Service {
 
   // Public notification helper expected by tests
   async sendRaidNotification(raidData: any, channel?: string): Promise<void> {
-    if (!this.bot || !this.bot.telegram) return;
+    if (!this.bot?.telegram) return;
     const targetChannel = channel || this.channelId;
     if (!targetChannel) return;
 
@@ -413,7 +422,7 @@ export class TelegramRaidManager extends Service {
         })
       });
 
-      const result = await response.json();
+      const result = await response.json() as StartRaidResponse;
       
       if (result.success) {
         const keyboard = Markup.inlineKeyboard([
@@ -452,7 +461,7 @@ export class TelegramRaidManager extends Service {
         });
 
         // Notify channel if this is a private message
-        if (ctx.chat?.type === 'private' && this.channelId) {
+        if (ctx.chat?.type === 'private' && (this.channelId != null)) {
           await this.sendChannelMessage(
             `🚨 *NEW RAID ALERT!* 🚨\n\n` +
             `${ctx.from?.first_name} started a raid!\n` +
@@ -483,7 +492,7 @@ export class TelegramRaidManager extends Service {
         })
       });
 
-      const result = await response.json();
+      const result = await response.json() as JoinRaidResponse;
       
       if (result.success) {
         await ctx.reply(
@@ -533,7 +542,7 @@ export class TelegramRaidManager extends Service {
         })
       });
 
-      const result = await response.json();
+      const result = await response.json() as SubmitEngagementResponse;
       
       if (result.success) {
         const points = this.getPointsForAction(engagementType);
@@ -567,7 +576,7 @@ export class TelegramRaidManager extends Service {
         })
       });
 
-      const result = await response.json();
+      const result = await response.json() as RaidStatusResponse;
       
       if (result.success && result.raid) {
         const raid = result.raid;
@@ -630,7 +639,7 @@ export class TelegramRaidManager extends Service {
     }
   }
 
-  private async showLeaderboard(ctx: Context, period: string = 'all'): Promise<void> {
+  private async showLeaderboard(ctx: Context, period = 'all'): Promise<void> {
     try {
       const response = await fetch(this.raidCoordinatorUrl, {
         method: 'POST',
@@ -641,7 +650,7 @@ export class TelegramRaidManager extends Service {
         })
       });
 
-      const result = await response.json();
+      const result = await response.json() as LeaderboardResponse;
       
       if (result.success && result.leaderboard && result.leaderboard.length > 0) {
         let leaderboardText = `🏆 *COMMUNITY LEADERBOARD* 🏆\n\n`;

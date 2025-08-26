@@ -1,4 +1,5 @@
-import { Evaluator, IAgentRuntime, Memory, elizaLogger } from "@elizaos/core";
+import type { Evaluator, IAgentRuntime, Memory } from "@elizaos/core";
+import { elizaLogger } from "@elizaos/core";
 
 interface RecentEngagement {
   actionType?: string;

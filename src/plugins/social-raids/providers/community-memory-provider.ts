@@ -1,4 +1,5 @@
-import { Provider, IAgentRuntime, Memory, State, elizaLogger } from "@elizaos/core";
+import type { Provider, IAgentRuntime, Memory, State} from "@elizaos/core";
+import { elizaLogger } from "@elizaos/core";
 
 export class CommunityMemoryProvider implements Provider {
   static async get(runtime: IAgentRuntime, message: Memory, state?: State) {
@@ -11,7 +12,7 @@ export class CommunityMemoryProvider implements Provider {
     try {
       const userId = (message as any)?.entityId ?? 'unknown-user';
       const service: any = runtime.getService?.("COMMUNITY_MEMORY_SERVICE");
-      if (!service || !service.supabase) {
+      if (!service?.supabase) {
         return { text: "Service not available", data: { personality: null, memoryFragments: [] } };
       }
 

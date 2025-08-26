@@ -1,4 +1,5 @@
-import { Service, ServiceType, IAgentRuntime, elizaLogger } from "@elizaos/core";
+import type { IAgentRuntime} from "@elizaos/core";
+import { Service, ServiceType, elizaLogger } from "@elizaos/core";
 import { createClient } from "@supabase/supabase-js";
 import * as cron from "node-cron";
 import type { CommunityInteraction, UserStats } from "../types";
@@ -43,8 +44,8 @@ export class CommunityMemoryService extends Service {
   capabilityDescription = "Manages community memory, user personalities, and engagement tracking";
   
   public supabase: any;
-  private memoryCache = new Map<string, MemoryFragment[]>();
-  private personalityCache = new Map<string, UserPersonality>();
+  private readonly memoryCache = new Map<string, MemoryFragment[]>();
+  private readonly personalityCache = new Map<string, UserPersonality>();
 
   constructor(runtime: IAgentRuntime) {
     super(runtime);
@@ -356,7 +357,7 @@ export class CommunityMemoryService extends Service {
     };
   }
 
-  async getUserMemories(userId: string, limit: number = 50): Promise<MemoryFragment[]> {
+  async getUserMemories(userId: string, limit = 50): Promise<MemoryFragment[]> {
     try {
       // Check cache first
       if (this.memoryCache.has(userId)) {
@@ -534,7 +535,7 @@ export class CommunityMemoryService extends Service {
     }
   }
 
-  async getTopContributors(limit: number = 10): Promise<UserStats[]> {
+  async getTopContributors(limit = 10): Promise<UserStats[]> {
     try {
       const { data, error } = await this.supabase
         .from('users')
@@ -606,26 +607,26 @@ export class CommunityMemoryService extends Service {
   }
 
   // Retrieve leaderboard with optional pagination
-  async getLeaderboard(limit: number = 10, offset?: number): Promise<any[]> {
+  async getLeaderboard(limit = 10, offset?: number): Promise<any[]> {
     try {
       const base = this.supabase.from('leaderboards').select('*');
       // If select() returned a Promise result (as some tests mock), handle it directly
-      if (base && typeof (base as any).then === 'function') {
-        const { data, error } = await (base as any);
+      if (base && typeof (base).then === 'function') {
+        const { data, error } = await (base);
         if (error) throw new Error(error.message || String(error));
         return data || [];
       }
 
       // Otherwise, proceed with chainable query
-      let query = (base as any).order('total_points', { ascending: false });
+      const query = (base).order('total_points', { ascending: false });
 
       if (typeof offset === 'number') {
         const to = offset + Math.max(0, limit) - 1;
-        const { data, error } = await (query as any).range(offset, to);
+        const { data, error } = await (query).range(offset, to);
         if (error) throw new Error(error.message || String(error));
         return data || [];
       } else {
-        const { data, error } = await (query as any).limit(limit);
+        const { data, error } = await (query).limit(limit);
         if (error) throw new Error(error.message || String(error));
         return data || [];
       }
@@ -655,7 +656,7 @@ export class CommunityMemoryService extends Service {
   }
 
   // Retrieve memory fragments for a user
-  async getMemoryFragments(userId: string, limit: number = 10): Promise<any[]> {
+  async getMemoryFragments(userId: string, limit = 10): Promise<any[]> {
     try {
       const { data, error } = await this.supabase
         .from('memory_fragments')
@@ -672,22 +673,22 @@ export class CommunityMemoryService extends Service {
   }
 
   // Compute simple community insights
-  async getCommunityInsights(sinceDays: number = 7): Promise<any> {
+  async getCommunityInsights(sinceDays = 7): Promise<any> {
     try {
       let query: any = this.supabase.from('community_interactions').select('*');
 
       if (sinceDays && sinceDays > 0) {
         const since = new Date(Date.now() - sinceDays * 24 * 60 * 60 * 1000).toISOString();
-        query = (query as any).gte('timestamp', since);
+        query = (query).gte('timestamp', since);
       }
 
       let result: any;
-      if (query && typeof (query as any).then === 'function') {
+      if (query && typeof (query).then === 'function') {
         // Tests may mock gte() to resolve directly
         result = await query;
       } else {
         // Reasonable upper bound for tests (also allows mocked .limit chains)
-        result = await (query as any).limit(1000);
+        result = await (query).limit(1000);
       }
 
       const { data, error } = result || {};

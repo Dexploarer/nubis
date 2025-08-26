@@ -1,4 +1,4 @@
-import { Evaluator, IAgentRuntime, Memory, elizaLogger } from "@elizaos/core";
+import { elizaLogger, type Evaluator, type IAgentRuntime, type Memory } from "@elizaos/core";
 
 interface EngagementLike {
   raidId?: string;
@@ -11,6 +11,7 @@ function toDate(d?: string | Date): Date | null {
   try { return d instanceof Date ? d : new Date(d); } catch { return null; }
 }
 
+// eslint-disable-next-line @typescript-eslint/prefer-readonly-parameter-types
 function coefOfVariation(values: number[]): number {
   if (values.length === 0) return 1;
   const mean = values.reduce((a, b) => a + b, 0) / values.length;
@@ -25,7 +26,7 @@ export const ParticipationConsistencyEvaluator: Evaluator = {
   similes: ["CONSISTENCY_EVALUATOR", "PARTICIPATION_VARIANCE", "ENGAGEMENT_STABILITY"],
   description: "Flags inconsistencies in a user’s engagement patterns across sessions",
   validate: async (_runtime: IAgentRuntime, message: Memory): Promise<boolean> => {
-    const text = (message.content?.text || "").toLowerCase();
+    const text = (message.content?.text ?? "").toLowerCase();
     const history = (message.content as any)?.engagementHistory || (message.content as any)?.userEngagements || [];
     return text.includes("raid") || text.includes("engage") || Array.isArray(history);
   },

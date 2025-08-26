@@ -1,13 +1,13 @@
-import { Evaluator, IAgentRuntime, Memory, elizaLogger, type State } from "@elizaos/core";
+import { State, Evaluator, IAgentRuntime, Memory, elizaLogger} from "@elizaos/core";
 
-type EngagementData = {
+interface EngagementData {
   actionType?: string;
   raidId?: string;
   userId?: string;
   timestamp?: Date | string | number;
   evidence?: any;
   suspiciousPatterns?: string[];
-};
+}
 
 export class EngagementQualityEvaluator implements Evaluator {
   name = "ENGAGEMENT_QUALITY";
@@ -68,7 +68,7 @@ export class EngagementQualityEvaluator implements Evaluator {
       }
 
       const suspicious = Array.isArray(engagement.suspiciousPatterns)
-        ? engagement.suspiciousPatterns!
+        ? engagement.suspiciousPatterns
         : [];
 
       let score = this.calculateQualityScore(engagement);
@@ -127,7 +127,7 @@ export class EngagementQualityEvaluator implements Evaluator {
       score += 0.2;
     }
 
-    if (Array.isArray(engagement.suspiciousPatterns) && engagement.suspiciousPatterns!.length > 0) {
+    if (Array.isArray(engagement.suspiciousPatterns) && engagement.suspiciousPatterns.length > 0) {
       score -= 0.3; // stronger penalty to satisfy unit tests
     }
 
@@ -164,12 +164,12 @@ export class EngagementQualityEvaluator implements Evaluator {
     const isUrl = (u: string) => typeof u === "string" && /^https?:\/\//.test(u);
     if (typeof evidence === "string") return true;
     if (typeof evidence === "object") {
-      const type = String((evidence as any).type || "").toLowerCase();
+      const type = String((evidence).type || "").toLowerCase();
       if (type === "screenshot") {
-        return isUrl((evidence as any).url);
+        return isUrl((evidence).url);
       }
       if (type === "video") {
-        return isUrl((evidence as any).url) && Number((evidence as any).duration || 0) > 0;
+        return isUrl((evidence).url) && Number((evidence).duration || 0) > 0;
       }
     }
     return false;

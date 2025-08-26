@@ -1,13 +1,13 @@
 import {
-  Action,
-  IAgentRuntime,
-  Memory,
-  State,
-  HandlerCallback,
-  elizaLogger,
-  ActionResult,
-} from "@elizaos/core";
-import { CommunityMemoryService } from "../services/community-memory-service";
+  type Action,
+  type IAgentRuntime,
+  type Memory,
+  type State,
+  type HandlerCallback,
+  type ActionResult,
+  elizaLogger} from "@elizaos/core";
+import type { CommunityMemoryService } from "../services/community-memory-service";
+import type { StartRaidResponse } from "../types";
 
 export const startRaidAction: Action = {
   name: "START_RAID",
@@ -82,7 +82,7 @@ export const startRaidAction: Action = {
         })
       });
 
-      const result = await response.json();
+      const result = await response.json() as StartRaidResponse;
 
       if (result.success) {
         // Record the raid initiation in community memory (guard missing method in tests)

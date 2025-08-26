@@ -1,0 +1,5 @@
+---
+description:never use the twtitter API, only the credentials as password and email. and cookies Auth
+globs:
+alwaysApply: true
+---

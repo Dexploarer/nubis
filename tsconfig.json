@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": ".",
-    "lib": ["ESNext", "DOM"],
-    "target": "ES2020",
+    "rootDir": "..",
+    "lib": ["ESNext"],
+    "target": "ESNext",
     "module": "Preserve",
     "moduleResolution": "Bundler",
     "strict": true,
@@ -21,17 +21,24 @@
     "noEmitOnError": false,
     "moduleDetection": "force",
     "allowArbitraryExtensions": true,
-    "downlevelIteration": true,
     "baseUrl": ".",
-    "typeRoots": ["./types", "./node_modules/@types"]
-    ,
-    "types": []
+    "rootDirs": [
+      ".",
+      "../project/src"
+    ],
+    "paths": {
+      "@elizaos/core": ["../../core/src"],
+      "@elizaos/core/*": ["../../core/src/*"]
+    }
   },
-  "include": ["src/**/*.ts", "types/**/*.d.ts"],
+  "include": [
+    "src/**/*.ts",
+    "types/**/*.d.ts"
+  ],
   "exclude": [
     "dist",
     "node_modules",
-    "src/__tests__/**/*",
+    "src/**/__tests__/**/*",
     "src/**/cypress/**/*",
     "**/*.test.ts",
     "**/*.spec.ts"

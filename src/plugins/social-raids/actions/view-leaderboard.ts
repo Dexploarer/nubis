@@ -1,12 +1,12 @@
-import {
+import type {
   Action,
   IAgentRuntime,
   Memory,
   State,
   HandlerCallback,
-  elizaLogger,
-  ActionResult,
-} from "@elizaos/core";
+  ActionResult} from "@elizaos/core";
+import { elizaLogger} from "@elizaos/core";
+import type { LeaderboardResponse } from "../types";
 
 export const viewLeaderboardAction: Action = {
   name: "VIEW_LEADERBOARD",
@@ -55,7 +55,7 @@ export const viewLeaderboardAction: Action = {
         })
       });
 
-      const result = await response.json();
+      const result = await response.json() as LeaderboardResponse;
 
       if (result.success && result.leaderboard && result.leaderboard.length > 0) {
         // Build leaderboard display
@@ -149,7 +149,7 @@ export const viewLeaderboardAction: Action = {
       elizaLogger.error("View leaderboard action failed:", error);
       
       if (callback) {
-        callback({
+        await callback({
           text: "⚠️ **LEADERBOARD TEMPORARILY OFFLINE** ⚠️\n\n" +
                 "Our ranking systems are having a moment! 📊⚙️\n\n" +
                 "**While we're fixing things:**\n" +

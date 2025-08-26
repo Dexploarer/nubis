@@ -339,6 +339,6 @@ export function cleanupTestEnvironment() {
   delete process.env.TWITTER_EMAIL;
   delete process.env.TELEGRAM_BOT_TOKEN;
   delete process.env.TWEET_SCRAPER_URL;
-  // @ts-ignore
+  // @ts-expect-error
   global.fetch = undefined as any;
 }

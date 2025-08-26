@@ -1,4 +1,5 @@
-import { Service, ServiceType, IAgentRuntime, elizaLogger } from "@elizaos/core";
+import type { IAgentRuntime} from "@elizaos/core";
+import { Service, ServiceType, elizaLogger } from "@elizaos/core";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import type { Scraper } from "agent-twitter-client";
 import * as fs from "fs";
@@ -14,7 +15,7 @@ export class TwitterRaidService extends Service {
   public scraper: Scraper | null = null;
   public isAuthenticated = false;
   public twitterConfig: TwitterAuthConfig | null = null;
-  private raidCoordinatorUrl: string;
+  private readonly raidCoordinatorUrl: string;
 
   constructor(runtime: IAgentRuntime) {
     super(runtime);
@@ -101,7 +102,7 @@ export class TwitterRaidService extends Service {
         ? (global as any).import
         : (s: string) => import(s);
       const mod = await dynamicImport("agent-twitter-client");
-      const Impl = (mod as any).Scraper || (undefined as unknown as Scraper);
+      const Impl = (mod).Scraper || (undefined as unknown as Scraper);
       this.scraper = new Impl();
       await this.authenticateTwitter();
       return this.isAuthenticated;
@@ -282,7 +283,7 @@ export class TwitterRaidService extends Service {
     }
   }
 
-  async exportTweets(username: string, count: number = 100, skipCount: number = 0): Promise<TweetData[]> {
+  async exportTweets(username: string, count = 100, skipCount = 0): Promise<TweetData[]> {
     try {
       elizaLogger.info(`Exporting ${count} tweets from @${username} (skipping ${skipCount})`);
 
