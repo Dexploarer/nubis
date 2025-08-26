@@ -715,6 +715,7 @@ export class CommunityMemoryService extends Service {
     this.personalityCache.clear();
     elizaLogger.info("Community Memory Service stopped");
   }
+<<<<<<< HEAD
 
   // Minimal no-op Supabase client to avoid runtime errors when env is missing
   private createNoopSupabase(): any {
@@ -740,3 +741,6 @@ export class CommunityMemoryService extends Service {
 
 // Ensure the class constructor reports the expected static identifier when accessed as `.name`
 Object.defineProperty(CommunityMemoryService, 'name', { value: CommunityMemoryService.serviceType });
+=======
+}
+>>>>>>> fdc97d12f583e42cb328455d4cd828b34ac4f757

@@ -19,7 +19,11 @@ export const joinRaidAction: Action = {
     "COUNT_ME_IN"
   ],
   validate: async (runtime: IAgentRuntime, message: Memory) => {
+<<<<<<< HEAD
     const text = message.content?.text?.toLowerCase() || '';
+=======
+    const text = message.content.text?.toLowerCase() || '';
+>>>>>>> fdc97d12f583e42cb328455d4cd828b34ac4f757
     return text.includes("join raid") || 
            text.includes("participate") ||
            text.includes("count me in") ||
@@ -63,9 +67,14 @@ export const joinRaidAction: Action = {
         body: JSON.stringify({
           action: 'join_raid',
           userId: message.entityId,
+<<<<<<< HEAD
           username: message.content?.source || "user",
           platform: 'elizaos',
           sessionId,
+=======
+          username: message.content.source || "user",
+          platform: 'elizaos'
+>>>>>>> fdc97d12f583e42cb328455d4cd828b34ac4f757
         })
       });
 
@@ -78,7 +87,11 @@ export const joinRaidAction: Action = {
           await (memoryService as any).recordInteraction({
             id: crypto.randomUUID(),
             userId: message.entityId,
+<<<<<<< HEAD
             username: message.content?.source || "user",
+=======
+            username: message.content.source || "user",
+>>>>>>> fdc97d12f583e42cb328455d4cd828b34ac4f757
             interactionType: 'raid_participation',
             content: 'Joined active raid',
             context: { raidId: result.raidId, participantNumber: result.participantNumber },

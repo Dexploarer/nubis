@@ -77,7 +77,11 @@ export const startRaidAction: Action = {
           action: 'start_raid',
           twitterUrl: twitterUrl,
           userId: message.entityId,
+<<<<<<< HEAD
           username: message.content?.source || runtime.character?.name || "agent",
+=======
+          username: message.content.source || runtime.character?.name || "agent",
+>>>>>>> fdc97d12f583e42cb328455d4cd828b34ac4f757
           platform: 'elizaos'
         })
       });
@@ -91,7 +95,11 @@ export const startRaidAction: Action = {
           await (memoryService as any).recordInteraction({
             id: crypto.randomUUID(),
             userId: message.entityId,
+<<<<<<< HEAD
             username: message.content?.source || "user",
+=======
+            username: message.content.source || "user",
+>>>>>>> fdc97d12f583e42cb328455d4cd828b34ac4f757
             interactionType: 'raid_initiation',
             content: `Started raid for: ${twitterUrl}`,
             context: { twitterUrl, raidId: result.raidId, platform: 'elizaos' },
