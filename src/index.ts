@@ -6,6 +6,29 @@ import { getEnabledPlugins } from './plugins/index.js';
 // Get character based on environment configuration
 const character = getCharacter(config.CHARACTER_NAME);
 
+// Bootstrap LLM-related environment variables at module load so providers see them early
+if (config.OPENAI_BASE_URL && !process.env.OPENAI_BASE_URL) {
+  process.env.OPENAI_BASE_URL = config.OPENAI_BASE_URL;
+}
+if (config.OPENAI_BASE_URL && !process.env.OPENAI_API_BASE_URL) {
+  process.env.OPENAI_API_BASE_URL = config.OPENAI_BASE_URL;
+}
+if (config.OPENAI_API_KEY && !process.env.OPENAI_API_KEY) {
+  process.env.OPENAI_API_KEY = config.OPENAI_API_KEY;
+}
+if ((config as any).DEFAULT_MODEL && !process.env.DEFAULT_MODEL) {
+  process.env.DEFAULT_MODEL = (config as any).DEFAULT_MODEL as string;
+}
+if (process.env.DEFAULT_MODEL && !process.env.OPENAI_MODEL) {
+  process.env.OPENAI_MODEL = process.env.DEFAULT_MODEL;
+}
+if (process.env.DEFAULT_MODEL && !process.env.MODEL) {
+  process.env.MODEL = process.env.DEFAULT_MODEL;
+}
+if ((config as any).FALLBACK_MODEL && !process.env.FALLBACK_MODEL) {
+  process.env.FALLBACK_MODEL = (config as any).FALLBACK_MODEL as string;
+}
+
 // Get enabled plugins based on configuration
 const enabledPlugins = getEnabledPlugins();
 

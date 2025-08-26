@@ -43,7 +43,6 @@ export const socialRaidsPlugin: Plugin = {
   ],
   
   providers: [
-<<<<<<< HEAD
     new RaidStatusProvider(),
     new UserStatsProvider(),
     new CommunityMemoryProvider()
@@ -51,15 +50,6 @@ export const socialRaidsPlugin: Plugin = {
   
   evaluators: [
     new EngagementQualityEvaluator(),
-=======
-    RaidStatusProvider,
-    UserStatsProvider,
-    CommunityMemoryProvider
-  ],
-  
-  evaluators: [
-    EngagementQualityEvaluator,
->>>>>>> fdc97d12f583e42cb328455d4cd828b34ac4f757
     SpamScoreEvaluator,
     ContentRelevanceEvaluator,
     ParticipationConsistencyEvaluator,

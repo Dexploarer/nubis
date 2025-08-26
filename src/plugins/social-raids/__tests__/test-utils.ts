@@ -1,9 +1,5 @@
 // @ts-nocheck
-<<<<<<< HEAD
 import { describe, expect, it, beforeEach, afterEach, mock as bunMock } from 'bun:test';
-=======
-import { describe, expect, it, beforeEach, afterEach } from 'bun:test';
->>>>>>> fdc97d12f583e42cb328455d4cd828b34ac4f757
 import {
   type IAgentRuntime,
   type Memory,

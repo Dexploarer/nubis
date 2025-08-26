@@ -16,7 +16,11 @@ export const configSchema = z.object({
   
   // AI Model configuration (at least one required)
   OPENAI_API_KEY: z.string().optional(),
+  OPENAI_BASE_URL: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
+  // Model selection
+  DEFAULT_MODEL: z.string().default('llama3.3-70b-instruct'),
+  FALLBACK_MODEL: z.string().default('llama3-8b-instruct'),
   
   // Database
   DATABASE_URL: z.string().default('sqlite://./data/agent.db'),
@@ -49,7 +53,10 @@ export function validateConfig(): AppConfig {
       NODE_ENV: process.env.NODE_ENV,
       LOG_LEVEL: process.env.LOG_LEVEL,
       OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+      OPENAI_BASE_URL: process.env.OPENAI_BASE_URL ?? process.env.OPENAI_API_BASE_URL,
       ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+      DEFAULT_MODEL: process.env.DEFAULT_MODEL,
+      FALLBACK_MODEL: process.env.FALLBACK_MODEL,
       DATABASE_URL: process.env.DATABASE_URL,
       DISCORD_API_TOKEN: process.env.DISCORD_API_TOKEN,
       DISCORD_APPLICATION_ID: process.env.DISCORD_APPLICATION_ID,

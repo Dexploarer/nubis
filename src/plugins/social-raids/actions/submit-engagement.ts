@@ -90,11 +90,7 @@ export const submitEngagementAction: Action = {
         body: JSON.stringify({
           action: 'submit_engagement',
           userId: message.entityId,
-<<<<<<< HEAD
           username: message.content?.source || "user",
-=======
-          username: message.content.source || "user",
->>>>>>> fdc97d12f583e42cb328455d4cd828b34ac4f757
           engagementType: engagementType,
           platform: 'elizaos'
         })
@@ -112,11 +108,7 @@ export const submitEngagementAction: Action = {
           await memoryService.recordInteraction({
             id: crypto.randomUUID(),
             userId: message.entityId,
-<<<<<<< HEAD
             username: message.content?.source || "user",
-=======
-            username: message.content.source || "user",
->>>>>>> fdc97d12f583e42cb328455d4cd828b34ac4f757
             interactionType: 'quality_engagement',
             content: `Submitted ${engagementType} engagement`,
             context: { engagementType, points, raidId: result.raidId },
