@@ -2,8 +2,8 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": ".",
-    "lib": ["ESNext"],
-    "target": "ES2015",
+    "lib": ["ESNext", "DOM"],
+    "target": "ES2020",
     "module": "Preserve",
     "moduleResolution": "Bundler",
     "strict": true,
@@ -23,12 +23,11 @@
     "allowArbitraryExtensions": true,
     "downlevelIteration": true,
     "baseUrl": ".",
-    "paths": {
-      "@elizaos/core": ["../../core/src"],
-      "@elizaos/core/*": ["../../core/src/*"]
-    }
+    "typeRoots": ["./types", "./node_modules/@types"]
+    ,
+    "types": []
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "types/**/*.d.ts"],
   "exclude": [
     "dist",
     "node_modules",

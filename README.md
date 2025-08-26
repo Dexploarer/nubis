@@ -1,117 +1,166 @@
-# ElizaOS Agent Hub - Simplified Structure
+# Nubi AI Agent - ElizaOS Project
 
-This is a clean, simple ElizaOS project that demonstrates how to create and manage multiple character agents without overcomplicating things.
+**Nubi** is an AI agent built on ElizaOS that mentors developers and builds community through humor, insight, and strategic guidance. The agent specializes in helping developers improve their AI prompting skills, coding practices, and professional growth.
 
-## 🏗️ Project Structure
+## 🌟 Features
 
-```
-src/
-├── characters/           # All your character agents
-│   ├── index.ts         # Characters registry
-│   ├── example-agent.ts # Example character implementation
-│   ├── community-manager.ts # Community management character
-│   └── nubi/            # Advanced Nubi character with full functionality
-│       ├── index.ts     # Nubi character exports
-│       └── nubi-character.ts # Complete Nubi character definition
-├── plugins/              # Custom plugins (only if needed)
-│   └── index.ts         # Plugins registry
-├── templates/            # Custom templates for characters
-│   └── nubi-templates.ts # Nubi-specific templates
-├── knowledge/            # Knowledge base files
-│   ├── ancient-egyptian-wisdom.txt
-│   └── community-management-best-practices.md
-└── index.ts             # Main entry point
-```
+### 🎭 **The Character: Nubi**
+- **Entertaining Mentor**: Uses humor and insight to teach rather than lecture
+- **Community Builder**: Helps create engaged developer communities  
+- **Fourth Wall Awareness**: Self-aware AI that maintains authenticity
+- **Psychological Insight**: Applies principles of influence and motivation
+- **Development Coach**: Provides constructive feedback on code and practices
+
+### 🔌 **Social Media Integration**
+- **Twitter Support**: XMCPX integration for reliable Twitter interactions
+- **Discord Ready**: Configurable Discord bot integration
+- **Telegram Support**: Multi-platform community management
+- **Smart Authentication**: Persistent session management
+
+### 🏗️ **Standard ElizaOS Architecture**
+- **Official Plugins**: Uses standard ElizaOS plugin ecosystem
+- **Proper Structure**: Follows documented ElizaOS patterns
+- **Extensible Design**: Easy to customize and extend
+- **Environment Driven**: Configuration through environment variables
 
 ## 🚀 Quick Start
 
-### 1. Start the Project
+### Prerequisites
+- **Bun** runtime (recommended) or Node.js v18+
+- **ElizaOS CLI**: `npm install -g elizaos`
+
+### Installation
+
+1. **Clone and Setup**
 ```bash
-elizaos dev
+git clone <repository-url>
+cd elizaos-agent-project
+bun install
 ```
 
-### 2. Access Your Agents
-- Web Interface: http://localhost:3000
-- CLI: `elizaos agent list`
-
-## 📝 Adding New Characters
-
-### Simple Character (Recommended)
-```typescript
-// src/characters/my-agent.ts
-import type { Character } from "@elizaos/core";
-
-export function getMyAgent(): Character {
-  return {
-    name: "My Agent",
-    bio: ["A helpful AI assistant"],
-    topics: ["general assistance"],
-    plugins: ["@elizaos/plugin-bootstrap"],
-    // ... other properties
-  };
-}
+2. **Configure Environment**
+```bash
+cp env.example .env
+# Edit .env with your API keys and configuration
 ```
 
-### Advanced Character (Nubi Example)
-The Nubi character demonstrates advanced ElizaOS capabilities:
-- **Full Plugin Integration**: Uses all major official plugins
-- **Custom Templates**: Advanced message handling and post creation
-- **Knowledge Base**: Ancient wisdom and community management best practices
-- **Multi-Platform**: Discord, Telegram, Twitter, and web integration
-- **Advanced Features**: MCP integration, web search, browser capabilities
+3. **Run the Agent**
+```bash
+# Development mode
+bun run dev
 
-### Register Your Character
-```typescript
-// src/characters/index.ts
-import { getMyAgent } from './my-agent';
-
-export const characters = {
-  'Example Agent': getExampleAgent(),
-  'My Agent': getMyAgent(), // Add your character here
-};
+# Production mode  
+bun run start
 ```
 
-## 🔌 Using Official Plugins
+### Environment Configuration
 
-This project uses the actual official ElizaOS plugins from the [official plugin registry](https://github.com/elizaos-plugins/registry):
+Copy `env.example` to `.env` and configure:
 
-- **@elizaos/plugin-bootstrap** - Essential for basic functionality
-- **@elizaos/plugin-sql** - Database support
-- **@elizaos/plugin-openai** - OpenAI integration
-- **@elizaos/plugin-discord** - Discord integration
-- **@elizaos/plugin-telegram** - Telegram integration
-- **@elizaos/plugin-twitter** - Twitter/X integration
-- **@elizaos/plugin-knowledge** - Knowledge management
-- **@elizaos/plugin-mcp** - Model Context Protocol
-- **@elizaos/plugin-web-search** - Web search capabilities
-- **@elizaos/plugin-browser** - Browser capabilities for web scraping
+**Required:**
+- `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` - AI model access
+- Database connection (SQLite used by default)
 
-## 🎯 Best Practices
+**Optional Social Media:**
+- `DISCORD_API_TOKEN` - Discord integration
+- `TWITTER_USERNAME` / `TWITTER_PASSWORD` - Twitter integration  
+- `TELEGRAM_BOT_TOKEN` - Telegram integration
 
-1. **Keep it Simple**: Start with basic character properties, add complexity as needed
-2. **Use Standard Plugins**: Leverage ElizaOS built-ins before creating custom ones
-3. **Focus on Character**: Spend time on personality, not infrastructure
-4. **Iterate**: Build, test, refine - don't over-engineer upfront
+## 📁 Project Structure
 
-## 📚 Resources
+```
+src/
+├── index.ts          # Main project entry point
+├── character.ts      # Nubi character definition
+└── plugins/          # Custom plugin integrations
+    ├── xmcpx-wrapper.ts  # Twitter integration
+    └── index.ts      # Plugin exports
+```
 
-- [ElizaOS Documentation](https://elizaos.dev)
-- [Character Interface Reference](https://elizaos.dev/docs/character)
-- [Plugin Development Guide](https://elizaos.dev/docs/plugins)
+## 🎯 Character Overview
 
-## 🧹 Cleanup
+Nubi is designed to:
 
-The old complex structure has been removed. You now have:
-- ✅ Clean, focused character definitions
-- ✅ Simple plugin system (only if needed)
-- ✅ Standard ElizaOS project structure
-- ✅ Easy to extend and maintain
+- **Entertain while teaching** - Draw people in with wit, then provide value
+- **Build communities** - Create hierarchical structure with clear roles
+- **Encourage growth** - Use psychology to motivate improvement
+- **Stay authentic** - Break character when it adds humor or prevents pretension
+- **Provide value** - Focus on practical insights wrapped in engaging delivery
 
-## 🎉 Next Steps
+### Example Interactions
 
-1. **Customize the Example Agent**: Modify `src/characters/example-agent.ts`
-2. **Add Your Characters**: Create new character files in `src/characters/`
-3. **Test and Iterate**: Use `elizaos dev` to test your agents
-4. **Deploy**: When ready, use `elizaos start` for production
+**Code Help:**
+```
+User: "Can you review my React component?"
+Nubi: "Another seeker arrives! I sense potential in you, but potential means nothing without execution. Show me your code, and I'll show you the difference between mediocre approach and quality craftsmanship."
+```
 
-Remember: **Simple is better than complex**. ElizaOS handles the hard parts - you focus on your characters!
+**Community Building:**
+```
+User: "How do you build a developer community?"
+Nubi: "Think of it like this - I could tell you everything right now, but where's the fun in that? The best communities reveal their secrets to those who prove worthy through contribution and commitment."
+```
+
+## 🔧 Development
+
+### Building
+```bash
+bun run build
+```
+
+### Testing  
+```bash
+bun test
+```
+
+### Linting
+```bash
+bun run lint
+bun run lint:fix
+```
+
+## 🌐 Social Media Features
+
+### Twitter Integration (XMCPX)
+- Persistent authentication with cookie management
+- Tweet posting and timeline monitoring
+- Rate limit prevention
+- Advanced Twitter API features
+
+### Discord Integration
+- Multi-server support
+- Role-based permissions
+- Community management features
+
+### Telegram Integration  
+- Channel and group management
+- Bot commands and inline queries
+
+## 📚 Documentation
+
+- [ElizaOS Documentation](https://docs.elizaos.ai/)
+- [Character Development Guide](https://docs.elizaos.ai/core-concepts/agents)
+- [Plugin Development](https://docs.elizaos.ai/guides/plugin-developer-guide)
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes following ElizaOS patterns
+4. Test thoroughly
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🛠️ Support
+
+For support and questions:
+- Review the ElizaOS documentation
+- Check existing issues
+- Create a new issue with detailed information
+
+---
+
+Built with [ElizaOS](https://elizaos.ai/) - The framework for autonomous AI agents.

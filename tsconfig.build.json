@@ -9,6 +9,9 @@
     "emitDeclarationOnly": true
   },
   "include": ["src/index.ts", "src/plugin.ts", "src/frontend/**/*.ts", "src/frontend/**/*.tsx"],
+  "files": [
+    "types/node-shim.d.ts"
+  ],
   "exclude": [
     "node_modules",
     "dist",

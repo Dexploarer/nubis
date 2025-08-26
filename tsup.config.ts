@@ -7,7 +7,7 @@ export default defineConfig({
   sourcemap: true,
   clean: false,
   format: ['esm'], // Ensure you're targeting CommonJS
-  dts: true, // require DTS so we get d.ts in the dist folder on npm
+  dts: false, // disable DTS for test/build order to avoid Node typings requirement
   external: [
     'dotenv', // Externalize dotenv to prevent bundling
     'fs', // Externalize fs to use Node.js built-in module
