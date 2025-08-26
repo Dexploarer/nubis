@@ -71,7 +71,7 @@ export function validateConfig(): AppConfig {
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw new Error(
-        `Invalid configuration: ${error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`
+        `Invalid configuration: ${error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')}`
       );
     }
     throw error;

@@ -1,0 +1,22 @@
+# Example Matrix for runtime template switching using parameter overrides
+# Keep a single base character (e.g., src/characters/nubi.ts) and vary via parameters.
+
+matrix:
+  - parameter: 'character.llm.model'
+    values: ['gpt-4o', 'claude-3-5-sonnet']
+  - parameter: 'character.temperature'
+    values: [0.1, 0.5, 0.9]
+  - parameter: 'plugins[2]'
+    values: [
+      null,
+      '@elizaos/plugin-discord'
+    ]
+  - parameter: 'settings.voice.model'
+    values: ['en_US-hfc_female-medium', 'en_US-hfc_male-medium']
+
+# Optional: per-run input override example (if your runner supports it)
+# - parameter: 'run[0].input'
+#   values: [
+#     'Give me a short engaging intro post about debugging best practices',
+#     'Explain how to structure plugin services with ElizaOS patterns'
+#   ]

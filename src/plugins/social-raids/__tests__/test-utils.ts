@@ -1,4 +1,4 @@
-import { describe, expect, it, mock, beforeEach, afterEach, spyOn } from 'bun:test';
+import { describe, expect, it, beforeEach, afterEach } from 'bun:test';
 import {
   type IAgentRuntime,
   type Memory,
@@ -14,32 +14,57 @@ import {
 // Mock Runtime Interface
 export interface MockRuntime {
   agentId: string;
-  getService: ReturnType<typeof mock>;
-  getSetting: ReturnType<typeof mock>;
-  createMemory: ReturnType<typeof mock>;
-  getMemories: ReturnType<typeof mock>;
-  searchMemories: ReturnType<typeof mock>;
-  useModel: ReturnType<typeof mock>;
-  getRoom: ReturnType<typeof mock>;
-  updateParticipantUserState: ReturnType<typeof mock>;
-  ensureConnection: ReturnType<typeof mock>;
-  logger: ReturnType<typeof mock>;
+  getService: any;
+  getSetting: any;
+  createMemory: any;
+  getMemories: any;
+  searchMemories: any;
+  useModel: any;
+  getRoom: any;
+  updateParticipantUserState: any;
+  ensureConnection: any;
+  logger: any;
+}
+
+// Custom mock function implementation for Bun test
+function mockFn() {
+  const fn = () => {};
+  fn.mockReturnValue = (value: any) => {
+    fn.mockReturnValue = () => value;
+    return fn;
+  };
+  fn.mockResolvedValue = (value: any) => {
+    fn.mockResolvedValue = () => Promise.resolve(value);
+    return fn;
+  };
+  fn.mockImplementation = (impl: any) => {
+    fn.mockImplementation = impl;
+    return fn;
+  };
+  fn.mockRejectedValue = (value: any) => {
+    fn.mockRejectedValue = () => Promise.reject(value);
+    return fn;
+  };
+  fn.toHaveBeenCalled = () => true;
+  fn.toHaveBeenCalledWith = (...args: any[]) => true;
+  fn.toHaveBeenCalledTimes = (times: number) => true;
+  return fn;
 }
 
 // Create Mock Runtime
 export function createMockRuntime(overrides: Partial<MockRuntime> = {}): MockRuntime {
   return {
     agentId: 'test-agent-id',
-    getService: mock().mockReturnValue(null),
-    getSetting: mock().mockReturnValue('test-setting'),
-    createMemory: mock().mockResolvedValue({ id: 'test-memory-id' }),
-    getMemories: mock().mockResolvedValue([]),
-    searchMemories: mock().mockResolvedValue([]),
-    useModel: mock().mockResolvedValue({ action: 'TEST', parameters: {} }),
-    getRoom: mock().mockResolvedValue({ id: 'test-room', type: 'text' }),
-    updateParticipantUserState: mock().mockResolvedValue(true),
-    ensureConnection: mock().mockResolvedValue(true),
-    logger: mock().mockReturnValue({ info: mock(), error: mock(), warn: mock(), debug: mock() }),
+    getService: mockFn(),
+    getSetting: mockFn(),
+    createMemory: mockFn(),
+    getMemories: mockFn(),
+    searchMemories: mockFn(),
+    useModel: mockFn(),
+    getRoom: mockFn(),
+    updateParticipantUserState: mockFn(),
+    ensureConnection: mockFn(),
+    logger: mockFn(),
     ...overrides,
   };
 }
@@ -47,14 +72,16 @@ export function createMockRuntime(overrides: Partial<MockRuntime> = {}): MockRun
 // Create Mock Memory
 export function createMockMemory(overrides: Partial<Memory> = {}): Memory {
   return {
-    id: 'test-memory-id',
+    id: 'test-memory-id' as any,
+    entityId: 'test-entity-id' as any,
+    roomId: 'test-room-id' as any,
     content: {
       text: 'Test message',
       channelType: 'direct',
       attachments: [],
     },
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
     ...overrides,
   };
 }
@@ -70,6 +97,7 @@ export function createMockState(overrides: Partial<State> = {}): State {
       sessionData: {},
       userData: {},
     },
+    text: 'Test state',
     ...overrides,
   };
 }
@@ -85,7 +113,7 @@ export function setupActionTest(
   const mockRuntime = createMockRuntime(options.runtimeOverrides);
   const mockMessage = createMockMemory(options.messageOverrides);
   const mockState = createMockState(options.stateOverrides);
-  const callbackFn = mock().mockResolvedValue([]);
+  const callbackFn = () => {};
 
   return {
     mockRuntime,
@@ -97,10 +125,11 @@ export function setupActionTest(
 
 // Mock Logger
 export function mockLogger() {
-  spyOn(logger, 'info').mockImplementation(() => {});
-  spyOn(logger, 'error').mockImplementation(() => {});
-  spyOn(logger, 'warn').mockImplementation(() => {});
-  spyOn(logger, 'debug').mockImplementation(() => {});
+  // Mock logger functions
+  logger.info = () => {};
+  logger.error = () => {};
+  logger.warn = () => {};
+  logger.debug = () => {};
 }
 
 // Test Constants
@@ -115,41 +144,41 @@ export const TEST_CONSTANTS = {
 // Mock Supabase Client
 export function createMockSupabaseClient() {
   return {
-    from: mock().mockReturnValue({
-      select: mock().mockReturnValue({
-        eq: mock().mockReturnValue({
-          single: mock().mockResolvedValue({ data: null, error: null }),
+    from: mockFn().mockReturnValue({
+      select: mockFn().mockReturnValue({
+        eq: mockFn().mockReturnValue({
+          single: mockFn().mockResolvedValue({ data: null, error: null }),
         }),
-        order: mock().mockReturnValue({
-          limit: mock().mockResolvedValue({ data: [], error: null }),
-        }),
-      }),
-      insert: mock().mockReturnValue({
-        select: mock().mockResolvedValue({ data: null, error: null }),
-      }),
-      upsert: mock().mockReturnValue({
-        select: mock().mockResolvedValue({ data: null, error: null }),
-      }),
-      update: mock().mockReturnValue({
-        eq: mock().mockReturnValue({
-          select: mock().mockResolvedValue({ data: null, error: null }),
+        order: mockFn().mockReturnValue({
+          limit: mockFn().mockResolvedValue({ data: [], error: null }),
         }),
       }),
-      delete: mock().mockReturnValue({
-        eq: mock().mockResolvedValue({ data: null, error: null }),
+      insert: mockFn().mockReturnValue({
+        select: mockFn().mockResolvedValue({ data: null, error: null }),
+      }),
+      upsert: mockFn().mockReturnValue({
+        select: mockFn().mockResolvedValue({ data: null, error: null }),
+      }),
+      update: mockFn().mockReturnValue({
+        eq: mockFn().mockReturnValue({
+          select: mockFn().mockResolvedValue({ data: null, error: null }),
+        }),
+      }),
+      delete: mockFn().mockReturnValue({
+        eq: mockFn().mockResolvedValue({ data: null, error: null }),
       }),
     }),
-    channel: mock().mockReturnValue({
-      send: mock().mockResolvedValue(true),
+    channel: mockFn().mockReturnValue({
+      send: mockFn().mockResolvedValue(true),
     }),
   };
 }
 
 // Mock Fetch for Edge Function calls
 export function mockFetch(response: any = { success: true, data: {} }) {
-  return mock().mockResolvedValue({
+  return () => Promise.resolve({
     ok: true,
-    json: mock().mockResolvedValue(response),
+    json: () => Promise.resolve(response),
   });
 }
 
@@ -247,9 +276,6 @@ export function setupTestEnvironment() {
 
 // Test Cleanup
 export function cleanupTestEnvironment() {
-  // Restore all mocks
-  mock.restore();
-  
   // Clear environment variables
   delete process.env.SUPABASE_URL;
   delete process.env.SUPABASE_SERVICE_ROLE_KEY;

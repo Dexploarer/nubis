@@ -237,7 +237,7 @@ function generateMentorshipResponse(guidanceType: string, userMessage: string): 
     ]
   };
 
-  const responseOptions = responses[guidanceType] || responses.general;
+  const responseOptions = responses[guidanceType as keyof typeof responses] || responses.general;
   return responseOptions[Math.floor(Math.random() * responseOptions.length)];
 }
 

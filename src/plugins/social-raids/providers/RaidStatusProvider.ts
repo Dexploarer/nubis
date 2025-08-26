@@ -1,7 +1,8 @@
 import { Provider, IAgentRuntime, Memory, State, elizaLogger } from "@elizaos/core";
 
 export const RaidStatusProvider: Provider = {
-  get: async (runtime: IAgentRuntime, message: Memory, state?: State): Promise<string> => {
+  name: "RAID_STATUS",
+  get: async (runtime: IAgentRuntime, message: Memory, state?: State): Promise<any> => {
     try {
       const raidCoordinatorUrl = runtime.getSetting("RAID_COORDINATOR_URL");
       if (!raidCoordinatorUrl) {

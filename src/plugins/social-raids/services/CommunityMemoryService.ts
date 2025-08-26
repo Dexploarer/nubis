@@ -35,7 +35,9 @@ interface UserPersonality {
  * Like the ancient Egyptian scales of Ma'at, it judges the worth of each interaction.
  */
 export class CommunityMemoryService extends Service {
-  static serviceType: ServiceType = "COMMUNITY_MEMORY_SERVICE";
+  static serviceType = "COMMUNITY_MEMORY_SERVICE";
+  
+  capabilityDescription = "Manages community memory, user personalities, and engagement tracking";
   
   private supabase: SupabaseClient;
   private memoryCache = new Map<string, MemoryFragment[]>();
@@ -383,7 +385,7 @@ export class CommunityMemoryService extends Service {
       });
 
       if (error) {
-        elizaLogger.error("Failed to update community standing:", error);
+        elizaLogger.error("Failed to update community standing:", String(error));
       }
     } catch (error) {
       elizaLogger.error("Error updating user community standing:", error);
@@ -490,17 +492,17 @@ export class CommunityMemoryService extends Service {
       const { data: activeUsers, error } = await this.supabase
         .from('community_interactions')
         .select('user_id')
-        .gte('timestamp', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-        .group('user_id');
+        .gte('timestamp', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
       if (error) throw error;
 
-      const uniqueUserIds = [...new Set(activeUsers?.map(u => u.user_id) || [])];
+      // Get unique user IDs manually
+      const uniqueUserIds = [...new Set(activeUsers?.map((u: any) => u.user_id) || [])];
 
       // Update profiles for active users
       for (const userId of uniqueUserIds.slice(0, 100)) { // Limit batch size
         try {
-          await this.getPersonalityProfile(userId); // This will update the cache
+          await this.getPersonalityProfile(String(userId)); // This will update the cache
           await new Promise(resolve => setTimeout(resolve, 100)); // Rate limit
         } catch (error) {
           elizaLogger.error(`Failed to update profile for user ${userId}:`, error);

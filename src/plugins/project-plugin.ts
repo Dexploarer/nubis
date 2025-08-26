@@ -23,8 +23,8 @@ import {
 const projectConfigSchema = z.object({
   CHARACTER_NAME: z.string().default('Nubi'),
   COMMUNITY_NAME: z.string().default('Developer Community'),
-  ENABLE_MENTORSHIP: z.string().transform(val => val === 'true').default('true'),
-  ENABLE_COMMUNITY_BUILDING: z.string().transform(val => val === 'true').default('true'),
+  ENABLE_MENTORSHIP: z.string().transform((val: string) => val === 'true').default('true'),
+  ENABLE_COMMUNITY_BUILDING: z.string().transform((val: string) => val === 'true').default('true'),
 });
 
 /**
@@ -62,7 +62,7 @@ export const projectPlugin: Plugin = {
     } catch (error) {
       if (error instanceof z.ZodError) {
         throw new Error(
-          `Invalid project configuration: ${error.errors.map((e) => e.message).join(', ')}`
+          `Invalid project configuration: ${error.errors.map((e: any) => e.message).join(', ')}`
         );
       }
       throw error;

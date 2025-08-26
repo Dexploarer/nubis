@@ -5,6 +5,7 @@ import {
   State,
   HandlerCallback,
   elizaLogger,
+  ActionResult,
 } from "@elizaos/core";
 import { CommunityMemoryService } from "../services/CommunityMemoryService";
 
@@ -32,7 +33,7 @@ export const joinRaidAction: Action = {
     state: State,
     _options: { [key: string]: unknown },
     callback?: HandlerCallback
-  ): Promise<boolean> => {
+  ): Promise<ActionResult> => {
     try {
       elizaLogger.info("Processing join raid action");
 
@@ -46,7 +47,7 @@ export const joinRaidAction: Action = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'join_raid',
-          userId: message.userId,
+          userId: message.id,
           username: message.content.source || "user",
           platform: 'elizaos'
         })
@@ -60,7 +61,7 @@ export const joinRaidAction: Action = {
         if (memoryService) {
           await memoryService.recordInteraction({
             id: crypto.randomUUID(),
-            userId: message.userId!,
+            userId: message.id,
             username: message.content.source || "user",
             interactionType: 'raid_participation',
             content: 'Joined active raid',
@@ -99,7 +100,7 @@ export const joinRaidAction: Action = {
           });
         }
 
-        return true;
+        return { success: true, text: "Successfully joined raid" };
       } else {
         throw new Error(result.error || "Failed to join raid");
       }
@@ -124,19 +125,19 @@ export const joinRaidAction: Action = {
         });
       }
       
-      return false;
+      return { success: false, text: "Failed to join raid" };
     }
   },
   examples: [
     [
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "I want to join the raid"
         }
       },
       {
-        user: "{{agentName}}",
+        name: "{{agentName}}",
         content: {
           text: "⚡ **WELCOME TO THE BATTLEFIELD!** ⚡\n\n🎖️ **Soldier #5** - You're officially enlisted! 🎖️\n\n**🎯 YOUR MISSION:**\n1️⃣ Hit the target: [Tweet Link]\n2️⃣ Engage authentically\n3️⃣ Report back for points\n4️⃣ Dominate the leaderboard\n\n**Now go make some noise!** 🔥",
           action: "JOIN_RAID"
@@ -145,13 +146,13 @@ export const joinRaidAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Count me in for this raid!"
         }
       },
       {
-        user: "{{agentName}}",
+        name: "{{agentName}}",
         content: {
           text: "🚀 **ENLISTED!** You're now part of the raid squad! \n\nParticipant #3 reporting for duty! 🎖️\n\n**Mission briefing incoming...**\nTarget the tweet, engage with quality, earn points, dominate! 💪\n\n*\"Together we raid, together we conquer!\"*",
           action: "JOIN_RAID"

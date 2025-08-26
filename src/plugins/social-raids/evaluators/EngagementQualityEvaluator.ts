@@ -1,7 +1,7 @@
 import { Evaluator, IAgentRuntime, Memory, elizaLogger } from "@elizaos/core";
 
 export const EngagementQualityEvaluator: Evaluator = {
-  name: "ENGAGEMENT_QUALITY_EVALUATOR",
+  name: "ENGAGEMENT_QUALITY",
   similes: ["QUALITY_EVALUATOR", "ENGAGEMENT_ASSESSOR", "RAID_EVALUATOR"],
   validate: async (runtime: IAgentRuntime, message: Memory): Promise<boolean> => {
     const text = message.content.text.toLowerCase();
@@ -14,7 +14,7 @@ export const EngagementQualityEvaluator: Evaluator = {
            text.includes('quote');
   },
   description: "Evaluates the quality of user engagement in raids and social interactions",
-  handler: async (runtime: IAgentRuntime, message: Memory): Promise<Memory[]> => {
+  handler: async (runtime: IAgentRuntime, message: Memory): Promise<void> => {
     try {
       const text = message.content.text.toLowerCase();
       let engagementScore = 0.5; // Base score
@@ -144,11 +144,12 @@ export const EngagementQualityEvaluator: Evaluator = {
       
       elizaLogger.debug(`Engagement quality evaluation: ${engagementScore.toFixed(2)} (${qualityTier})`);
       
-      return [evaluatedMemory];
+      // Evaluator doesn't return anything, it modifies the message in place
+      return;
       
     } catch (error) {
       elizaLogger.error("EngagementQualityEvaluator error:", error);
-      return [message];
+      return;
     }
   },
   examples: [
@@ -156,7 +157,7 @@ export const EngagementQualityEvaluator: Evaluator = {
       context: "User submitted a retweet with thoughtful commentary",
       messages: [
         {
-          user: "{{user1}}",
+          name: "{{user1}}",
           content: {
             text: "Retweeted with: 'This is exactly why our community values authentic engagement over numbers. Quality discourse builds lasting connections, and I believe this approach will help us create something truly meaningful together.' 🎯"
           }
@@ -168,7 +169,7 @@ export const EngagementQualityEvaluator: Evaluator = {
       context: "User submitted basic engagement report",
       messages: [
         {
-          user: "{{user1}}",
+          name: "{{user1}}",
           content: {
             text: "liked it"
           }
@@ -180,7 +181,7 @@ export const EngagementQualityEvaluator: Evaluator = {
       context: "User provides detailed analysis with engagement",
       messages: [
         {
-          user: "{{user1}}",
+          name: "{{user1}}",
           content: {
             text: "I commented with a detailed analysis of why this approach works: The strategy outlined here specifically addresses the community engagement challenge we discussed. Furthermore, the implementation seems thoughtful because it considers both quality and scalability. This could help our community grow sustainably."
           }

@@ -5,6 +5,7 @@ import {
   State,
   HandlerCallback,
   elizaLogger,
+  ActionResult,
 } from "@elizaos/core";
 import { CommunityMemoryService } from "../services/CommunityMemoryService";
 
@@ -18,7 +19,7 @@ export const startRaidAction: Action = {
     "CREATE_RAID"
   ],
   validate: async (runtime: IAgentRuntime, message: Memory) => {
-    const text = message.content.text.toLowerCase();
+    const text = message.content.text?.toLowerCase() || '';
     
     // Check if message contains raid-related keywords and a Twitter URL
     const hasRaidKeywords = text.includes("start raid") || 
@@ -39,13 +40,13 @@ export const startRaidAction: Action = {
     state: State,
     _options: { [key: string]: unknown },
     callback?: HandlerCallback
-  ): Promise<boolean> => {
+  ): Promise<ActionResult> => {
     try {
       elizaLogger.info("Starting raid action handler");
 
       // Extract Twitter URL from message
       const urlRegex = /(https?:\/\/)?(www\.)?(twitter\.com|x\.com)\/\w+\/status\/\d+/i;
-      const match = message.content.text.match(urlRegex);
+      const match = message.content.text?.match(urlRegex);
       
       if (!match) {
         if (callback) {
@@ -75,7 +76,7 @@ export const startRaidAction: Action = {
         body: JSON.stringify({
           action: 'start_raid',
           twitterUrl: twitterUrl,
-          userId: message.userId,
+          userId: message.id,
           username: message.content.source || runtime.character?.name || "agent",
           platform: 'elizaos'
         })
@@ -89,7 +90,7 @@ export const startRaidAction: Action = {
         if (memoryService) {
           await memoryService.recordInteraction({
             id: crypto.randomUUID(),
-            userId: message.userId!,
+            userId: message.id,
             username: message.content.source || "user",
             interactionType: 'raid_initiation',
             content: `Started raid for: ${twitterUrl}`,
@@ -126,12 +127,10 @@ export const startRaidAction: Action = {
           callback({
             text: raidMessage,
             content: {
-              raidId: result.raidId,
-              targetUrl: twitterUrl,
               action: 'raid_started',
-              strategy: 'community_coordination',
-              duration: 60,
-              pointSystem: {
+              raidId: result.raidId,
+              twitterUrl: twitterUrl,
+              points: {
                 like: 1,
                 retweet: 2,
                 quote: 3,
@@ -140,22 +139,24 @@ export const startRaidAction: Action = {
             }
           });
         }
-
+        
         return true;
       } else {
-        throw new Error(result.error || "Failed to start raid");
+        if (callback) {
+          callback({
+            text: "❌ Failed to start raid. Please try again or contact support.",
+            content: { action: 'raid_start_failed', error: result.error }
+          });
+        }
+        return false;
       }
     } catch (error) {
-      elizaLogger.error("Start raid action failed:", error);
+      elizaLogger.error("Error in start raid action:", error);
       
       if (callback) {
         callback({
-          text: "⚠️ Failed to initiate the raid! Our coordination systems might be temporarily overloaded, or the target URL needs to be a valid Twitter/X post.\n\n**Let's regroup and try again!** 💪\n\nMake sure you're sharing a complete Twitter URL like:\n`https://twitter.com/username/status/1234567890`",
-          content: { 
-            error: error.message,
-            action: 'raid_start_failed',
-            suggestion: 'check_url_format'
-          }
+          text: "❌ Failed to start raid due to an error. Please try again.",
+          content: { action: 'raid_start_error', error: error instanceof Error ? error.message : 'Unknown error' }
         });
       }
       
@@ -165,13 +166,13 @@ export const startRaidAction: Action = {
   examples: [
     [
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Let's raid this tweet: https://twitter.com/elonmusk/status/1234567890"
         }
       },
       {
-        user: "{{agentName}}",
+        name: "{{agentName}}",
         content: {
           text: "🎯 **RAID INITIATED!** 🎯\n\n**Target:** https://twitter.com/elonmusk/status/1234567890\n**Raid ID:** `raid_abc123`\n**Duration:** 60 minutes\n\n**🏆 POINT SYSTEM:**\n👍 Like = 1 point\n🔄 Retweet = 2 points\n💬 Quote Tweet = 3 points\n📝 Comment = 5 points\n\n**Let's dominate this together!** Our community's engagement power is about to make waves! 🌊",
           action: "START_RAID"
@@ -180,13 +181,13 @@ export const startRaidAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Start raid on this https://x.com/jack/status/9876543210"
         }
       },
       {
-        user: "{{agentName}}",
+        name: "{{agentName}}",
         content: {
           text: "🚀 **RAID LAUNCHING!** 🚀\n\nTarget locked: https://x.com/jack/status/9876543210\n\n**Mission briefing:**\n• Engage authentically \n• Report your actions\n• Earn points and glory!\n\n**Rally the troops in Telegram!** Use `/raid https://x.com/jack/status/9876543210` 💪",
           action: "START_RAID"
@@ -195,13 +196,13 @@ export const startRaidAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Can we do a community raid?"
         }
       },
       {
-        user: "{{agentName}}",
+        name: "{{agentName}}",
         content: {
           text: "🎯 Absolutely! I'm ready to coordinate an epic community raid! 🚀\n\nJust share the Twitter/X URL of the tweet you want us to raid and I'll handle the rest!\n\nOur community will:\n• Engage authentically\n• Earn points for participation\n• Dominate the conversation! 💪\n\nWhat's our target? 🔥",
           action: "START_RAID"

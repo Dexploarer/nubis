@@ -5,6 +5,7 @@ import {
   State,
   HandlerCallback,
   elizaLogger,
+  ActionResult,
 } from "@elizaos/core";
 import { CommunityMemoryService } from "../services/CommunityMemoryService";
 
@@ -40,7 +41,7 @@ export const submitEngagementAction: Action = {
     "ENGAGEMENT_DONE"
   ],
   validate: async (runtime: IAgentRuntime, message: Memory) => {
-    const text = message.content.text.toLowerCase();
+    const text = message.content.text?.toLowerCase() || '';
     
     // Check for engagement keywords
     const hasEngagementWords = text.includes("liked") || text.includes("retweeted") || 
@@ -62,12 +63,12 @@ export const submitEngagementAction: Action = {
     state: State,
     _options: { [key: string]: unknown },
     callback?: HandlerCallback
-  ): Promise<boolean> => {
+  ): Promise<ActionResult> => {
     try {
       elizaLogger.info("Processing engagement submission");
 
       // Detect engagement type from message
-      const text = message.content.text.toLowerCase();
+      const text = message.content.text?.toLowerCase() || '';
       let engagementType = 'like'; // default
       
       if (text.includes('retweeted') || text.includes('retweet')) engagementType = 'retweet';
@@ -149,7 +150,7 @@ export const submitEngagementAction: Action = {
           });
         }
 
-        return true;
+        return { success: true, text: "Engagement submitted successfully" };
       } else {
         throw new Error(result.error || "Failed to submit engagement");
       }
@@ -177,19 +178,19 @@ export const submitEngagementAction: Action = {
         });
       }
       
-      return false;
+      return { success: false, text: "Failed to submit engagement" };
     }
   },
   examples: [
     [
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "I liked and retweeted the post!"
         }
       },
       {
-        user: "{{agentName}}",
+        name: "{{agentName}}",
         content: {
           text: "🎉 **ENGAGEMENT CONFIRMED!** 🎉\n\n🔄 **RETWEET** successfully recorded!\n\n**📊 SCORE UPDATE:**\n🏆 Points Earned: **+2**\n💰 Total Points: **47**\n🥇 Current Rank: **#12**\n📈 +2 rank positions!\n\n**Outstanding work, champion!** 🏆",
           action: "SUBMIT_ENGAGEMENT"
@@ -198,13 +199,13 @@ export const submitEngagementAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Done! I commented on that tweet with my thoughts"
         }
       },
       {
-        user: "{{agentName}}",
+        name: "{{agentName}}",
         content: {
           text: "🎉 **ENGAGEMENT CONFIRMED!** 🎉\n\n📝 **COMMENT** successfully recorded!\n\n**📊 SCORE UPDATE:**\n🏆 Points Earned: **+5**\n💰 Total Points: **82**\n🥇 Current Rank: **#7**\n\n**🔥 IMPACT ANALYSIS:**\n🌟 HIGH VALUE engagement detected!\n\n*\"Quality over quantity - you're setting the standard!\"* 💪",
           action: "SUBMIT_ENGAGEMENT"

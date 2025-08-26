@@ -5,7 +5,9 @@ import * as fs from "fs";
 import type { TweetData, TwitterAuthConfig, ApiResponse } from "../types";
 
 export class TwitterRaidService extends Service {
-  static serviceType: ServiceType = "TWITTER_RAID_SERVICE";
+  static serviceType = "TWITTER_RAID_SERVICE";
+  
+  capabilityDescription = "Manages Twitter authentication, posting, and engagement scraping";
   
   private supabase: SupabaseClient;
   private scraper: Scraper | null = null;
@@ -98,21 +100,21 @@ export class TwitterRaidService extends Service {
     }
     
     try {
-      const result = await this.scraper.sendTweet(content);
-      elizaLogger.info("Tweet posted successfully:", result);
+      const result: any = await this.scraper.sendTweet(content);
+      elizaLogger.info("Tweet posted successfully:", String(result));
       
       // Log the tweet to database
       await this.supabase
         .from('agent_tweets')
         .insert({
-          tweet_id: result.rest_id || result.id,
+          tweet_id: result.rest_id || result.id || result.data?.id,
           content: content,
           platform: 'twitter',
           posted_at: new Date(),
           status: 'posted'
         });
       
-      return result.rest_id || result.id || "";
+      return result.rest_id || result.id || result.data?.id || "";
     } catch (error) {
       elizaLogger.error("Failed to post tweet:", error);
       throw error;
@@ -360,10 +362,12 @@ export class TwitterRaidService extends Service {
   async stop(): Promise<void> {
     if (this.scraper) {
       try {
-        await this.scraper.logout();
+        // Note: logout method may not be available in current version
+        // Just clean up the scraper instance
       } catch (error) {
-        elizaLogger.error("Error during Twitter logout:", error);
+        elizaLogger.error("Error during Twitter cleanup:", error);
       }
+      this.scraper = null;
       this.isAuthenticated = false;
     }
     elizaLogger.info("Twitter Raid Service stopped");

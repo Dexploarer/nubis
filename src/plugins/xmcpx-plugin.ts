@@ -8,7 +8,6 @@
 import type { 
   Plugin, 
   IAgentRuntime, 
-  Service, 
   Action, 
   Provider, 
   HandlerCallback, 
@@ -17,7 +16,7 @@ import type {
   ActionResult,
   ProviderResult 
 } from '@elizaos/core';
-import { logger } from '@elizaos/core';
+import { Service, logger } from '@elizaos/core';
 import { z } from 'zod';
 
 /**
@@ -274,12 +273,12 @@ export const xmcpxPlugin: Plugin = {
       
       // Set environment variables
       for (const [key, value] of Object.entries(validatedConfig)) {
-        if (value) process.env[key] = value;
+        if (value) process.env[key] = String(value);
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
         throw new Error(
-          `Invalid XMCPX configuration: ${error.errors.map((e) => e.message).join(', ')}`
+          `Invalid XMCPX configuration: ${error.errors.map((e: any) => e.message).join(', ')}`
         );
       }
       throw error;

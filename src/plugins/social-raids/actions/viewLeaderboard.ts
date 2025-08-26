@@ -5,6 +5,7 @@ import {
   State,
   HandlerCallback,
   elizaLogger,
+  ActionResult,
 } from "@elizaos/core";
 
 export const viewLeaderboardAction: Action = {
@@ -36,7 +37,7 @@ export const viewLeaderboardAction: Action = {
     state: State,
     _options: { [key: string]: unknown },
     callback?: HandlerCallback
-  ): Promise<boolean> => {
+  ): Promise<ActionResult> => {
     try {
       elizaLogger.info("Processing leaderboard request");
 
@@ -113,7 +114,7 @@ export const viewLeaderboardAction: Action = {
           });
         }
 
-        return true;
+        return { success: true, text: "Leaderboard displayed successfully" };
       } else {
         // Empty leaderboard case
         if (callback) {
@@ -140,7 +141,7 @@ export const viewLeaderboardAction: Action = {
           });
         }
 
-        return true;
+        return { success: true, text: "Empty leaderboard displayed" };
       }
     } catch (error) {
       elizaLogger.error("View leaderboard action failed:", error);
@@ -163,19 +164,19 @@ export const viewLeaderboardAction: Action = {
         });
       }
       
-      return false;
+      return { success: false, text: "Failed to display leaderboard" };
     }
   },
   examples: [
     [
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Show me the leaderboard"
         }
       },
       {
-        user: "{{agentName}}",
+        name: "{{agentName}}",
         content: {
           text: "🏆 **COMMUNITY LEADERBOARD** 🏆\n\n*Rankings by total raid points earned*\n\n🥇 **#1 Alice** 👑⚡\n    💰 247 points | 🎯 15 raids | 🔥 7-day streak\n\n🥈 **#2 Bob** 👑🔥\n    💰 183 points | 🎯 12 raids\n\n🥉 **#3 Charlie** 👑\n    💰 156 points | 🎯 8 raids\n\n🚀 **Ready to dominate?** Share a Twitter URL to start the next raid! 🎯",
           action: "VIEW_LEADERBOARD"
@@ -184,13 +185,13 @@ export const viewLeaderboardAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Who's winning the raids?"
         }
       },
       {
-        user: "{{agentName}}",
+        name: "{{agentName}}",
         content: {
           text: "🏆 **CURRENT RAID CHAMPIONS** 🏆\n\n🥇 **Alice leads with 247 points!** 👑\n\nShe's dominating with consistent high-value engagements and a 7-day streak! 🔥\n\n**Think you can challenge her throne?** \nStart raiding and climb those rankings! 💪\n\n*\"Champions aren't made overnight - they're forged through consistent action!\"* 💎",
           action: "VIEW_LEADERBOARD"

@@ -174,7 +174,7 @@ export const engagementStrategyProvider: Provider = {
         text: `Engagement strategy: ${strategy}`,
         values: {
           engagementStrategy: strategy,
-          strategyGuidance: strategyGuidance[strategy],
+          strategyGuidance: strategyGuidance[strategy as keyof typeof strategyGuidance] || strategyGuidance.standard,
           hasQuestions,
           hasEmotionalContent: hasEmotionalWords,
           hasTechnicalContent: hasTechnicalTerms,
@@ -182,7 +182,7 @@ export const engagementStrategyProvider: Provider = {
         data: {
           engagement: {
             strategy,
-            guidance: strategyGuidance[strategy],
+            guidance: strategyGuidance[strategy as keyof typeof strategyGuidance] || strategyGuidance.standard,
             characteristics: {
               hasQuestions,
               isLongMessage,

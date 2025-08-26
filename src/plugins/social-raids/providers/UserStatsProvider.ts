@@ -2,7 +2,8 @@ import { Provider, IAgentRuntime, Memory, State, elizaLogger } from "@elizaos/co
 import { createClient } from "@supabase/supabase-js";
 
 export const UserStatsProvider: Provider = {
-  get: async (runtime: IAgentRuntime, message: Memory, state?: State): Promise<string> => {
+  name: "USER_STATS",
+  get: async (runtime: IAgentRuntime, message: Memory, state?: State): Promise<any> => {
     try {
       const userId = message.userId;
       if (!userId) return "";

@@ -27,8 +27,8 @@ import { CommunityMemoryProvider } from "./providers/CommunityMemoryProvider";
 import { EngagementQualityEvaluator } from "./evaluators/EngagementQualityEvaluator";
 
 export const socialRaidsPlugin: Plugin = {
-  name: "social-raids",
-  description: "Comprehensive Twitter/Telegram raids coordination plugin with engagement tracking, community memory, and leaderboards",
+  name: "SOCIAL_RAIDS_PLUGIN",
+  description: "Manages Twitter/Telegram raids, engagement tracking, and community memory.",
   
   actions: [
     startRaidAction,
@@ -49,10 +49,27 @@ export const socialRaidsPlugin: Plugin = {
   ],
   
   services: [
-    TwitterRaidService,
-    TelegramRaidManager,
-    CommunityMemoryService
-  ]
+    {
+      name: "TWITTER_RAID_SERVICE",
+      service: TwitterRaidService
+    },
+    {
+      name: "TELEGRAM_RAID_MANAGER", 
+      service: TelegramRaidManager
+    },
+    {
+      name: "COMMUNITY_MEMORY_SERVICE",
+      service: CommunityMemoryService
+    }
+  ],
+
+  config: {
+    TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '',
+    TELEGRAM_CHANNEL_ID: process.env.TELEGRAM_CHANNEL_ID || '',
+    TWITTER_USERNAME: process.env.TWITTER_USERNAME || '',
+    TWITTER_PASSWORD: process.env.TWITTER_PASSWORD || '',
+    TWEET_SCRAPER_URL: process.env.TWEET_SCRAPER_URL || ''
+  }
 };
 
 export default socialRaidsPlugin;

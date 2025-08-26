@@ -5,6 +5,7 @@ import {
   State,
   HandlerCallback,
   elizaLogger,
+  ActionResult,
 } from "@elizaos/core";
 import { TwitterRaidService } from "../services/TwitterRaidService";
 
@@ -18,7 +19,7 @@ export const scrapeTweetsAction: Action = {
     "EXTRACT_TWEETS"
   ],
   validate: async (runtime: IAgentRuntime, message: Memory) => {
-    const text = message.content.text.toLowerCase();
+    const text = message.content.text?.toLowerCase() || '';
     return text.includes("scrape") || 
            text.includes("export") ||
            text.includes("download") ||
@@ -32,12 +33,12 @@ export const scrapeTweetsAction: Action = {
     state: State,
     _options: { [key: string]: unknown },
     callback?: HandlerCallback
-  ): Promise<boolean> => {
+  ): Promise<ActionResult> => {
     try {
       elizaLogger.info("Processing tweet scraping request");
 
       // Extract username from message
-      const text = message.content.text.toLowerCase();
+      const text = message.content.text?.toLowerCase() || '';
       const usernameMatch = text.match(/(?:from|of|@)?(\w+)/);
       
       if (!usernameMatch) {
@@ -57,7 +58,7 @@ export const scrapeTweetsAction: Action = {
             content: { action: 'scrape_tweets_missing_username' }
           });
         }
-        return false;
+        return { success: false, text: "Missing username" };
       }
 
       const username = usernameMatch[1];
@@ -127,7 +128,7 @@ export const scrapeTweetsAction: Action = {
         });
       }
 
-      return true;
+      return { success: true, text: "Tweet scraping completed" };
     } catch (error) {
       elizaLogger.error("Scrape tweets action failed:", error);
       
@@ -154,19 +155,19 @@ export const scrapeTweetsAction: Action = {
         });
       }
       
-      return false;
+      return { success: false, text: "Tweet scraping failed" };
     }
   },
   examples: [
     [
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Scrape 200 tweets from elonmusk"
         }
       },
       {
-        user: "{{agentName}}",
+        name: "{{agentName}}",
         content: {
           text: "🔄 **SCRAPING TWEETS** 🔄\n\n**Target:** @elonmusk\n**Count:** 200 tweets\n**Status:** Initializing...\n\nThis may take a few moments. I'll notify you when complete! ⏳",
           action: "SCRAPE_TWEETS"
@@ -175,13 +176,13 @@ export const scrapeTweetsAction: Action = {
     ],
     [
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Export tweets from @pmarca skip 1000"
         }
       },
       {
-        user: "{{agentName}}",
+        name: "{{agentName}}",
         content: {
           text: "🔄 **SCRAPING TWEETS** 🔄\n\n**Target:** @pmarca\n**Count:** 100 tweets\n**Skip:** 1000 tweets\n**Status:** Initializing...\n\nThis may take a few moments. I'll notify you when complete! ⏳",
           action: "SCRAPE_TWEETS"

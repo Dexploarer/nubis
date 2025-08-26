@@ -53,6 +53,10 @@ jobs:
         npx eslint src/**/*.ts --ext .ts
         npx prettier --check src/**/*.ts
         
+    - name: Plan matrix combinations
+      run: |
+        bun run matrix:plan
+        
     - name: Run matrix testing
       run: |
         cd src/testing

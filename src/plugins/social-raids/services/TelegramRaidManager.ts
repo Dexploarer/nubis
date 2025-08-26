@@ -12,7 +12,9 @@ interface TelegramRaidContext extends Context {
 }
 
 export class TelegramRaidManager extends Service {
-  static serviceType: ServiceType = "TELEGRAM_RAID_MANAGER";
+  static serviceType = "TELEGRAM_RAID_MANAGER";
+  
+  capabilityDescription = "Manages Telegram bot operations, raid notifications, and chat management";
   
   private bot: Telegraf | null = null;
   private supabase: SupabaseClient;
@@ -277,8 +279,7 @@ export class TelegramRaidManager extends Service {
 
         await ctx.reply(raidMessage, { 
           reply_markup: keyboard.reply_markup, 
-          parse_mode: 'Markdown',
-          disable_web_page_preview: false
+          parse_mode: 'Markdown'
         });
 
         // Notify channel if this is a private message
@@ -325,7 +326,7 @@ export class TelegramRaidManager extends Service {
           `📊 Report back for points\n\n` +
           `*Target:* [Click here to engage](${result.targetUrl})\n\n` +
           `Let's show Twitter what real community looks like! 💪`,
-          { parse_mode: 'Markdown', disable_web_page_preview: false }
+          { parse_mode: 'Markdown' }
         );
       } else {
         await ctx.reply(`❌ Failed to join raid: ${result.error}\n\nMake sure there's an active raid to join!`);
@@ -412,7 +413,7 @@ export class TelegramRaidManager extends Service {
           `*Points Distributed:* ${raid.points_distributed}\n` +
           `*Time Remaining:* ${timeRemaining}\n\n` +
           `*Keep pushing! Every engagement counts!* 🚀`,
-          { parse_mode: 'Markdown', disable_web_page_preview: false }
+          { parse_mode: 'Markdown' }
         );
       } else {
         await ctx.reply("📊 No active raid found.\n\nStart a new raid by sharing a Twitter URL! 🎯");
