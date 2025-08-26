@@ -430,5 +430,5 @@ const validateMemory = (memory: Memory): boolean => {
 This comprehensive guide covers all aspects of the ElizaOS Memory System, from basic usage to advanced customization. Follow these patterns and best practices to build robust, scalable memory systems for your agents.
 description:
 globs:
-alwaysApply: false
+alwaysApply: true
 ---

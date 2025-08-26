@@ -16,6 +16,7 @@ import { startRaidAction } from "./actions/startRaid";
 import { joinRaidAction } from "./actions/joinRaid";
 import { submitEngagementAction } from "./actions/submitEngagement";
 import { viewLeaderboardAction } from "./actions/viewLeaderboard";
+import { scrapeTweetsAction } from "./actions/scrapeTweets";
 
 // Providers
 import { RaidStatusProvider } from "./providers/RaidStatusProvider";
@@ -33,7 +34,8 @@ export const socialRaidsPlugin: Plugin = {
     startRaidAction,
     joinRaidAction,
     submitEngagementAction,
-    viewLeaderboardAction
+    viewLeaderboardAction,
+    scrapeTweetsAction
   ],
   
   providers: [

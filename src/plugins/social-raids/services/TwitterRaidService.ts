@@ -120,22 +120,36 @@ export class TwitterRaidService extends Service {
   }
 
   async scrapeEngagement(tweetUrl: string): Promise<TweetData> {
-    if (!this.isAuthenticated || !this.scraper) {
-      throw new Error("Twitter not authenticated");
-    }
-    
     try {
-      // Extract tweet ID from URL
-      const tweetId = this.extractTweetId(tweetUrl);
-      const tweet = await this.scraper.getTweet(tweetId);
+      // Use the existing tweet-scraper Edge Function
+      const tweetScraperUrl = this.runtime.getSetting("TWEET_SCRAPER_URL") || 
+                             "https://nfnmoqepgjyutcbbaqjg.supabase.co/functions/v1/tweet-scraper";
+      
+      const response = await fetch(tweetScraperUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'scrape_tweet_by_url',
+          tweetUrl: tweetUrl,
+          storeInDatabase: true
+        })
+      });
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(`Tweet scraping failed: ${result.error}`);
+      }
+
+      const tweet = result.data.tweet;
       
       const tweetData: TweetData = {
-        id: tweet.id!,
-        text: tweet.text!,
-        author: tweet.username!,
-        createdAt: new Date(tweet.timeParsed!),
+        id: tweet.id,
+        text: tweet.text,
+        author: tweet.username,
+        createdAt: new Date(tweet.createdAt),
         metrics: {
-          likes: tweet.favoriteCount || 0,
+          likes: tweet.likeCount || 0,
           retweets: tweet.retweetCount || 0,
           quotes: tweet.quoteCount || 0,
           comments: tweet.replyCount || 0,
@@ -146,7 +160,7 @@ export class TwitterRaidService extends Service {
       await this.supabase
         .from('engagement_snapshots')
         .insert({
-          tweet_id: tweetId,
+          tweet_id: tweet.id,
           likes: tweetData.metrics.likes,
           retweets: tweetData.metrics.retweets,
           quotes: tweetData.metrics.quotes,
@@ -161,41 +175,48 @@ export class TwitterRaidService extends Service {
     }
   }
 
-  async exportTweets(username: string, count: number = 100): Promise<TweetData[]> {
-    if (!this.isAuthenticated || !this.scraper) {
-      throw new Error("Twitter not authenticated");
-    }
-
+  async exportTweets(username: string, count: number = 100, skipCount: number = 0): Promise<TweetData[]> {
     try {
-      elizaLogger.info(`Exporting ${count} tweets from @${username}`);
+      elizaLogger.info(`Exporting ${count} tweets from @${username} (skipping ${skipCount})`);
       
-      const tweets = this.scraper.getTweets(username, count);
-      const exportedTweets: TweetData[] = [];
+      // Use the existing tweet-scraper Edge Function
+      const tweetScraperUrl = this.runtime.getSetting("TWEET_SCRAPER_URL") || 
+                             "https://nfnmoqepgjyutcbbaqjg.supabase.co/functions/v1/tweet-scraper";
       
-      let fetchedCount = 0;
-      for await (const tweet of tweets) {
-        if (fetchedCount >= count) break;
-        
-        if (tweet.username?.toLowerCase() === username.toLowerCase()) {
-          const tweetData: TweetData = {
-            id: tweet.id!,
-            text: tweet.isRetweet && tweet.retweetedStatus ? tweet.retweetedStatus.text! : tweet.text!,
-            author: tweet.username!,
-            createdAt: new Date(tweet.timeParsed!),
-            metrics: {
-              likes: tweet.favoriteCount || 0,
-              retweets: tweet.retweetCount || 0,
-              quotes: tweet.quoteCount || 0,
-              comments: tweet.replyCount || 0,
-            }
-          };
-          
-          exportedTweets.push(tweetData);
-          elizaLogger.info(`Exported tweet ${fetchedCount + 1}/${count}: ${tweet.text?.substring(0, 50)}...`);
-        }
-        
-        fetchedCount++;
+      const response = await fetch(tweetScraperUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'scrape_user_tweets',
+          username: username,
+          count: count,
+          skipCount: skipCount,
+          includeReplies: false,
+          includeRetweets: true,
+          storeInDatabase: true,
+          exportFormat: 'json'
+        })
+      });
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(`Tweet scraping failed: ${result.error}`);
       }
+
+      // Convert the scraped data to our TweetData format
+      const exportedTweets: TweetData[] = result.data.tweets.map((tweet: any) => ({
+        id: tweet.id,
+        text: tweet.text,
+        author: tweet.username,
+        createdAt: new Date(tweet.createdAt),
+        metrics: {
+          likes: tweet.likeCount || 0,
+          retweets: tweet.retweetCount || 0,
+          quotes: tweet.quoteCount || 0,
+          comments: tweet.replyCount || 0,
+        }
+      }));
 
       // Save to file like the user's example
       const exportedData = exportedTweets.map(tweet => ({
@@ -222,10 +243,11 @@ export class TwitterRaidService extends Service {
           username: username,
           count: exportedTweets.length,
           exported_at: new Date(),
-          file_path: 'exported-tweets.json'
+          file_path: 'exported-tweets.json',
+          scraping_session_id: result.data.scrapingStats?.sessionId
         });
       
-      elizaLogger.success(`Successfully exported ${exportedTweets.length} tweets to exported-tweets.json and tweets.json`);
+      elizaLogger.success(`Successfully exported ${exportedTweets.length} tweets using Edge Function`);
       return exportedTweets;
       
     } catch (error) {

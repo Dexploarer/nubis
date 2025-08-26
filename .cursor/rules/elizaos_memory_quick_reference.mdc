@@ -1,3 +1,7 @@
+---
+description: ElizaOS Memory System: Quick Reference Guide
+alwaysApply: false
+---
 # ElizaOS Memory System: Quick Reference Guide
 
 ## Core Memory Interface
@@ -485,5 +489,5 @@ const relevantFacts = await runtime.searchMemories({
 This quick reference provides the essential patterns and syntax for working with the ElizaOS Memory System. For detailed explanations and advanced patterns, refer to the comprehensive Memory System guide.
 description:
 globs:
-alwaysApply: false
+
 ---
