@@ -54,3 +54,15 @@ bun run check && bun run build
 - Postgres connection strings: https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
 - `../knowledge/coding_standards.md`
 - `../knowledge/security_protocols.md`
+Core internal references:
+- `../rules/elizaos_development_workflow.md`
+- `../rules/elizaos-architecture-patterns.md`
+- `../rules/elizaos_coding_standards.md`
+- `../rules/testing_standards.md`
+- `../rules/elizaos_security_protocols.md`
+- `../rules/elizaos_template-quick-reference.md`
+- `../rules/elizaos_template_system.md`
+- `../rules/elizaos_interface_system.md`
+- `../rules/elizaos_memory_operational_rules.md`
+- `../rules/elizaos_memory_quick_reference.md`
+- `../knowledge/README.md`

@@ -6,9 +6,9 @@ import {
 } from '@elizaos/core';
 
 // Import providers
-import { RaidStatusProvider } from '../providers/RaidStatusProvider';
-import { UserStatsProvider } from '../providers/UserStatsProvider';
-import { CommunityMemoryProvider } from '../providers/CommunityMemoryProvider';
+import { RaidStatusProvider } from '../providers/raid-status-provider';
+import { UserStatsProvider } from '../providers/user-stats-provider';
+import { CommunityMemoryProvider } from '../providers/community-memory-provider';
 
 // Import test utilities
 import {

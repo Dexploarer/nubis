@@ -7,7 +7,7 @@ import {
   elizaLogger,
   ActionResult,
 } from "@elizaos/core";
-import { CommunityMemoryService } from "../services/CommunityMemoryService";
+import { CommunityMemoryService } from "../services/community-memory-service";
 
 export const joinRaidAction: Action = {
   name: "JOIN_RAID",
@@ -19,7 +19,7 @@ export const joinRaidAction: Action = {
     "COUNT_ME_IN"
   ],
   validate: async (runtime: IAgentRuntime, message: Memory) => {
-    const text = message.content.text.toLowerCase();
+    const text = message.content.text?.toLowerCase() || '';
     return text.includes("join raid") || 
            text.includes("participate") ||
            text.includes("count me in") ||
@@ -47,7 +47,7 @@ export const joinRaidAction: Action = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'join_raid',
-          userId: message.id,
+          userId: message.entityId,
           username: message.content.source || "user",
           platform: 'elizaos'
         })
@@ -61,7 +61,7 @@ export const joinRaidAction: Action = {
         if (memoryService) {
           await memoryService.recordInteraction({
             id: crypto.randomUUID(),
-            userId: message.id,
+            userId: message.entityId,
             username: message.content.source || "user",
             interactionType: 'raid_participation',
             content: 'Joined active raid',

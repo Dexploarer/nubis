@@ -7,7 +7,7 @@ import {
   elizaLogger,
   ActionResult,
 } from "@elizaos/core";
-import { CommunityMemoryService } from "../services/CommunityMemoryService";
+import { CommunityMemoryService } from "../services/community-memory-service";
 
 const getPointsForAction = (action: string): number => {
   const pointsMap: Record<string, number> = {
@@ -86,7 +86,7 @@ export const submitEngagementAction: Action = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'submit_engagement',
-          userId: message.userId,
+          userId: message.entityId,
           username: message.content.source || "user",
           engagementType: engagementType,
           platform: 'elizaos'
@@ -104,7 +104,7 @@ export const submitEngagementAction: Action = {
         if (memoryService) {
           await memoryService.recordInteraction({
             id: crypto.randomUUID(),
-            userId: message.userId!,
+            userId: message.entityId,
             username: message.content.source || "user",
             interactionType: 'quality_engagement',
             content: `Submitted ${engagementType} engagement`,

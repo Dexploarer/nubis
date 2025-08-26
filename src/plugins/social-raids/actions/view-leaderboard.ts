@@ -20,7 +20,7 @@ export const viewLeaderboardAction: Action = {
     "STANDINGS"
   ],
   validate: async (runtime: IAgentRuntime, message: Memory) => {
-    const text = message.content.text.toLowerCase();
+    const text = message.content.text?.toLowerCase() || "";
     return text.includes("leaderboard") || 
            text.includes("ranking") || 
            text.includes("rankings") ||

@@ -7,11 +7,11 @@ import {
 } from '@elizaos/core';
 
 // Import actions
-import { startRaidAction } from '../actions/startRaid';
-import { joinRaidAction } from '../actions/joinRaid';
-import { submitEngagementAction } from '../actions/submitEngagement';
-import { viewLeaderboardAction } from '../actions/viewLeaderboard';
-import { scrapeTweetsAction } from '../actions/scrapeTweets';
+import { startRaidAction } from '../actions/start-raid';
+import { joinRaidAction } from '../actions/join-raid';
+import { submitEngagementAction } from '../actions/submit-engagement';
+import { viewLeaderboardAction } from '../actions/view-leaderboard';
+import { scrapeTweetsAction } from '../actions/scrape-tweets';
 
 // Import test utilities
 import {
@@ -47,7 +47,7 @@ describe('Social Raids Actions', () => {
       };
 
       const isValid = await startRaidAction.validate(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State
       );
@@ -63,7 +63,7 @@ describe('Social Raids Actions', () => {
       };
 
       const isValid = await startRaidAction.validate(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State
       );
@@ -86,11 +86,11 @@ describe('Social Raids Actions', () => {
       };
 
       const result = await startRaidAction.handler(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback
       );
 
       expect(result).toBe(true);
@@ -105,11 +105,11 @@ describe('Social Raids Actions', () => {
       };
 
       const result = await startRaidAction.handler(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback
       );
 
       expect(result).toBe(false);
@@ -131,11 +131,11 @@ describe('Social Raids Actions', () => {
       };
 
       const result = await startRaidAction.handler(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback
       );
 
       expect(result).toBe(false);
@@ -152,7 +152,7 @@ describe('Social Raids Actions', () => {
       };
 
       const isValid = await joinRaidAction.validate(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State
       );
@@ -178,11 +178,11 @@ describe('Social Raids Actions', () => {
       };
 
       const result = await joinRaidAction.handler(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback
       );
 
       expect(result).toBe(true);
@@ -197,11 +197,11 @@ describe('Social Raids Actions', () => {
       };
 
       const result = await joinRaidAction.handler(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback
       );
 
       expect(result).toBe(false);
@@ -218,7 +218,7 @@ describe('Social Raids Actions', () => {
       };
 
       const isValid = await submitEngagementAction.validate(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State
       );
@@ -245,11 +245,11 @@ describe('Social Raids Actions', () => {
       };
 
       const result = await submitEngagementAction.handler(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback
       );
 
       expect(result).toBe(true);
@@ -264,11 +264,11 @@ describe('Social Raids Actions', () => {
       };
 
       const result = await submitEngagementAction.handler(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback
       );
 
       expect(result).toBe(false);
@@ -285,7 +285,7 @@ describe('Social Raids Actions', () => {
       };
 
       const isValid = await viewLeaderboardAction.validate(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State
       );
@@ -314,11 +314,11 @@ describe('Social Raids Actions', () => {
       };
 
       const result = await viewLeaderboardAction.handler(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback
       );
 
       expect(result).toBe(true);
@@ -340,11 +340,11 @@ describe('Social Raids Actions', () => {
       };
 
       const result = await viewLeaderboardAction.handler(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback
       );
 
       expect(result).toBe(true);
@@ -361,7 +361,7 @@ describe('Social Raids Actions', () => {
       };
 
       const isValid = await scrapeTweetsAction.validate(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State
       );
@@ -402,11 +402,11 @@ describe('Social Raids Actions', () => {
       };
 
       const result = await scrapeTweetsAction.handler(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback
       );
 
       expect(result).toBe(true);
@@ -421,11 +421,11 @@ describe('Social Raids Actions', () => {
       };
 
       const result = await scrapeTweetsAction.handler(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback
       );
 
       expect(result).toBe(false);
@@ -443,11 +443,11 @@ describe('Social Raids Actions', () => {
       };
 
       const result = await scrapeTweetsAction.handler(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback
       );
 
       expect(result).toBe(false);
@@ -469,11 +469,11 @@ describe('Social Raids Actions', () => {
       };
 
       const result = await scrapeTweetsAction.handler(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback
       );
 
       expect(result).toBe(true);
@@ -488,7 +488,7 @@ describe('Social Raids Actions', () => {
       setup.mockMessage.content = { text: '' };
 
       const isValid = await startRaidAction.validate(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State
       );
@@ -501,7 +501,7 @@ describe('Social Raids Actions', () => {
       setup.mockMessage.content = null as any;
 
       const isValid = await startRaidAction.validate(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State
       );
@@ -514,7 +514,7 @@ describe('Social Raids Actions', () => {
       setup.mockMessage.content = { text: 'a'.repeat(10000) };
 
       const isValid = await startRaidAction.validate(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State
       );
@@ -534,11 +534,11 @@ describe('Social Raids Actions', () => {
       };
 
       await startRaidAction.handler(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback
       );
 
       Assertions.expectServiceCalled(setup.mockRuntime, 'TWITTER_RAID_SERVICE');
@@ -557,11 +557,11 @@ describe('Social Raids Actions', () => {
       };
 
       const result = await startRaidAction.handler(
-        setup.mockRuntime as IAgentRuntime,
+        setup.mockRuntime as unknown as IAgentRuntime,
         setup.mockMessage as Memory,
         setup.mockState as State,
         {},
-        setup.callbackFn as HandlerCallback
+        setup.callbackFn as unknown as HandlerCallback
       );
 
       expect(result).toBe(false);

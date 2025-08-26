@@ -7,15 +7,15 @@
 
 import type { Plugin, IAgentRuntime } from '@elizaos/core';
 import { logger } from '@elizaos/core';
-import { z } from 'zod';
+import * as z from 'zod';
 
 // Import our actions and providers
-import { mentorAction, buildCommunityAction } from '../actions/community-actions.js';
+import { mentorAction, buildCommunityAction } from '../actions/community-actions';
 import { 
   communityContextProvider, 
   learningContextProvider, 
   engagementStrategyProvider 
-} from '../providers/community-providers.js';
+} from '../providers/community-providers';
 
 /**
  * Configuration schema for the project plugin
@@ -23,8 +23,8 @@ import {
 const projectConfigSchema = z.object({
   CHARACTER_NAME: z.string().default('Nubi'),
   COMMUNITY_NAME: z.string().default('Developer Community'),
-  ENABLE_MENTORSHIP: z.string().transform((val: string) => val === 'true').default('true'),
-  ENABLE_COMMUNITY_BUILDING: z.string().transform((val: string) => val === 'true').default('true'),
+  ENABLE_MENTORSHIP: z.string().default('true'),
+  ENABLE_COMMUNITY_BUILDING: z.string().default('true'),
 });
 
 /**
@@ -47,11 +47,17 @@ export const projectPlugin: Plugin = {
   async init(config: Record<string, string>, runtime: IAgentRuntime) {
     logger.debug('Project plugin initialized');
     try {
-      const validatedConfig = await projectConfigSchema.parseAsync(config);
+      const result = projectConfigSchema.safeParse(config);
+      if (!result.success) {
+        const err: any = (result as any).error;
+        const issues = Array.isArray(err?.issues) ? err.issues.map((e: any) => e.message).join(', ') : 'Invalid configuration';
+        throw new Error(`Invalid project configuration: ${issues}`);
+      }
+      const validatedConfig = result.data;
       
       // Set environment variables
       for (const [key, value] of Object.entries(validatedConfig)) {
-        if (value) process.env[key] = String(value);
+        if (value !== undefined) process.env[key] = String(value);
       }
       
       logger.info(`Character: ${validatedConfig.CHARACTER_NAME}`);
@@ -60,11 +66,6 @@ export const projectPlugin: Plugin = {
       logger.info(`Community building enabled: ${validatedConfig.ENABLE_COMMUNITY_BUILDING}`);
       
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new Error(
-          `Invalid project configuration: ${error.errors.map((e: any) => e.message).join(', ')}`
-        );
-      }
       throw error;
     }
   },

@@ -30,7 +30,7 @@ Parse documentation into DOCUMENT memories and add rules to consult them.
   - include `source_path`, `section_title`, `doc_title`
 
 4) Add a rule to prioritize KB
-- Create or update a rule in `/.windsurf/rules/` (e.g., `knowledge_kb.md`) that instructs Cascade to consult KB memories tagged with `tag`
+- Create or update a rule in `../rules/` (e.g., `knowledge_kb.md`) that instructs Cascade to consult KB memories tagged with `tag`
 
 5) Verify retrieval
 - Run a test search using agent’s memory search to confirm relevant chunks are returned
@@ -51,3 +51,14 @@ bun run check && bun run build
 ## References
 - `../rules/elizaos_memory_operational_rules.md`
 - `../rules/documentation-guidelines.md`
+Core internal references:
+- `../rules/elizaos_development_workflow.md`
+- `../rules/elizaos-architecture-patterns.md`
+- `../rules/elizaos_coding_standards.md`
+- `../rules/testing_standards.md`
+- `../rules/elizaos_security_protocols.md`
+- `../rules/elizaos_template-quick-reference.md`
+- `../rules/elizaos_template_system.md`
+- `../rules/elizaos_interface_system.md`
+- `../rules/elizaos_memory_quick_reference.md`
+- `../knowledge/README.md`

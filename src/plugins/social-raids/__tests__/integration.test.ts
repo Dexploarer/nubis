@@ -7,18 +7,18 @@ import {
 
 // Import plugin components
 import { socialRaidsPlugin } from '../index';
-import { TwitterRaidService } from '../services/TwitterRaidService';
-import { TelegramRaidManager } from '../services/TelegramRaidManager';
-import { CommunityMemoryService } from '../services/CommunityMemoryService';
-import { startRaidAction } from '../actions/startRaid';
-import { joinRaidAction } from '../actions/joinRaid';
-import { submitEngagementAction } from '../actions/submitEngagement';
-import { viewLeaderboardAction } from '../actions/viewLeaderboard';
-import { scrapeTweetsAction } from '../actions/scrapeTweets';
-import { RaidStatusProvider } from '../providers/RaidStatusProvider';
-import { UserStatsProvider } from '../providers/UserStatsProvider';
-import { CommunityMemoryProvider } from '../providers/CommunityMemoryProvider';
-import { EngagementQualityEvaluator } from '../evaluators/EngagementQualityEvaluator';
+import { TwitterRaidService } from '../services/twitter-raid-service';
+import { TelegramRaidManager } from '../services/telegram-raid-manager';
+import { CommunityMemoryService } from '../services/community-memory-service';
+import { startRaidAction } from '../actions/start-raid';
+import { joinRaidAction } from '../actions/join-raid';
+import { submitEngagementAction } from '../actions/submit-engagement';
+import { viewLeaderboardAction } from '../actions/view-leaderboard';
+import { scrapeTweetsAction } from '../actions/scrape-tweets';
+import { RaidStatusProvider } from '../providers/raid-status-provider';
+import { UserStatsProvider } from '../providers/user-stats-provider';
+import { CommunityMemoryProvider } from '../providers/community-memory-provider';
+import { EngagementQualityEvaluator } from '../evaluators/engagement-quality-evaluator';
 
 // Import test utilities
 import {

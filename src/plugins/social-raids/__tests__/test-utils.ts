@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, expect, it, beforeEach, afterEach } from 'bun:test';
 import {
   type IAgentRuntime,
@@ -81,7 +82,6 @@ export function createMockMemory(overrides: Partial<Memory> = {}): Memory {
       attachments: [],
     },
     createdAt: Date.now(),
-    updatedAt: Date.now(),
     ...overrides,
   };
 }

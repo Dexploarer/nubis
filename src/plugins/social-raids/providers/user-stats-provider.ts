@@ -5,7 +5,7 @@ export const UserStatsProvider: Provider = {
   name: "USER_STATS",
   get: async (runtime: IAgentRuntime, message: Memory, state?: State): Promise<any> => {
     try {
-      const userId = message.userId;
+      const userId = message.entityId;
       if (!userId) return "";
 
       const supabaseUrl = runtime.getSetting("SUPABASE_URL");

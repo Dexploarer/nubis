@@ -20,7 +20,7 @@ Create a custom memory type or a database adapter and integrate it into the runt
 
 ## Steps
 1) Design extension
-- Review rules: `.windsurf/rules/elizaos_memory_operational_rules.md`, `.windsurf/rules/elizaos_memory_quick_reference.md`
+- Review rules: `../rules/elizaos_memory_operational_rules.md`, `../rules/elizaos_memory_quick_reference.md`
 - Decide scope: new Memory `type` or a storage `adapter`
 
 2) Implement custom type (only if `extension_type=type`)
@@ -57,3 +57,13 @@ bun run check && bun run build
 - `../rules/elizaos_memory_operational_rules.md`
 - `../rules/elizaos_memory_quick_reference.md`
 - `../rules/architecture_patterns.md`
+Core internal references:
+- `../rules/elizaos_development_workflow.md`
+- `../rules/elizaos-architecture-patterns.md`
+- `../rules/elizaos_coding_standards.md`
+- `../rules/testing_standards.md`
+- `../rules/elizaos_security_protocols.md`
+- `../rules/elizaos_template-quick-reference.md`
+- `../rules/elizaos_template_system.md`
+- `../rules/elizaos_interface_system.md`
+- `../knowledge/README.md`

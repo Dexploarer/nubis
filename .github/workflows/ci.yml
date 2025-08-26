@@ -14,6 +14,27 @@ env:
   BUN_VERSION: '1.0.0'
 
 jobs:
+  docs-link-lint:
+    name: Docs Link Lint
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Fail on legacy .windsurf/rules/ references
+      run: |
+        set -euo pipefail
+        echo "Scanning for legacy '.windsurf/rules/' path usage..."
+        matches=$(grep -R -n '\.windsurf/rules/' . \
+          --exclude-dir=.git \
+          --exclude-dir=node_modules \
+          --exclude-dir=dist \
+          --exclude-dir=.windsurf/rules || true)
+        if [ -n "$matches" ]; then
+          echo "::error::Found legacy '.windsurf/rules/' references. Use '../rules/' instead."
+          echo "$matches"
+          exit 1
+        fi
+        echo "No legacy references found."
   # Matrix Testing Job
   matrix-testing:
     name: Matrix Testing Suite

@@ -4,7 +4,7 @@ export const EngagementQualityEvaluator: Evaluator = {
   name: "ENGAGEMENT_QUALITY",
   similes: ["QUALITY_EVALUATOR", "ENGAGEMENT_ASSESSOR", "RAID_EVALUATOR"],
   validate: async (runtime: IAgentRuntime, message: Memory): Promise<boolean> => {
-    const text = message.content.text.toLowerCase();
+    const text = message.content?.text?.toLowerCase() || "";
     return text.includes('engag') ||
            text.includes('raid') ||
            text.includes('tweet') ||
@@ -16,6 +16,10 @@ export const EngagementQualityEvaluator: Evaluator = {
   description: "Evaluates the quality of user engagement in raids and social interactions",
   handler: async (runtime: IAgentRuntime, message: Memory): Promise<void> => {
     try {
+      if (!message.content?.text) {
+        elizaLogger.debug("EngagementQualityEvaluator: no text content to evaluate");
+        return;
+      }
       const text = message.content.text.toLowerCase();
       let engagementScore = 0.5; // Base score
       let qualityIndicators: string[] = [];
@@ -154,7 +158,7 @@ export const EngagementQualityEvaluator: Evaluator = {
   },
   examples: [
     {
-      context: "User submitted a retweet with thoughtful commentary",
+      prompt: "Evaluate the engagement quality of the user's message.",
       messages: [
         {
           name: "{{user1}}",
@@ -166,7 +170,7 @@ export const EngagementQualityEvaluator: Evaluator = {
       outcome: "High quality engagement detected - thoughtful commentary adds significant value (Score: 0.85)"
     },
     {
-      context: "User submitted basic engagement report",
+      prompt: "Evaluate the engagement quality of the user's message.",
       messages: [
         {
           name: "{{user1}}",
@@ -178,7 +182,7 @@ export const EngagementQualityEvaluator: Evaluator = {
       outcome: "Basic engagement detected - brief but authentic participation (Score: 0.4)"
     },
     {
-      context: "User provides detailed analysis with engagement",
+      prompt: "Evaluate the engagement quality of the user's message.",
       messages: [
         {
           name: "{{user1}}",

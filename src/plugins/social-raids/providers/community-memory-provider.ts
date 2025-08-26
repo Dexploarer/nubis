@@ -1,11 +1,11 @@
 import { Provider, IAgentRuntime, Memory, State, elizaLogger } from "@elizaos/core";
-import { CommunityMemoryService } from "../services/CommunityMemoryService";
+import { CommunityMemoryService } from "../services/community-memory-service";
 
 export const CommunityMemoryProvider: Provider = {
   name: "COMMUNITY_MEMORY",
   get: async (runtime: IAgentRuntime, message: Memory, state?: State): Promise<any> => {
     try {
-      const userId = message.userId;
+      const userId = message.entityId;
       if (!userId) return "";
 
       const memoryService = runtime.getService<CommunityMemoryService>("COMMUNITY_MEMORY_SERVICE");

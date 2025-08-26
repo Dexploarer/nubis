@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Prevent reintroducing legacy .windsurf/rules/ paths
+bash scripts/check-docs-links.sh

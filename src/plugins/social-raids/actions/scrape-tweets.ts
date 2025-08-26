@@ -7,7 +7,7 @@ import {
   elizaLogger,
   ActionResult,
 } from "@elizaos/core";
-import { TwitterRaidService } from "../services/TwitterRaidService";
+import { TwitterRaidService } from "../services/twitter-raid-service";
 
 export const scrapeTweetsAction: Action = {
   name: "SCRAPE_TWEETS",

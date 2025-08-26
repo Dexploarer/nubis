@@ -14,7 +14,7 @@ export const RaidStatusProvider: Provider = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           action: 'get_status',
-          userId: message.userId 
+          userId: message.entityId 
         })
       });
 

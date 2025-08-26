@@ -3,7 +3,7 @@
  * Following official ElizaOS patterns with Zod validation
  */
 
-import { z } from 'zod';
+import * as z from 'zod';
 
 /**
  * Configuration schema with proper validation
@@ -37,7 +37,7 @@ export const configSchema = z.object({
   COMMUNITY_NAME: z.string().default('Developer Community'),
 });
 
-export type AppConfig = z.infer<typeof configSchema>;
+export type AppConfig = ReturnType<typeof configSchema.parse>;
 
 /**
  * Validate and parse configuration
@@ -71,7 +71,7 @@ export function validateConfig(): AppConfig {
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw new Error(
-        `Invalid configuration: ${error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')}`
+        `Invalid configuration: ${error.issues.map((e: any) => `${e.path?.join?.('.') ?? ''}: ${e.message}`).join(', ')}`
       );
     }
     throw error;

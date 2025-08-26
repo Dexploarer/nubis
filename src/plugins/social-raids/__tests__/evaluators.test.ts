@@ -6,7 +6,7 @@ import {
 } from '@elizaos/core';
 
 // Import evaluators
-import { EngagementQualityEvaluator } from '../evaluators/EngagementQualityEvaluator';
+import { EngagementQualityEvaluator } from '../evaluators/engagement-quality-evaluator';
 
 // Import test utilities
 import {

@@ -7,7 +7,7 @@ import {
   elizaLogger,
   ActionResult,
 } from "@elizaos/core";
-import { CommunityMemoryService } from "../services/CommunityMemoryService";
+import { CommunityMemoryService } from "../services/community-memory-service";
 
 export const startRaidAction: Action = {
   name: "START_RAID",
@@ -55,7 +55,7 @@ export const startRaidAction: Action = {
             content: { action: 'start_raid_missing_url' }
           });
         }
-        return false;
+        return { success: false, text: 'Missing Twitter/X URL to start raid' } as ActionResult;
       }
 
       let twitterUrl = match[0];
@@ -76,7 +76,7 @@ export const startRaidAction: Action = {
         body: JSON.stringify({
           action: 'start_raid',
           twitterUrl: twitterUrl,
-          userId: message.id,
+          userId: message.entityId,
           username: message.content.source || runtime.character?.name || "agent",
           platform: 'elizaos'
         })
@@ -90,7 +90,7 @@ export const startRaidAction: Action = {
         if (memoryService) {
           await memoryService.recordInteraction({
             id: crypto.randomUUID(),
-            userId: message.id,
+            userId: message.entityId,
             username: message.content.source || "user",
             interactionType: 'raid_initiation',
             content: `Started raid for: ${twitterUrl}`,
@@ -140,7 +140,7 @@ export const startRaidAction: Action = {
           });
         }
         
-        return true;
+        return { success: true, text: 'Raid started successfully' } as ActionResult;
       } else {
         if (callback) {
           callback({
@@ -148,7 +148,7 @@ export const startRaidAction: Action = {
             content: { action: 'raid_start_failed', error: result.error }
           });
         }
-        return false;
+        return { success: false, text: 'Failed to start raid' } as ActionResult;
       }
     } catch (error) {
       elizaLogger.error("Error in start raid action:", error);
@@ -160,7 +160,7 @@ export const startRaidAction: Action = {
         });
       }
       
-      return false;
+      return { success: false, text: 'Error starting raid' } as ActionResult;
     }
   },
   examples: [
