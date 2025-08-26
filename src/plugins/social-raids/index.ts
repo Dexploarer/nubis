@@ -18,6 +18,10 @@ import { joinRaidAction } from './actions/join-raid';
 import { submitEngagementAction } from './actions/submit-engagement';
 import { viewLeaderboardAction } from './actions/view-leaderboard';
 import { scrapeTweetsAction } from './actions/scrape-tweets';
+import { queryKnowledgeAction } from './actions/query-knowledge';
+import { soulBindingAction } from './actions/soul-binding';
+import { soulBindingConfirmationAction } from './actions/soul-binding-confirmation';
+import { soulBindingCompletionAction } from './actions/soul-binding-completion';
 
 // Providers
 import { RaidStatusProvider } from './providers/raid-status-provider';
@@ -35,8 +39,11 @@ import { EngagementFraudEvaluator } from './evaluators/engagement-fraud-evaluato
 import { TwitterRaidService } from './services/twitter-raid-service';
 import { TelegramRaidManager } from './services/telegram-raid-manager';
 import { CommunityMemoryService } from './services/community-memory-service';
+import { IdentityManagementService } from './services/identity-management-service';
+import { WalletVerificationService } from './services/wallet-verification-service';
 import { EntitySyncService } from './services/entity-sync-service';
 import { ForumTopicManager } from './services/forum-topic-manager';
+import { KnowledgeOptimizationService } from './services/knowledge-optimization-service';
 
 // Configuration interface - simplified to match project patterns
 interface SocialRaidsConfig {
@@ -54,6 +61,11 @@ interface SocialRaidsConfig {
   SUPABASE_SERVICE_ROLE_KEY?: string;
   RAID_COORDINATOR_URL?: string;
   TWEET_SCRAPER_URL?: string;
+  // Web3 Wallet Verification
+  PROJECT_URL?: string;
+  WEB3_STATEMENT?: string;
+  WEB3_CAPTCHA_ENABLED?: boolean;
+  WEB3_RATE_LIMIT?: number;
 }
 
 export const socialRaidsPlugin: Plugin = {
@@ -77,6 +89,11 @@ export const socialRaidsPlugin: Plugin = {
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     RAID_COORDINATOR_URL: process.env.RAID_COORDINATOR_URL,
     TWEET_SCRAPER_URL: process.env.TWEET_SCRAPER_URL,
+    // Web3 Wallet Verification
+    PROJECT_URL: process.env.PROJECT_URL,
+    WEB3_STATEMENT: process.env.WEB3_STATEMENT,
+    WEB3_CAPTCHA_ENABLED: process.env.WEB3_CAPTCHA_ENABLED,
+    WEB3_RATE_LIMIT: process.env.WEB3_RATE_LIMIT,
   },
 
   // Lifecycle method
@@ -100,6 +117,11 @@ export const socialRaidsPlugin: Plugin = {
         SUPABASE_SERVICE_ROLE_KEY: config.SUPABASE_SERVICE_ROLE_KEY,
         RAID_COORDINATOR_URL: config.RAID_COORDINATOR_URL,
         TWEET_SCRAPER_URL: config.TWEET_SCRAPER_URL,
+        // Web3 Wallet Verification
+        PROJECT_URL: config.PROJECT_URL,
+        WEB3_STATEMENT: config.WEB3_STATEMENT,
+        WEB3_CAPTCHA_ENABLED: config.WEB3_CAPTCHA_ENABLED === 'true',
+        WEB3_RATE_LIMIT: parseInt(config.WEB3_RATE_LIMIT || '30'),
       };
 
       // Set environment variables
@@ -117,13 +139,17 @@ export const socialRaidsPlugin: Plugin = {
   },
 
   // Component definitions
-  services: [TwitterRaidService, TelegramService, TelegramRaidManager, CommunityMemoryService, EntitySyncService, ForumTopicManager],
+  services: [TwitterRaidService, TelegramService, TelegramRaidManager, CommunityMemoryService, IdentityManagementService, WalletVerificationService, EntitySyncService, ForumTopicManager, KnowledgeOptimizationService],
   actions: [
     startRaidAction,
     joinRaidAction,
     submitEngagementAction,
     viewLeaderboardAction,
     scrapeTweetsAction,
+    queryKnowledgeAction,
+    soulBindingAction,
+    soulBindingConfirmationAction,
+    soulBindingCompletionAction,
   ],
   providers: [new RaidStatusProvider(), new UserStatsProvider(), new CommunityMemoryProvider()],
   evaluators: [

@@ -315,22 +315,56 @@ export class TelegramRaidManager extends Service {
     if (!ctx.from || !ctx.message || !('text' in ctx.message)) return;
 
     try {
-      await this.supabase.from('community_interactions').insert({
-        user_id: ctx.from.id.toString(),
-        interaction_type: 'telegram_message',
-        content: ctx.message.text,
-        context: {
-          chat_id: ctx.chat?.id,
-          chat_type: ctx.chat?.type,
-          username: ctx.from.username,
-          first_name: ctx.from.first_name,
-        },
-        weight: 1.0,
-        sentiment_score: 0.5, // TODO: Add sentiment analysis
-        timestamp: new Date(),
-      });
+      // 🧠 Use Enhanced Community Memory Service for ElizaOS integration
+      const communityMemoryService = this.runtime.getService('COMMUNITY_MEMORY_SERVICE');
+      if (communityMemoryService && typeof (communityMemoryService as any).recordInteraction === 'function') {
+        
+        // Prepare interaction data for ElizaOS memory system
+        const interaction = {
+          userId: ctx.from.id.toString(),
+          interactionType: 'telegram_message',
+          content: ctx.message.text,
+          platform: 'telegram',
+          roomId: ctx.chat?.id?.toString() || ctx.from.id.toString(),
+          context: {
+            chat_id: ctx.chat?.id,
+            chat_type: ctx.chat?.type,
+            username: ctx.from.username,
+            first_name: ctx.from.first_name,
+            message_id: ctx.message.message_id,
+            is_bot_command: ctx.message.text.startsWith('/'),
+            is_raid_related: ctx.message.text.toLowerCase().includes('raid') || 
+                           ctx.message.text.toLowerCase().includes('twitter') ||
+                           ctx.message.text.toLowerCase().includes('engagement'),
+          },
+          sentimentScore: 0.5, // TODO: Add sentiment analysis
+          timestamp: new Date(),
+        };
+
+        // Store in ElizaOS memory system via Community Memory Service
+        await (communityMemoryService as any).recordInteraction(interaction);
+        
+        elizaLogger.debug('Telegram interaction stored in ElizaOS memory system');
+      } else {
+        // Fallback: Direct Supabase storage (legacy)
+        elizaLogger.warn('Community Memory Service not available, using direct Supabase storage');
+        await this.supabase.from('community_interactions').insert({
+          user_id: ctx.from.id.toString(),
+          interaction_type: 'telegram_message',
+          content: ctx.message.text,
+          context: {
+            chat_id: ctx.chat?.id,
+            chat_type: ctx.chat?.type,
+            username: ctx.from.username,
+            first_name: ctx.from.first_name,
+          },
+          weight: 1.0,
+          sentiment_score: 0.5,
+          timestamp: new Date(),
+        });
+      }
     } catch (error) {
-      elizaLogger.error('Failed to log interaction to database:', error);
+      elizaLogger.error('Failed to log Telegram interaction:', error);
     }
   }
 

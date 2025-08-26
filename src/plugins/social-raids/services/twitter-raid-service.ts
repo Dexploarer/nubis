@@ -243,7 +243,35 @@ export class TwitterRaidService extends Service {
       const result: any = await (this.scraper as any).postTweet(content);
       elizaLogger.info('Tweet posted successfully:', String(result?.id || 'ok'));
 
-      // Log the tweet to database
+      // 🧠 Store in ElizaOS memory system via Community Memory Service
+      try {
+        const communityMemoryService = this.runtime.getService('COMMUNITY_MEMORY_SERVICE');
+        if (communityMemoryService && typeof (communityMemoryService as any).recordInteraction === 'function') {
+          
+          const interaction = {
+            userId: 'agent', // This is the agent posting
+            interactionType: 'twitter_post',
+            content: content,
+            platform: 'twitter',
+            roomId: 'agent_timeline', // Agent's own timeline
+            context: {
+              tweet_id: result?.id || result?.rest_id || result?.data?.id,
+              post_type: 'original_tweet',
+              character_length: content.length,
+              is_agent_generated: true,
+            },
+            sentimentScore: 0.7, // Assume positive sentiment for agent posts
+            timestamp: new Date(),
+          };
+
+          await (communityMemoryService as any).recordInteraction(interaction);
+          elizaLogger.debug('Twitter post stored in ElizaOS memory system');
+        }
+      } catch (memoryError) {
+        elizaLogger.warn('Failed to store tweet in ElizaOS memory:', memoryError);
+      }
+
+      // Fallback: Log the tweet to database (secondary storage)
       await this.supabase.from('agent_tweets').insert({
         tweet_id: result?.id || result?.rest_id || result?.data?.id,
         content: content,
@@ -504,7 +532,36 @@ export class TwitterRaidService extends Service {
       }
 
       if (result) {
-        // Log engagement action
+        // 🧠 Store engagement in ElizaOS memory system via Community Memory Service
+        try {
+          const communityMemoryService = this.runtime.getService('COMMUNITY_MEMORY_SERVICE');
+          if (communityMemoryService && typeof (communityMemoryService as any).recordInteraction === 'function') {
+            
+            const interaction = {
+              userId: 'agent', // Agent performing engagement
+              interactionType: `twitter_${engagementType}`,
+              content: content || `Agent ${engagementType} on tweet ${tweetId}`,
+              platform: 'twitter',
+              roomId: `tweet_${tweetId}`, // Group by tweet ID
+              context: {
+                target_tweet_id: tweetId,
+                target_tweet_url: tweetUrl,
+                engagement_type: engagementType,
+                is_agent_engagement: true,
+                success: true,
+              },
+              sentimentScore: 0.8, // Positive sentiment for successful engagement
+              timestamp: new Date(),
+            };
+
+            await (communityMemoryService as any).recordInteraction(interaction);
+            elizaLogger.debug(`Twitter ${engagementType} stored in ElizaOS memory system`);
+          }
+        } catch (memoryError) {
+          elizaLogger.warn('Failed to store Twitter engagement in ElizaOS memory:', memoryError);
+        }
+
+        // Fallback: Log engagement action (secondary storage)
         await this.supabase.from('agent_engagements').insert({
           tweet_id: tweetId,
           engagement_type: engagementType,

@@ -62,6 +62,10 @@ export interface CommunityInteraction {
   sentimentScore: number;
   relatedRaidId?: string;
   timestamp: Date;
+  // Cross-platform identity support
+  platform?: string;
+  originalUserId?: string;
+  roomId?: string;
 }
 
 export interface UserStats {

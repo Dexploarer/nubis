@@ -3,3 +3,7 @@ export { joinRaidAction } from './join-raid';
 export { submitEngagementAction } from './submit-engagement';
 export { viewLeaderboardAction } from './view-leaderboard';
 export { scrapeTweetsAction } from './scrape-tweets';
+export { queryKnowledgeAction } from './query-knowledge';
+export { soulBindingAction } from './soul-binding';
+export { soulBindingConfirmationAction } from './soul-binding-confirmation';
+export { soulBindingCompletionAction } from './soul-binding-completion';

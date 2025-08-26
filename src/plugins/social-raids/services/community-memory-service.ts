@@ -1,17 +1,26 @@
-import type { IAgentRuntime } from '@elizaos/core';
-import { Service, ServiceType, elizaLogger } from '@elizaos/core';
+import type { IAgentRuntime, Memory, UUID } from '@elizaos/core';
+import { Service, ServiceType, elizaLogger, MemoryType } from '@elizaos/core';
+import type { IdentityManagementService } from './identity-management-service';
 import { createClient } from '@supabase/supabase-js';
 import * as cron from 'node-cron';
 import type { CommunityInteraction, UserStats } from '../types';
 
-interface MemoryFragment {
+// Enhanced memory interface that integrates with ElizaOS core memory
+interface CommunityMemoryData {
   id: string;
   userId: string;
-  type: string;
+  interactionType: string;
   content: string;
   weight: number;
-  timestamp: Date;
+  sentimentScore: number;
+  platform: string;
   context: any;
+  metadata?: {
+    raidId?: string;
+    engagementMetrics?: any;
+    qualityScore?: number;
+    communityImpact?: number;
+  };
 }
 
 interface UserPersonality {
@@ -44,8 +53,14 @@ export class CommunityMemoryService extends Service {
   capabilityDescription = 'Manages community memory, user personalities, and engagement tracking';
 
   public supabase: any;
-  private readonly memoryCache = new Map<string, MemoryFragment[]>();
+  private readonly memoryCache = new Map<string, Memory[]>();
   private readonly personalityCache = new Map<string, UserPersonality>();
+  
+  // ElizaOS Memory Integration
+  private readonly MEMORY_TABLE_NAME = 'community_interactions';
+  private readonly PERSONALITY_TABLE_NAME = 'user_personalities';
+  private readonly MAX_CACHE_SIZE = 1000; // Prevent memory leaks
+  private cleanupInterval?: NodeJS.Timeout;
 
   constructor(runtime: IAgentRuntime) {
     super(runtime);
@@ -66,11 +81,14 @@ export class CommunityMemoryService extends Service {
   }
 
   async initialize(): Promise<void> {
-    elizaLogger.info('Initializing Community Memory Service');
+    elizaLogger.info('Initializing Community Memory Service with ElizaOS integration');
 
     try {
-      // Load recent memories into cache
+      // Load recent memories into cache from both ElizaOS memory and Supabase
       await this.loadRecentMemories();
+
+      // Set up memory cleanup to prevent leaks (ElizaOS best practice)
+      this.setupMemoryCleanup();
 
       // Schedule periodic memory consolidation (every 6 hours)
       cron.schedule('0 */6 * * *', () => {
@@ -86,66 +104,107 @@ export class CommunityMemoryService extends Service {
         });
       });
 
-      elizaLogger.success('Community Memory Service initialized successfully');
+      // Schedule hourly memory sync between ElizaOS and Supabase
+      cron.schedule('0 * * * *', () => {
+        this.syncMemorySystemsAsync().catch((error) => {
+          elizaLogger.error('Memory system sync failed:', error);
+        });
+      });
+
+      elizaLogger.success('Community Memory Service initialized successfully with ElizaOS integration');
     } catch (error) {
       elizaLogger.error('Failed to initialize Community Memory Service:', error);
       throw error;
     }
   }
 
+  /**
+   * Records community interaction using ElizaOS core memory system
+   * This integrates with the runtime's memory system while maintaining Supabase sync
+   */
   async recordInteraction(interaction: any): Promise<void> {
     try {
-      // Calculate interaction weight using "Scales of Ma'at" principles
-      const normalized: CommunityInteraction = {
-        id: interaction.id || crypto.randomUUID(),
-        userId: interaction.userId,
-        username: interaction.username || '',
-        interactionType: interaction.interactionType || interaction.actionType || 'unknown',
-        content: interaction.content || '',
-        context: interaction.context || {},
-        weight: interaction.weight || 1,
-        sentimentScore: interaction.sentimentScore ?? interaction.sentiment ?? 0,
-        relatedRaidId: interaction.relatedRaidId || interaction.raidId,
-        timestamp: interaction.timestamp ? new Date(interaction.timestamp) : new Date(),
-      };
+      // 🔗 Get unified user identity across platforms
+      const userIdentity = await this.getUnifiedUserIdentity(interaction);
+      
+      // Calculate interaction weight using "Scales of Ma'at" principles with unified identity
+      const normalized = this.normalizeInteraction(interaction, userIdentity);
       const weight = this.calculateInteractionWeight(normalized);
+      const platform = normalized.platform;
 
-      // Store interaction in database
-      const { error } = await this.supabase.from('community_interactions').insert({
-        user_id: normalized.userId,
-        interaction_type: normalized.interactionType,
+      // 🧠 PRIMARY: Store in ElizaOS core memory system with unified identity
+      const elizaMemory: Memory = {
+        id: normalized.id as UUID,
+        entityId: userIdentity.uuid, // Use unified UUID across platforms
+        agentId: this.runtime.agentId,
+        roomId: interaction.roomId as UUID || userIdentity.uuid, // Use roomId or fallback to unified UUID
+        content: {
+          text: normalized.content,
+          source: platform,
+          metadata: {
+            interactionType: normalized.interactionType,
+            weight: weight,
+            sentimentScore: normalized.sentimentScore,
+            raidId: normalized.relatedRaidId,
+            platform: platform,
+            originalUserId: normalized.originalUserId, // Keep original platform ID for reference
+            unifiedUserId: userIdentity.uuid, // Store unified UUID
+            context: normalized.context,
+            qualityScore: this.calculateQualityScore(normalized),
+            communityImpact: weight > 1.5 ? 'high' : weight > 0.8 ? 'medium' : 'low',
+            // Cross-platform identity information
+            crossPlatformIdentity: {
+              platforms: await this.getUserPlatformAccounts(userIdentity.uuid),
+              displayName: userIdentity.metadata?.displayName,
+              preferredPlatform: userIdentity.metadata?.preferredPlatform,
+              isUnified: !userIdentity.metadata?.fallback,
+            },
+          },
+        },
+        createdAt: normalized.timestamp.getTime()
+      };
+
+      // Store in ElizaOS memory system (primary storage)
+      await this.runtime.createMemory(elizaMemory, "community_interaction");
+      
+      // Add embedding for semantic search capabilities (if available)
+      if (typeof this.runtime.addEmbeddingToMemory === 'function') {
+        try {
+          await this.runtime.addEmbeddingToMemory(elizaMemory);
+        } catch (embeddingError) {
+          elizaLogger.warn('Failed to add embedding to memory:', embeddingError);
+        }
+      } else {
+        elizaLogger.debug('addEmbeddingToMemory not available, skipping embedding generation');
+      }
+
+      // 💾 SECONDARY: Sync to Supabase for analytics and backup with identity context
+      await this.syncToSupabase(normalized, weight, userIdentity);
+
+      // Update local cache with unified identity
+      this.updateMemoryCache(userIdentity.uuid.toString(), {
+        id: normalized.id,
+        userId: userIdentity.uuid.toString(),
+        originalUserId: normalized.originalUserId,
+        interactionType: normalized.interactionType,
         content: normalized.content,
-        context: normalized.context,
         weight: weight,
-        sentiment_score: normalized.sentimentScore,
-        related_raid_id: normalized.relatedRaidId,
-        timestamp: normalized.timestamp,
+        sentimentScore: normalized.sentimentScore,
+        platform: platform,
+        context: normalized.context,
+        unifiedIdentity: true,
+        crossPlatform: !userIdentity.metadata?.fallback,
+        metadata: {
+          raidId: normalized.relatedRaidId,
+          qualityScore: this.calculateQualityScore(normalized),
+          communityImpact: weight > 1.5 ? 'high' : weight > 0.8 ? 'medium' : 'low',
+          platforms: await this.getUserPlatformAccounts(userIdentity.uuid),
+        },
       });
 
-      if (error) {
-        throw error;
-      }
-
-      // Update cache
-      if (!this.memoryCache.has(normalized.userId)) {
-        this.memoryCache.set(normalized.userId, []);
-      }
-
-      const memoryFragment: MemoryFragment = {
-        id: normalized.id,
-        userId: normalized.userId,
-        type: normalized.interactionType,
-        content: normalized.content,
-        weight: weight,
-        timestamp: normalized.timestamp,
-        context: normalized.context,
-      };
-
-      this.memoryCache.get(normalized.userId)!.push(memoryFragment);
-
-      // Update user's community standing immediately if high-weight interaction
+      // Update user's community standing if high-weight interaction
       if (weight > 2.0) {
-        await this.updateUserCommunityStanding(normalized.userId, weight);
+        await this.updateUserCommunityStandingMemory(normalized.userId, weight);
       }
 
       elizaLogger.debug(
@@ -375,7 +434,7 @@ export class CommunityMemoryService extends Service {
     };
   }
 
-  async getUserMemories(userId: string, limit = 50): Promise<MemoryFragment[]> {
+  async getUserMemories(userId: string, limit = 50): Promise<Memory[]> {
     try {
       // Check cache first
       if (this.memoryCache.has(userId)) {
@@ -392,15 +451,21 @@ export class CommunityMemoryService extends Service {
 
       if (error) throw error;
 
-      const memories: MemoryFragment[] =
+      const memories: Memory[] =
         data?.map((item: any) => ({
-          id: item.id,
-          userId: item.user_id,
-          type: item.interaction_type,
-          content: item.content,
-          weight: item.weight,
-          timestamp: new Date(item.timestamp),
-          context: item.context,
+          id: item.id as UUID,
+          entityId: item.user_id as UUID,
+          agentId: this.runtime.agentId,
+          roomId: item.room_id as UUID || item.user_id as UUID,
+          content: {
+            text: item.content,
+            metadata: {
+              type: item.interaction_type,
+              weight: item.weight,
+              context: item.context,
+            },
+          },
+          createdAt: new Date(item.timestamp).getTime(),
         })) || [];
 
       // Update cache
@@ -450,14 +515,20 @@ export class CommunityMemoryService extends Service {
           this.memoryCache.set(interaction.user_id, []);
         }
 
-        const memoryFragment: MemoryFragment = {
-          id: interaction.id,
-          userId: interaction.user_id,
-          type: interaction.interaction_type,
-          content: interaction.content,
-          weight: interaction.weight,
-          timestamp: new Date(interaction.timestamp),
-          context: interaction.context,
+        const memoryFragment: Memory = {
+          id: interaction.id as UUID,
+          entityId: interaction.user_id as UUID,
+          agentId: this.runtime.agentId,
+          roomId: interaction.room_id as UUID || interaction.user_id as UUID,
+          content: {
+            text: interaction.content,
+            metadata: {
+              type: interaction.interaction_type,
+              weight: interaction.weight,
+              context: interaction.context,
+            },
+          },
+          createdAt: new Date(interaction.timestamp).getTime(),
         };
 
         this.memoryCache.get(interaction.user_id)!.push(memoryFragment);
@@ -731,7 +802,461 @@ export class CommunityMemoryService extends Service {
     }
   }
 
+  // ========================================
+  // ElizaOS Memory Integration Helper Methods
+  // ========================================
+
+  /**
+   * Set up memory cleanup to prevent leaks (ElizaOS best practice)
+   */
+  private setupMemoryCleanup(): void {
+    this.cleanupInterval = setInterval(() => {
+      this.performMemoryCleanup();
+    }, 60000 * 10); // Every 10 minutes
+  }
+
+  /**
+   * Perform bounded cache cleanup to prevent memory leaks
+   */
+  private performMemoryCleanup(): void {
+    const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
+    
+    // Clean memory cache
+    for (const [userId, memories] of this.memoryCache.entries()) {
+      if (memories.length > this.MAX_CACHE_SIZE) {
+        // Keep only the most recent entries
+        this.memoryCache.set(userId, memories.slice(-this.MAX_CACHE_SIZE));
+      }
+    }
+
+    // Clean personality cache
+    if (this.personalityCache.size > this.MAX_CACHE_SIZE) {
+      const entries = Array.from(this.personalityCache.entries());
+      const sortedByAge = entries.sort((a, b) => 
+        b[1].lastUpdated.getTime() - a[1].lastUpdated.getTime()
+      );
+      
+      // Keep only the most recently updated personalities
+      this.personalityCache.clear();
+      sortedByAge.slice(0, this.MAX_CACHE_SIZE).forEach(([userId, personality]) => {
+        this.personalityCache.set(userId, personality);
+      });
+    }
+
+    elizaLogger.debug('Memory cleanup completed');
+  }
+
+  /**
+   * Calculate quality score for interaction content
+   */
+  private calculateQualityScore(interaction: CommunityInteraction): number {
+    let score = 0.5; // Base score
+
+    // Content length factor
+    const length = interaction.content.length;
+    if (length > 100) score += 0.2;
+    if (length > 300) score += 0.1;
+    if (length < 20) score -= 0.2;
+
+    // Quality indicators
+    const qualityWords = ['because', 'however', 'specifically', 'detailed', 'comprehensive'];
+    const qualityCount = qualityWords.filter(word => 
+      interaction.content.toLowerCase().includes(word)
+    ).length;
+    score += qualityCount * 0.1;
+
+    // Sentiment factor
+    score += interaction.sentimentScore * 0.2;
+
+    return Math.max(0, Math.min(1, score));
+  }
+
+  /**
+   * Update local memory cache with bounded size
+   */
+  private updateMemoryCache(userId: string, memoryData: CommunityMemoryData): void {
+    if (!this.memoryCache.has(userId)) {
+      this.memoryCache.set(userId, []);
+    }
+
+    const userMemories = this.memoryCache.get(userId)!;
+    userMemories.unshift(memoryData); // Add to front
+
+    // Keep cache bounded
+    if (userMemories.length > this.MAX_CACHE_SIZE) {
+      userMemories.splice(this.MAX_CACHE_SIZE);
+    }
+  }
+
+  /**
+   * Sync interaction data to Supabase (secondary storage)
+   */
+  private async syncToSupabase(interaction: CommunityInteraction, weight: number): Promise<void> {
+    try {
+      const { error } = await this.supabase.from('community_interactions').insert({
+        user_id: interaction.userId,
+        interaction_type: interaction.interactionType,
+        content: interaction.content,
+        context: interaction.context,
+        weight: weight,
+        sentiment_score: interaction.sentimentScore,
+        related_raid_id: interaction.relatedRaidId,
+        timestamp: interaction.timestamp,
+      });
+
+      if (error) {
+        elizaLogger.warn('Supabase sync failed, continuing with ElizaOS memory only:', error);
+      }
+    } catch (error) {
+      elizaLogger.warn('Supabase sync error, continuing with ElizaOS memory only:', error);
+    }
+  }
+
+  /**
+   * Update user community standing using ElizaOS memory system
+   */
+  private async updateUserCommunityStandingMemory(userId: string, weight: number): Promise<void> {
+    try {
+      const standingMemory: Memory = {
+        id: crypto.randomUUID() as UUID,
+        entityId: userId as UUID,
+        agentId: this.runtime.agentId,
+        roomId: userId as UUID, // Use userId as roomId for user-specific data
+        content: {
+          text: `Community standing update: weight ${weight}`,
+          type: 'community_standing',
+          source: 'memory_service',
+          metadata: {
+            weight: weight,
+            timestamp: Date.now(),
+            action: 'standing_update',
+          },
+        },
+        createdAt: Date.now(),
+        // type: MemoryType.FACT removed as it's not in the Memory interface
+      };
+
+      await this.runtime.createMemory(standingMemory, "community_standing");
+    } catch (error) {
+      elizaLogger.error('Failed to update community standing in memory:', error);
+    }
+  }
+
+  /**
+   * Sync memory systems between ElizaOS and Supabase
+   */
+  private async syncMemorySystemsAsync(): Promise<void> {
+    try {
+      elizaLogger.debug('Starting memory system sync...');
+      
+      // This could be expanded to:
+      // 1. Sync recent ElizaOS memories to Supabase for backup
+      // 2. Migrate old Supabase data to ElizaOS format
+      // 3. Validate data consistency between systems
+      
+      elizaLogger.debug('Memory system sync completed');
+    } catch (error) {
+      elizaLogger.error('Memory system sync failed:', error);
+    }
+  }
+
+  /**
+   * Get community interactions from ElizaOS memory system
+   */
+  async getCommunityMemories(userId?: string, limit = 50): Promise<Memory[]> {
+    try {
+      const searchParams: any = {
+        tableName: this.MEMORY_TABLE_NAME,
+        agentId: this.runtime.agentId,
+        count: limit,
+        unique: false,
+      };
+
+      if (userId) {
+        searchParams.entityId = userId as UUID;
+      }
+
+      return await this.runtime.getMemories(searchParams);
+    } catch (error) {
+      elizaLogger.error('Failed to get community memories from ElizaOS:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Enhanced knowledge query that combines memory and knowledge base
+   * Integrates with Knowledge Optimization Service for better retrieval
+   */
+  async queryKnowledgeAndMemory(query: string, userId?: string, limit = 5): Promise<any> {
+    try {
+      elizaLogger.debug('Querying knowledge and memory with:', query);
+
+      const results = {
+        memories: [],
+        knowledge: [],
+        combined_insights: [],
+      };
+
+      // 1. Query user's memories if userId provided
+      if (userId) {
+        const userMemories = await this.getCommunityMemories(userId, limit);
+        const relevantMemories = userMemories.filter(memory => 
+          (memory.content?.text || '').toLowerCase().includes(query.toLowerCase()) ||
+          (memory.content?.type || '').toLowerCase().includes(query.toLowerCase())
+        ).slice(0, 3);
+        
+        results.memories = relevantMemories.map(memory => ({
+          id: memory.id,
+          content: memory.content?.text || '',
+          type: memory.content?.type || 'unknown',
+          platform: memory.content?.source || 'unknown',
+          timestamp: new Date(memory.createdAt || Date.now()),
+          userId: memory.entityId,
+          metadata: memory.content?.metadata || {},
+          qualityScore: memory.content?.metadata?.qualityScore || 0.5,
+        }));
+      }
+
+      // 2. Query Knowledge Optimization Service
+      try {
+        const knowledgeOptimizer = this.runtime.getService('KNOWLEDGE_OPTIMIZATION_SERVICE');
+        if (knowledgeOptimizer && typeof (knowledgeOptimizer as any).searchDocuments === 'function') {
+          const knowledgeDocs = await (knowledgeOptimizer as any).searchDocuments(query);
+          results.knowledge = knowledgeDocs.slice(0, 3).map(doc => ({
+            title: doc.title,
+            category: doc.metadata.category,
+            relevance: doc.metadata.relevanceScore,
+            summary: this.createDocumentSummary(doc.content),
+            path: doc.path,
+            tags: doc.metadata.tags,
+          }));
+        }
+      } catch (error) {
+        elizaLogger.debug('Knowledge Optimization Service not available:', error);
+      }
+
+      // 3. Create combined insights by correlating memory and knowledge
+      if (results.memories.length > 0 && results.knowledge.length > 0) {
+        results.combined_insights = this.generateCombinedInsights(results.memories, results.knowledge, query);
+      }
+
+      return results;
+    } catch (error) {
+      elizaLogger.error('Failed to query knowledge and memory:', error);
+      return { memories: [], knowledge: [], combined_insights: [] };
+    }
+  }
+
+  private createDocumentSummary(content: string): string {
+    // Create a brief summary of the document content
+    const cleanContent = content
+      .replace(/^#+\s+/gm, '') // Remove markdown headers
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold formatting
+      .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1'); // Remove links
+    
+    const sentences = cleanContent.split(/[.!?]+/).filter(s => s.trim().length > 10);
+    const summary = sentences.slice(0, 2).join('. ').trim();
+    
+    return summary.length > 200 ? summary.substring(0, 197) + '...' : summary;
+  }
+
+  private generateCombinedInsights(memories: any[], knowledge: any[], query: string): any[] {
+    const insights = [];
+
+    // Find correlations between user interactions and knowledge base
+    for (const memory of memories) {
+      for (const doc of knowledge) {
+        const correlation = this.calculateCorrelation(memory, doc, query);
+        if (correlation > 0.3) {
+          insights.push({
+            type: 'correlation',
+            memory_context: {
+              content: memory.content,
+              platform: memory.platform,
+              timestamp: memory.timestamp,
+            },
+            knowledge_context: {
+              title: doc.title,
+              category: doc.category,
+              relevance: doc.relevance,
+            },
+            correlation_score: correlation,
+            insight: this.generateInsightText(memory, doc, query),
+          });
+        }
+      }
+    }
+
+    // Sort by correlation score and return top insights
+    return insights
+      .sort((a, b) => b.correlation_score - a.correlation_score)
+      .slice(0, 3);
+  }
+
+  private calculateCorrelation(memory: any, doc: any, query: string): number {
+    let score = 0;
+
+    // Check for common keywords
+    const memoryWords = memory.content.toLowerCase().split(/\W+/);
+    const docTags = doc.tags.map(tag => tag.toLowerCase());
+    const queryWords = query.toLowerCase().split(/\W+/);
+
+    // Correlation with query
+    const memoryQueryMatch = memoryWords.some(word => queryWords.includes(word));
+    const docQueryMatch = docTags.some(tag => queryWords.includes(tag));
+    if (memoryQueryMatch && docQueryMatch) score += 0.4;
+
+    // Platform/category correlation
+    if (memory.platform === 'telegram' && doc.category === 'community') score += 0.2;
+    if (memory.platform === 'twitter' && doc.category === 'social-platforms') score += 0.2;
+    if (memory.type.includes('raid') && doc.category === 'social-raids') score += 0.3;
+
+    // Content similarity (basic keyword overlap)
+    const commonWords = memoryWords.filter(word => 
+      docTags.includes(word) && word.length > 3
+    );
+    score += Math.min(commonWords.length * 0.1, 0.3);
+
+    return Math.min(score, 1.0);
+  }
+
+  private generateInsightText(memory: any, doc: any, query: string): string {
+    const templates = [
+      `Based on your ${memory.platform} activity about "${query}", you might find the ${doc.category} documentation helpful.`,
+      `Your interest in ${memory.type} relates to our knowledge on ${doc.title}.`,
+      `Since you've been engaging with ${query} topics, this ${doc.category} information could be valuable.`,
+    ];
+
+    return templates[Math.floor(Math.random() * templates.length)];
+  }
+
+  /**
+   * Get or create unified user identity across platforms
+   */
+  private async getUnifiedUserIdentity(interaction: any): Promise<any> {
+    try {
+      const identityService = this.runtime.getService('IDENTITY_MANAGEMENT_SERVICE') as IdentityManagementService;
+      if (!identityService || typeof identityService.getOrCreateUserIdentity !== 'function') {
+        // Fallback to direct user ID if identity service unavailable
+        elizaLogger.debug('Identity Management Service not available, using direct user ID');
+        return {
+          uuid: (interaction.userId || crypto.randomUUID()) as UUID,
+          metadata: {
+            displayName: interaction.username,
+            preferredPlatform: interaction.platform || 'unknown',
+          },
+        };
+      }
+
+      // Use Identity Management Service to get consistent UUID
+      const identity = await identityService.getOrCreateUserIdentity({
+        platform: interaction.platform || 'unknown',
+        platformId: interaction.userId || interaction.user_id || 'unknown',
+        platformUsername: interaction.username || interaction.user_name,
+        roomId: interaction.roomId,
+        metadata: {
+          originalInteraction: true,
+          timestamp: interaction.timestamp || new Date().toISOString(),
+        },
+      });
+
+      return identity;
+    } catch (error) {
+      elizaLogger.warn('Failed to get unified user identity, using fallback:', error);
+      
+      // Graceful fallback
+      return {
+        uuid: (interaction.userId || crypto.randomUUID()) as UUID,
+        metadata: {
+          displayName: interaction.username,
+          preferredPlatform: interaction.platform || 'unknown',
+          fallback: true,
+        },
+      };
+    }
+  }
+
+  /**
+   * Get user's platform accounts for cross-platform context
+   */
+  private async getUserPlatformAccounts(userUuid: UUID): Promise<string[]> {
+    try {
+      const identityService = this.runtime.getService('IDENTITY_MANAGEMENT_SERVICE') as IdentityManagementService;
+      if (!identityService || typeof identityService.getUserPlatformAccounts !== 'function') {
+        return [];
+      }
+
+      const accounts = await identityService.getUserPlatformAccounts(userUuid);
+      return accounts.map(account => account.platform);
+    } catch (error) {
+      elizaLogger.debug('Failed to get user platform accounts:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Enhanced normalization with unified identity support
+   */
+  private normalizeInteraction(interaction: any, userIdentity?: any): CommunityInteraction {
+    return {
+      id: interaction.id || crypto.randomUUID(),
+      userId: userIdentity?.uuid?.toString() || interaction.userId,
+      originalUserId: interaction.userId, // Keep original platform-specific ID
+      username: interaction.username || userIdentity?.metadata?.displayName || '',
+      interactionType: interaction.interactionType || interaction.actionType || 'unknown',
+      content: interaction.content || '',
+      context: interaction.context || {},
+      weight: interaction.weight || 1,
+      sentimentScore: interaction.sentimentScore ?? interaction.sentiment ?? 0,
+      relatedRaidId: interaction.relatedRaidId || interaction.raidId,
+      platform: interaction.platform || userIdentity?.metadata?.preferredPlatform || 'unknown',
+      roomId: interaction.roomId,
+      timestamp: interaction.timestamp ? new Date(interaction.timestamp) : new Date(),
+    };
+  }
+
+  /**
+   * Enhanced Supabase sync with identity information
+   */
+  private async syncToSupabase(normalized: CommunityInteraction, weight: number, userIdentity?: any): Promise<void> {
+    if (!this.supabase || this.supabase.from === this.createNoopSupabase().from) {
+      elizaLogger.debug('Supabase not configured, skipping sync');
+      return;
+    }
+
+    try {
+      await this.supabase.from('community_interactions').insert({
+        id: normalized.id,
+        user_id: normalized.userId,
+        original_user_id: normalized.originalUserId || normalized.userId,
+        unified_user_uuid: userIdentity?.uuid,
+        username: normalized.username,
+        interaction_type: normalized.interactionType,
+        content: normalized.content,
+        context: {
+          ...normalized.context,
+          weight: weight,
+          qualityScore: this.calculateQualityScore(normalized),
+          crossPlatform: !!userIdentity,
+          platforms: userIdentity ? await this.getUserPlatformAccounts(userIdentity.uuid) : [],
+        },
+        platform: normalized.platform || 'unknown',
+        weight: weight,
+        sentiment_score: normalized.sentimentScore,
+        raid_id: normalized.relatedRaidId,
+        timestamp: normalized.timestamp.toISOString(),
+      });
+
+      elizaLogger.debug('Successfully synced interaction to Supabase with identity context');
+    } catch (error) {
+      elizaLogger.warn('Failed to sync to Supabase:', error);
+    }
+  }
+
   async stop(): Promise<void> {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
     this.memoryCache.clear();
     this.personalityCache.clear();
     elizaLogger.info('Community Memory Service stopped');
