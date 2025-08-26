@@ -29,6 +29,25 @@ export class TwitterRaidService extends Service {
     this.raidCoordinatorUrl = runtime.getSetting("RAID_COORDINATOR_URL") || "";
   }
 
+  // Static lifecycle helpers to satisfy core service loader patterns
+  static async start(runtime: IAgentRuntime): Promise<TwitterRaidService> {
+    elizaLogger.info("Starting Twitter Raid Service");
+    const service = new TwitterRaidService(runtime);
+    await service.initialize();
+    return service;
+  }
+
+  static async stop(runtime: IAgentRuntime): Promise<void> {
+    try {
+      const existing = (runtime as any)?.getService?.(TwitterRaidService.serviceType);
+      if (existing && typeof existing.stop === "function") {
+        await (existing as TwitterRaidService).stop();
+      }
+    } finally {
+      elizaLogger.info("Twitter Raid Service stopped");
+    }
+  }
+
   async initialize(): Promise<void> {
     elizaLogger.info("Initializing Twitter Raid Service");
     
@@ -95,48 +114,94 @@ export class TwitterRaidService extends Service {
 
   private async authenticateTwitter(): Promise<void> {
     try {
+      // Determine auth method (default to credentials)
+      const authMethod = (
+        this.runtime.getSetting("TWITTER_AUTH_METHOD") ||
+        this.runtime.getSetting("AUTH_METHOD") ||
+        process.env.TWITTER_AUTH_METHOD ||
+        process.env.AUTH_METHOD ||
+        'credentials'
+      ).toString().toLowerCase();
+
+      if (authMethod === 'cookies') {
+        const cookiesStr = this.runtime.getSetting("TWITTER_COOKIES") || process.env.TWITTER_COOKIES;
+        if (!cookiesStr) {
+          elizaLogger.warn("TWITTER_COOKIES not configured; falling back to credentials auth");
+        } else {
+          let cookies: any;
+          try {
+            cookies = typeof cookiesStr === 'string' ? JSON.parse(cookiesStr) : cookiesStr;
+          } catch (e) {
+            elizaLogger.warn("TWITTER_COOKIES is not valid JSON array; falling back to credentials auth");
+            cookies = null;
+          }
+          if (Array.isArray(cookies) && cookies.length > 0 && this.scraper) {
+            if (typeof (this.scraper as any).setCookies === 'function') {
+              await (this.scraper as any).setCookies(cookies);
+            } else {
+              elizaLogger.warn("Scraper does not support setCookies; continuing without explicit cookie injection");
+            }
+            // If scraper exposes isLoggedIn, use it; otherwise assume true after cookie set
+            const probe = (this.scraper as any).isLoggedIn;
+            this.isAuthenticated = typeof probe === 'function' ? await probe.call(this.scraper) : true;
+
+            if (this.isAuthenticated) {
+              elizaLogger.success("Twitter authentication successful (cookies)");
+              // Best-effort status write; do not fail auth on DB issues
+              try {
+                await this.supabase
+                  .from('system_config')
+                  .upsert({ key: 'twitter_authenticated', value: 'true', updated_at: new Date() });
+              } catch (_) {}
+              return;
+            }
+            // Fall through to credentials if cookie probe fails
+            elizaLogger.warn("Cookie-based auth probe failed; falling back to credentials auth");
+          }
+        }
+      }
+
+      // Credentials flow (default)
       const username = this.runtime.getSetting("TWITTER_USERNAME") || process.env.TWITTER_USERNAME;
       const password = this.runtime.getSetting("TWITTER_PASSWORD") || process.env.TWITTER_PASSWORD;
       const email = this.runtime.getSetting("TWITTER_EMAIL") || process.env.TWITTER_EMAIL;
-      
+
       if (!username || !password) {
         throw new Error("Twitter credentials not configured");
       }
-      
+
       this.twitterConfig = { username, password, email };
-      
+
       if (this.scraper) {
         await (this.scraper as any).login(username, password, email);
         this.isAuthenticated = await (this.scraper as any).isLoggedIn();
-        
+
         if (this.isAuthenticated) {
-          elizaLogger.success("Twitter authentication successful");
-          
-          // Store authentication state in database
-          await this.supabase
-            .from('system_config')
-            .upsert({
-              key: 'twitter_authenticated',
-              value: 'true',
-              updated_at: new Date()
-            });
+          elizaLogger.success("Twitter authentication successful (credentials)");
+          // Best-effort status write; ignore DB errors
+          try {
+            await this.supabase
+              .from('system_config')
+              .upsert({ key: 'twitter_authenticated', value: 'true', updated_at: new Date() });
+          } catch (_) {}
         } else {
-          throw new Error("Twitter authentication failed");
+          throw new Error("Twitter authentication failed (credentials)");
         }
       }
     } catch (error) {
       elizaLogger.error("Twitter authentication error:", error);
-      
-      // Store failed authentication state
-      await this.supabase
-        .from('system_config')
-        .upsert({
-          key: 'twitter_authenticated',
-          value: 'false',
-          updated_at: new Date()
-        });
-      
-      throw error;
+      // Preserve original auth error; attempt best-effort status write
+      const originalError = error instanceof Error ? error : new Error(String(error));
+      try {
+        await this.supabase
+          .from('system_config')
+          .upsert({
+            key: 'twitter_authenticated',
+            value: 'false',
+            updated_at: new Date()
+          });
+      } catch (_) {}
+      throw originalError;
     }
   }
 
@@ -169,57 +234,50 @@ export class TwitterRaidService extends Service {
 
   async scrapeEngagement(tweetUrl: string): Promise<TweetData> {
     try {
-      // Use the existing tweet-scraper Edge Function
-      const tweetScraperUrl = this.runtime.getSetting("TWEET_SCRAPER_URL") || 
-                             "https://nfnmoqepgjyutcbbaqjg.supabase.co/functions/v1/tweet-scraper";
-      
-      const response = await fetch(tweetScraperUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'scrape_tweet_by_url',
-          tweetUrl: tweetUrl,
-          storeInDatabase: true
-        })
-      });
-
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(`Tweet scraping failed: ${result.error}`);
+      // Ensure we have a scraper. Do NOT attempt network auth here to keep tests isolated.
+      if (!this.scraper) {
+        throw new Error("Twitter not authenticated");
       }
 
-      const tweet = result.data.tweet;
-      
+      const tweetId = this.extractTweetId(tweetUrl);
+      const tweet: any = await (this.scraper as any).getTweet(tweetId);
+      if (!tweet) {
+        throw new Error("Tweet not found");
+      }
+
+      const author = tweet.username || tweet.user?.username || tweet.author?.username || "unknown";
+      const createdAt = tweet.createdAt || tweet.created_at || tweet.date || Date.now();
+      const likes = tweet.likeCount ?? tweet.favoriteCount ?? tweet.favorites ?? tweet.likes ?? 0;
+      const retweets = tweet.retweetCount ?? tweet.retweets ?? 0;
+      const quotes = tweet.quoteCount ?? tweet.quotes ?? 0;
+      const comments = tweet.replyCount ?? tweet.replies ?? 0;
+
       const tweetData: TweetData = {
-        id: tweet.id,
-        text: tweet.text,
-        author: tweet.username,
-        createdAt: new Date(tweet.createdAt),
-        metrics: {
-          likes: tweet.likeCount || 0,
-          retweets: tweet.retweetCount || 0,
-          quotes: tweet.quoteCount || 0,
-          comments: tweet.replyCount || 0,
-        }
+        id: String(tweet.id || tweet.rest_id || tweetId),
+        text: tweet.text || tweet.full_text || "",
+        author,
+        createdAt: new Date(createdAt),
+        metrics: { likes, retweets, quotes, comments }
       };
 
-      // Store engagement snapshot
-      await this.supabase
-        .from('engagement_snapshots')
-        .insert({
-          tweet_id: tweet.id,
-          likes: tweetData.metrics.likes,
-          retweets: tweetData.metrics.retweets,
-          quotes: tweetData.metrics.quotes,
-          comments: tweetData.metrics.comments,
-          timestamp: new Date()
-        });
+      // Best-effort: store engagement snapshot; do not fail method on DB issues
+      try {
+        await this.supabase
+          .from('engagement_snapshots')
+          .insert({
+            tweet_id: tweetData.id,
+            likes: tweetData.metrics.likes,
+            retweets: tweetData.metrics.retweets,
+            quotes: tweetData.metrics.quotes,
+            comments: tweetData.metrics.comments,
+            timestamp: new Date()
+          });
+      } catch (_) {}
 
       return tweetData;
     } catch (error) {
       elizaLogger.error("Failed to scrape engagement:", error);
-      // Tests expect this specific error message
+      // Maintain legacy error surface for tests/callers
       throw new Error("Tweet scraping failed");
     }
   }
@@ -227,45 +285,35 @@ export class TwitterRaidService extends Service {
   async exportTweets(username: string, count: number = 100, skipCount: number = 0): Promise<TweetData[]> {
     try {
       elizaLogger.info(`Exporting ${count} tweets from @${username} (skipping ${skipCount})`);
-      
-      // Use the existing tweet-scraper Edge Function
-      const tweetScraperUrl = this.runtime.getSetting("TWEET_SCRAPER_URL") || 
-                             "https://nfnmoqepgjyutcbbaqjg.supabase.co/functions/v1/tweet-scraper";
-      
-      const response = await fetch(tweetScraperUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'scrape_user_tweets',
-          username: username,
-          count: count,
-          skipCount: skipCount,
-          includeReplies: false,
-          includeRetweets: true,
-          storeInDatabase: true,
-          exportFormat: 'json'
-        })
-      });
 
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(`Tweet scraping failed: ${result.error}`);
+      if (!this.scraper) {
+        throw new Error("Twitter not authenticated");
       }
 
-      // Convert the scraped data to our TweetData format
-      const exportedTweets: TweetData[] = result.data.tweets.map((tweet: any) => ({
-        id: tweet.id,
-        text: tweet.text,
-        author: tweet.username,
-        createdAt: new Date(tweet.createdAt),
-        metrics: {
-          likes: tweet.likeCount || 0,
-          retweets: tweet.retweetCount || 0,
-          quotes: tweet.quoteCount || 0,
-          comments: tweet.replyCount || 0,
-        }
-      }));
+      const targetTotal = count + (skipCount || 0);
+      const collected: any[] = [];
+      // Iterate scraper tweets stream
+      for await (const tweet of (this.scraper as any).getTweets(username, targetTotal)) {
+        collected.push(tweet);
+        if (collected.length >= targetTotal) break;
+      }
+
+      const sliced = collected.slice(skipCount || 0).slice(0, count);
+      const exportedTweets: TweetData[] = sliced.map((tweet: any) => {
+        const author = tweet.username || tweet.user?.username || tweet.author?.username || "unknown";
+        const createdAt = tweet.createdAt || tweet.created_at || tweet.date || Date.now();
+        const likes = tweet.likeCount ?? tweet.favoriteCount ?? tweet.favorites ?? tweet.likes ?? 0;
+        const retweets = tweet.retweetCount ?? tweet.retweets ?? 0;
+        const quotes = tweet.quoteCount ?? tweet.quotes ?? 0;
+        const comments = tweet.replyCount ?? tweet.replies ?? 0;
+        return {
+          id: String(tweet.id || tweet.rest_id),
+          text: tweet.text || tweet.full_text || "",
+          author,
+          createdAt: new Date(createdAt),
+          metrics: { likes, retweets, quotes, comments }
+        };
+      });
 
       // Save to file like the user's example
       const exportedData = exportedTweets.map(tweet => ({
@@ -279,26 +327,26 @@ export class TwitterRaidService extends Service {
       }));
 
       fs.writeFileSync("exported-tweets.json", JSON.stringify(exportedData, null, 2));
-      
+
       // Extract just the text like in user's example
       const tweetTexts = exportedTweets.map(tweet => tweet.text).filter(text => text !== null);
       fs.writeFileSync("tweets.json", JSON.stringify(tweetTexts, null, 2));
-      
-      // Store export record in database
-      await this.supabase
-        .from('data_exports')
-        .insert({
-          export_type: 'tweets',
-          username: username,
-          count: exportedTweets.length,
-          exported_at: new Date(),
-          file_path: 'exported-tweets.json',
-          scraping_session_id: result.data.scrapingStats?.sessionId
-        });
-      
-      elizaLogger.success(`Successfully exported ${exportedTweets.length} tweets using Edge Function`);
+
+      // Best-effort DB record
+      try {
+        await this.supabase
+          .from('data_exports')
+          .insert({
+            export_type: 'tweets',
+            username: username,
+            count: exportedTweets.length,
+            exported_at: new Date(),
+            file_path: 'exported-tweets.json'
+          });
+      } catch (_) {}
+
+      elizaLogger.success(`Successfully exported ${exportedTweets.length} tweets using local scraper`);
       return exportedTweets;
-      
     } catch (error) {
       elizaLogger.error("Failed to export tweets:", error);
       throw error;

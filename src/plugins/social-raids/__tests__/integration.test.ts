@@ -24,7 +24,6 @@ import { EngagementQualityEvaluator } from '../evaluators/engagement-quality-eva
 import {
   createMockRuntime,
   createMockSupabaseClient,
-  mockFetch,
   TestData,
   setupTestEnvironment,
   cleanupTestEnvironment,
@@ -226,20 +225,6 @@ describe('Social Raids Plugin Integration', () => {
     });
 
     it('should handle tweet scraping workflow', async () => {
-      const mockResponse = {
-        success: true,
-        data: {
-          username: 'testuser',
-          tweetsScraped: 50,
-          tweets: [
-            { id: '1', text: 'Tweet 1', username: 'testuser' },
-            { id: '2', text: 'Tweet 2', username: 'testuser' },
-          ],
-        },
-      };
-
-      global.fetch = mockFetch(mockResponse);
-
       const mockTwitterService = {
         exportTweets: mock().mockResolvedValue([
           TestData.createTweetData({ id: '1', text: 'Tweet 1' }),
@@ -405,42 +390,40 @@ describe('Social Raids Plugin Integration', () => {
   });
 
   describe('Edge Function Integration', () => {
-    it('should call tweet scraper Edge Function correctly', async () => {
-      const mockResponse = {
-        success: true,
-        data: {
-          tweet: {
-            id: '1234567890123456789',
-            text: 'Test tweet',
-            username: 'testuser',
-            likeCount: 100,
-            retweetCount: 50,
-          },
-        },
-      };
-
-      global.fetch = mockFetch(mockResponse);
-
+    it('should scrape tweet engagement via local scraper', async () => {
       const twitterService = new TwitterRaidService(mockRuntime as IAgentRuntime);
+      // Mock local scraper response
+      (twitterService as any).scraper = {
+        getTweet: mock().mockResolvedValue({
+          id: '1234567890123456789',
+          text: 'Test tweet',
+          username: 'testuser',
+          likeCount: 100,
+          retweetCount: 50,
+          replyCount: 10,
+          quoteCount: 3,
+        })
+      } as any;
+      (twitterService as any).isAuthenticated = true;
+
       const result = await twitterService.scrapeEngagement('https://twitter.com/testuser/status/1234567890123456789');
 
       expect(result).toBeDefined();
       expect(result.id).toBe('1234567890123456789');
       expect(result.metrics.likes).toBe(100);
+      expect((twitterService as any).scraper.getTweet).toHaveBeenCalled();
     });
 
-    it('should handle Edge Function errors gracefully', async () => {
-      const mockErrorResponse = {
-        success: false,
-        error: 'Edge Function error',
-      };
-
-      global.fetch = mockFetch(mockErrorResponse);
-
+    it('should handle scraper errors gracefully', async () => {
       const twitterService = new TwitterRaidService(mockRuntime as IAgentRuntime);
+      (twitterService as any).scraper = {
+        getTweet: mock().mockRejectedValue(new Error('Scraper failure')),
+      } as any;
+      (twitterService as any).isAuthenticated = true;
 
-      await expect(twitterService.scrapeEngagement('https://twitter.com/testuser/status/1234567890123456789'))
-        .rejects.toThrow('Tweet scraping failed');
+      await expect(
+        twitterService.scrapeEngagement('https://twitter.com/testuser/status/1234567890123456789')
+      ).rejects.toThrow('Tweet scraping failed');
     });
   });
 
@@ -520,12 +503,15 @@ describe('Social Raids Plugin Integration', () => {
     });
 
     it('should handle network errors gracefully', async () => {
-      global.fetch = mock().mockRejectedValue(new Error('Network error'));
-
       const twitterService = new TwitterRaidService(mockRuntime as IAgentRuntime);
+      (twitterService as any).scraper = {
+        getTweet: mock().mockRejectedValue(new Error('Network error')),
+      } as any;
+      (twitterService as any).isAuthenticated = true;
 
-      await expect(twitterService.scrapeEngagement('https://twitter.com/testuser/status/1234567890123456789'))
-        .rejects.toThrow('Tweet scraping failed');
+      await expect(
+        twitterService.scrapeEngagement('https://twitter.com/testuser/status/1234567890123456789')
+      ).rejects.toThrow('Tweet scraping failed');
     });
 
     it('should handle validation errors', async () => {

@@ -10,7 +10,6 @@ import { CommunityMemoryService } from '../services/community-memory-service';
 import {
   createMockRuntime,
   createMockSupabaseClient,
-  mockFetch,
   TestData,
   setupTestEnvironment,
   cleanupTestEnvironment,
@@ -115,31 +114,38 @@ describe('Social Raids Services', () => {
     });
 
     describe('Engagement Scraping', () => {
-      it('should scrape engagement using Edge Function', async () => {
-        const mockResponse = {
-          success: true,
-          data: {
-            tweet: {
-              id: '1234567890123456789',
-              text: 'Test tweet',
-              username: 'testuser',
-              likeCount: 100,
-              retweetCount: 50,
-            },
-          },
+      it('should scrape engagement using local scraper', async () => {
+        const mockScraper = {
+          getTweet: mock().mockResolvedValue({
+            id: '1234567890123456789',
+            text: 'Test tweet',
+            username: 'testuser',
+            likeCount: 100,
+            retweetCount: 50,
+            quoteCount: 5,
+            replyCount: 10,
+            createdAt: Date.now(),
+          }),
         };
 
-        global.fetch = mockFetch(mockResponse);
+        service.scraper = mockScraper as any;
+        (service as any).isAuthenticated = true;
 
         const result = await service.scrapeEngagement('https://twitter.com/testuser/status/1234567890123456789');
 
         expect(result).toBeDefined();
         expect(result.id).toBe('1234567890123456789');
         expect(result.metrics.likes).toBe(100);
+        expect(result.metrics.retweets).toBe(50);
       });
 
-      it('should handle Edge Function errors', async () => {
-        global.fetch = mockFetch({ success: false, error: 'Edge Function error' });
+      it('should handle scraper errors', async () => {
+        const mockScraper = {
+          getTweet: mock().mockRejectedValue(new Error('Scrape failed')),
+        };
+
+        service.scraper = mockScraper as any;
+        (service as any).isAuthenticated = true;
 
         await expect(service.scrapeEngagement('https://twitter.com/testuser/status/1234567890123456789'))
           .rejects.toThrow('Tweet scraping failed');
@@ -147,20 +153,18 @@ describe('Social Raids Services', () => {
     });
 
     describe('Tweet Export', () => {
-      it('should export tweets using Edge Function', async () => {
-        const mockResponse = {
-          success: true,
-          data: {
-            username: 'testuser',
-            tweetsScraped: 50,
-            tweets: [
-              { id: '1', text: 'Tweet 1', username: 'testuser' },
-              { id: '2', text: 'Tweet 2', username: 'testuser' },
-            ],
-          },
+      it('should export tweets using local scraper', async () => {
+        async function* tweetGen() {
+          yield { id: '1', text: 'Tweet 1', username: 'testuser', createdAt: Date.now(), likeCount: 10, retweetCount: 5 };
+          yield { id: '2', text: 'Tweet 2', username: 'testuser', createdAt: Date.now(), likeCount: 20, retweetCount: 10 };
+        }
+
+        const mockScraper = {
+          getTweets: mock().mockReturnValue(tweetGen()),
         };
 
-        global.fetch = mockFetch(mockResponse);
+        service.scraper = mockScraper as any;
+        (service as any).isAuthenticated = true;
 
         const result = await service.exportTweets('testuser', 50, 0);
 
@@ -170,9 +174,14 @@ describe('Social Raids Services', () => {
       });
 
       it('should handle export errors', async () => {
-        global.fetch = mockFetch({ success: false, error: 'Export failed' });
+        const mockScraper = {
+          getTweets: mock().mockImplementation(() => { throw new Error('Export failed'); }),
+        };
 
-        await expect(service.exportTweets('testuser')).rejects.toThrow('Tweet scraping failed');
+        service.scraper = mockScraper as any;
+        (service as any).isAuthenticated = true;
+
+        await expect(service.exportTweets('testuser')).rejects.toThrow('Export failed');
       });
     });
   });
@@ -480,7 +489,9 @@ describe('Social Raids Services', () => {
 
     it('should handle network errors', async () => {
       const service = new TwitterRaidService(mockRuntime as IAgentRuntime);
-      global.fetch = mock().mockRejectedValue(new Error('Network error'));
+      // Simulate scraper network failure
+      service.scraper = { getTweet: mock().mockRejectedValue(new Error('Network error')) } as any;
+      (service as any).isAuthenticated = true;
 
       await expect(service.scrapeEngagement('https://twitter.com/testuser/status/1234567890123456789'))
         .rejects.toThrow('Tweet scraping failed');

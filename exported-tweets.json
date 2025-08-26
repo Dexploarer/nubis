@@ -4,17 +4,17 @@
     "text": "Tweet 1",
     "username": "@testuser",
     "isRetweet": false,
-    "createdAt": null,
-    "favoriteCount": 0,
-    "retweetCount": 0
+    "createdAt": "2025-08-26T11:11:23.704Z",
+    "favoriteCount": 10,
+    "retweetCount": 5
   },
   {
     "id": "2",
     "text": "Tweet 2",
     "username": "@testuser",
     "isRetweet": false,
-    "createdAt": null,
-    "favoriteCount": 0,
-    "retweetCount": 0
+    "createdAt": "2025-08-26T11:11:23.704Z",
+    "favoriteCount": 20,
+    "retweetCount": 10
   }
 ]

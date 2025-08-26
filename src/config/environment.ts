@@ -21,6 +21,14 @@ export const configSchema = z.object({
   // Model selection
   DEFAULT_MODEL: z.string().default('llama3.3-70b-instruct'),
   FALLBACK_MODEL: z.string().default('llama3-8b-instruct'),
+  TEXT_EMBEDDING: z.string().optional(),
+  
+  
+  // Embedding model configuration (optional)
+  EMBEDDING_MODEL: z.string().optional(),
+  OPENAI_EMBEDDING_MODEL: z.string().optional(),
+  TEXT_EMBEDDING_MODEL: z.string().optional(),
+  GEMINI_EMBEDDING_MODEL: z.string().optional(),
   
   // Database
   DATABASE_URL: z.string().default('sqlite://./data/agent.db'),
@@ -57,6 +65,9 @@ export function validateConfig(): AppConfig {
       ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
       DEFAULT_MODEL: process.env.DEFAULT_MODEL,
       FALLBACK_MODEL: process.env.FALLBACK_MODEL,
+      EMBEDDING_MODEL: process.env.EMBEDDING_MODEL,
+      OPENAI_EMBEDDING_MODEL: process.env.OPENAI_EMBEDDING_MODEL,
+      TEXT_EMBEDDING_MODEL: process.env.TEXT_EMBEDDING_MODEL,
       DATABASE_URL: process.env.DATABASE_URL,
       DISCORD_API_TOKEN: process.env.DISCORD_API_TOKEN,
       DISCORD_APPLICATION_ID: process.env.DISCORD_APPLICATION_ID,

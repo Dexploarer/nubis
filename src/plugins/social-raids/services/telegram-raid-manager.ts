@@ -28,6 +28,7 @@ export class TelegramRaidManager extends Service {
   private testChannelId: string | null = null;
   private raidCoordinatorUrl: string;
   private isInitialized = false;
+  private passiveMode = false;
 
   constructor(runtime: IAgentRuntime) {
     super(runtime);
@@ -43,10 +44,54 @@ export class TelegramRaidManager extends Service {
       elizaLogger.warn("Supabase configuration missing for TelegramRaidManager - using no-op client");
     }
     
-    this.botToken = runtime.getSetting("TELEGRAM_BOT_TOKEN");
-    this.channelId = runtime.getSetting("TELEGRAM_CHANNEL_ID");
+    this.botToken = runtime.getSetting("TELEGRAM_RAID_BOT_TOKEN") ||
+      runtime.getSetting("TELEGRAM_BOT_TOKEN");
+    this.channelId = runtime.getSetting("TELEGRAM_RAID_CHANNEL_ID") ||
+      runtime.getSetting("TELEGRAM_CHANNEL_ID");
     this.testChannelId = runtime.getSetting("TELEGRAM_TEST_CHANNEL");
     this.raidCoordinatorUrl = runtime.getSetting("RAID_COORDINATOR_URL") || "";
+
+    // Prefer passive (send-only) mode to avoid polling conflicts if another bot instance handles updates
+    const passiveSetting =
+      runtime.getSetting("TELEGRAM_RAID_PASSIVE") ||
+      runtime.getSetting("TELEGRAM_PASSIVE_MODE") ||
+      process.env.TELEGRAM_RAID_PASSIVE ||
+      process.env.TELEGRAM_PASSIVE_MODE;
+    this.passiveMode = String(passiveSetting ?? "").toLowerCase() === "true";
+  }
+
+  // Static lifecycle helpers to satisfy core service loader patterns
+  static async start(runtime: IAgentRuntime): Promise<TelegramRaidManager> {
+    elizaLogger.info("Starting Telegram Raid Manager");
+    const service = new TelegramRaidManager(runtime);
+    try {
+      // If no bot token configured, do not initialize (graceful no-op)
+      const token =
+        runtime.getSetting("TELEGRAM_RAID_BOT_TOKEN") ||
+        runtime.getSetting("TELEGRAM_BOT_TOKEN");
+      if (!token) {
+        elizaLogger.warn(
+          "No TELEGRAM_RAID_BOT_TOKEN/TELEGRAM_BOT_TOKEN configured; TelegramRaidManager will be registered but not started"
+        );
+        return service;
+      }
+      await service.initialize();
+      return service;
+    } catch (error) {
+      elizaLogger.error("Failed to start Telegram Raid Manager:", error);
+      throw error;
+    }
+  }
+
+  static async stop(runtime: IAgentRuntime): Promise<void> {
+    try {
+      const existing = runtime?.getService?.(TelegramRaidManager.serviceType);
+      if (existing && typeof (existing as TelegramRaidManager).stop === "function") {
+        await (existing as TelegramRaidManager).stop();
+      }
+    } finally {
+      elizaLogger.info("Telegram Raid Manager stopped");
+    }
   }
 
   async initialize(): Promise<void> {
@@ -59,21 +104,51 @@ export class TelegramRaidManager extends Service {
     
     try {
       this.bot = new Telegraf(this.botToken);
+
+      // Passive mode: do NOT poll for updates. Only enable send capabilities.
+      if (this.passiveMode) {
+        this.isInitialized = true;
+        elizaLogger.info("Telegram Raid Manager initialized in passive (send-only) mode");
+        if (this.channelId) {
+          await this.sendChannelMessage("🤖 Raid notifications enabled (passive mode). 🚀");
+        }
+        return;
+      }
+
+      // Active mode: set up handlers and start polling
       this.setupCommandHandlers();
       this.setupCallbackHandlers();
       this.setupMiddleware();
-      
-      // Start bot
+
       await this.bot.launch();
       this.isInitialized = true;
-      
+
       elizaLogger.success("Telegram Raid Manager initialized successfully");
-      
-      // Send initialization message to channel
+
       if (this.channelId) {
         await this.sendChannelMessage("🤖 Raid bot is online and ready for action! 🚀");
       }
-    } catch (error) {
+    } catch (error: any) {
+      // If conflict due to another getUpdates poller, fallback to passive mode instead of crashing
+      const desc: string | undefined = error?.response?.description || error?.message;
+      if (typeof desc === "string" && /getUpdates request/i.test(desc)) {
+        elizaLogger.warn(
+          "Telegram polling conflict detected. Switching TelegramRaidManager to passive (send-only) mode."
+        );
+        try {
+          if (!this.bot) this.bot = new Telegraf(this.botToken);
+          this.passiveMode = true;
+          this.isInitialized = true;
+          if (this.channelId) {
+            await this.sendChannelMessage(
+              "🤖 Raid notifications active (passive mode due to existing bot instance)."
+            );
+          }
+          return;
+        } catch (e) {
+          // Fall through to error
+        }
+      }
       elizaLogger.error("Failed to initialize Telegram Raid Manager:", error);
       throw error;
     }

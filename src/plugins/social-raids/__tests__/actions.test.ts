@@ -128,7 +128,7 @@ describe('Social Raids Actions', () => {
       };
 
       // Simulate Edge Function failure
-      global.fetch = mockFetch({ success: false, error: 'Edge Function error' });
+      (globalThis as any).fetch = mockFetch({ success: false, error: 'Edge Function error' });
 
       const result = await startRaidAction.handler(
         setup.mockRuntime as unknown as IAgentRuntime,
@@ -371,21 +371,6 @@ describe('Social Raids Actions', () => {
     });
 
     it('should handle successful tweet scraping', async () => {
-      // Mock fetch for Edge Function call
-      const mockFetchResponse = {
-        success: true,
-        data: {
-          username: 'elonmusk',
-          tweetsScraped: 50,
-          tweets: [
-            { id: '1', text: 'Tweet 1', username: 'elonmusk' },
-            { id: '2', text: 'Tweet 2', username: 'elonmusk' },
-          ],
-        },
-      };
-
-      global.fetch = mockFetch(mockFetchResponse);
-
       const setup = setupActionTest({
         runtimeOverrides: {
           getService: mock().mockReturnValue({
@@ -433,11 +418,14 @@ describe('Social Raids Actions', () => {
       Assertions.expectCallbackCalled(setup.callbackFn, 'username to scrape');
     });
 
-    it('should handle Edge Function errors', async () => {
-      // Mock fetch to return error
-      global.fetch = mockFetch({ success: false, error: 'Edge Function error' });
-
-      const setup = setupActionTest();
+    it('should handle export errors from service', async () => {
+      const setup = setupActionTest({
+        runtimeOverrides: {
+          getService: mock().mockReturnValue({
+            exportTweets: mock().mockRejectedValue(new Error('Export failed')),
+          }),
+        },
+      });
       setup.mockMessage.content = {
         text: 'Scrape tweets from elonmusk',
         channelType: 'direct',

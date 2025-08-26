@@ -63,9 +63,15 @@ export const socialRaidsPlugin: Plugin = {
   ],
 
   config: {
+    // Prefer raid-specific credentials when provided
+    TELEGRAM_RAID_BOT_TOKEN: process.env.TELEGRAM_RAID_BOT_TOKEN || '',
+    TELEGRAM_RAID_CHANNEL_ID: process.env.TELEGRAM_RAID_CHANNEL_ID || '',
     TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '',
     TELEGRAM_CHANNEL_ID: process.env.TELEGRAM_CHANNEL_ID || '',
     TELEGRAM_TEST_CHANNEL: process.env.TELEGRAM_TEST_CHANNEL || '',
+    // Passive mode flags (string "true" enables passive send-only mode)
+    TELEGRAM_RAID_PASSIVE: process.env.TELEGRAM_RAID_PASSIVE || '',
+    TELEGRAM_PASSIVE_MODE: process.env.TELEGRAM_PASSIVE_MODE || '',
     TWITTER_USERNAME: process.env.TWITTER_USERNAME || '',
     TWITTER_PASSWORD: process.env.TWITTER_PASSWORD || '',
     TWITTER_EMAIL: process.env.TWITTER_EMAIL || '',

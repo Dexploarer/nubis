@@ -186,7 +186,17 @@ var configSchema = z.object({
   LOG_LEVEL: z.string().default("info"),
   // AI Model configuration (at least one required)
   OPENAI_API_KEY: z.string().optional(),
+  OPENAI_BASE_URL: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
+  // Model selection
+  DEFAULT_MODEL: z.string().default("llama3.3-70b-instruct"),
+  FALLBACK_MODEL: z.string().default("llama3-8b-instruct"),
+  TEXT_EMBEDDING: z.string().optional(),
+  // Embedding model configuration (optional)
+  EMBEDDING_MODEL: z.string().optional(),
+  OPENAI_EMBEDDING_MODEL: z.string().optional(),
+  TEXT_EMBEDDING_MODEL: z.string().optional(),
+  GEMINI_EMBEDDING_MODEL: z.string().optional(),
   // Database
   DATABASE_URL: z.string().default("sqlite://./data/agent.db"),
   // Social Media Integrations
@@ -207,7 +217,13 @@ function validateConfig() {
       NODE_ENV: process.env.NODE_ENV,
       LOG_LEVEL: process.env.LOG_LEVEL,
       OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+      OPENAI_BASE_URL: process.env.OPENAI_BASE_URL ?? process.env.OPENAI_API_BASE_URL,
       ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+      DEFAULT_MODEL: process.env.DEFAULT_MODEL,
+      FALLBACK_MODEL: process.env.FALLBACK_MODEL,
+      EMBEDDING_MODEL: process.env.EMBEDDING_MODEL,
+      OPENAI_EMBEDDING_MODEL: process.env.OPENAI_EMBEDDING_MODEL,
+      TEXT_EMBEDDING_MODEL: process.env.TEXT_EMBEDDING_MODEL,
       DATABASE_URL: process.env.DATABASE_URL,
       DISCORD_API_TOKEN: process.env.DISCORD_API_TOKEN,
       DISCORD_APPLICATION_ID: process.env.DISCORD_APPLICATION_ID,
@@ -962,6 +978,23 @@ var _TwitterRaidService = class _TwitterRaidService extends Service2 {
     this.supabase = supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : this.createNoopSupabase();
     this.raidCoordinatorUrl = runtime.getSetting("RAID_COORDINATOR_URL") || "";
   }
+  // Static lifecycle helpers to satisfy core service loader patterns
+  static async start(runtime) {
+    elizaLogger.info("Starting Twitter Raid Service");
+    const service = new _TwitterRaidService(runtime);
+    await service.initialize();
+    return service;
+  }
+  static async stop(runtime) {
+    try {
+      const existing = runtime?.getService?.(_TwitterRaidService.serviceType);
+      if (existing && typeof existing.stop === "function") {
+        await existing.stop();
+      }
+    } finally {
+      elizaLogger.info("Twitter Raid Service stopped");
+    }
+  }
   async initialize() {
     elizaLogger.info("Initializing Twitter Raid Service");
     try {
@@ -1008,6 +1041,39 @@ var _TwitterRaidService = class _TwitterRaidService extends Service2 {
   }
   async authenticateTwitter() {
     try {
+      const authMethod = (this.runtime.getSetting("TWITTER_AUTH_METHOD") || this.runtime.getSetting("AUTH_METHOD") || process.env.TWITTER_AUTH_METHOD || process.env.AUTH_METHOD || "credentials").toString().toLowerCase();
+      if (authMethod === "cookies") {
+        const cookiesStr = this.runtime.getSetting("TWITTER_COOKIES") || process.env.TWITTER_COOKIES;
+        if (!cookiesStr) {
+          elizaLogger.warn("TWITTER_COOKIES not configured; falling back to credentials auth");
+        } else {
+          let cookies;
+          try {
+            cookies = typeof cookiesStr === "string" ? JSON.parse(cookiesStr) : cookiesStr;
+          } catch (e) {
+            elizaLogger.warn("TWITTER_COOKIES is not valid JSON array; falling back to credentials auth");
+            cookies = null;
+          }
+          if (Array.isArray(cookies) && cookies.length > 0 && this.scraper) {
+            if (typeof this.scraper.setCookies === "function") {
+              await this.scraper.setCookies(cookies);
+            } else {
+              elizaLogger.warn("Scraper does not support setCookies; continuing without explicit cookie injection");
+            }
+            const probe = this.scraper.isLoggedIn;
+            this.isAuthenticated = typeof probe === "function" ? await probe.call(this.scraper) : true;
+            if (this.isAuthenticated) {
+              elizaLogger.success("Twitter authentication successful (cookies)");
+              try {
+                await this.supabase.from("system_config").upsert({ key: "twitter_authenticated", value: "true", updated_at: /* @__PURE__ */ new Date() });
+              } catch (_) {
+              }
+              return;
+            }
+            elizaLogger.warn("Cookie-based auth probe failed; falling back to credentials auth");
+          }
+        }
+      }
       const username = this.runtime.getSetting("TWITTER_USERNAME") || process.env.TWITTER_USERNAME;
       const password = this.runtime.getSetting("TWITTER_PASSWORD") || process.env.TWITTER_PASSWORD;
       const email = this.runtime.getSetting("TWITTER_EMAIL") || process.env.TWITTER_EMAIL;
@@ -1019,24 +1085,27 @@ var _TwitterRaidService = class _TwitterRaidService extends Service2 {
         await this.scraper.login(username, password, email);
         this.isAuthenticated = await this.scraper.isLoggedIn();
         if (this.isAuthenticated) {
-          elizaLogger.success("Twitter authentication successful");
-          await this.supabase.from("system_config").upsert({
-            key: "twitter_authenticated",
-            value: "true",
-            updated_at: /* @__PURE__ */ new Date()
-          });
+          elizaLogger.success("Twitter authentication successful (credentials)");
+          try {
+            await this.supabase.from("system_config").upsert({ key: "twitter_authenticated", value: "true", updated_at: /* @__PURE__ */ new Date() });
+          } catch (_) {
+          }
         } else {
-          throw new Error("Twitter authentication failed");
+          throw new Error("Twitter authentication failed (credentials)");
         }
       }
     } catch (error) {
       elizaLogger.error("Twitter authentication error:", error);
-      await this.supabase.from("system_config").upsert({
-        key: "twitter_authenticated",
-        value: "false",
-        updated_at: /* @__PURE__ */ new Date()
-      });
-      throw error;
+      const originalError = error instanceof Error ? error : new Error(String(error));
+      try {
+        await this.supabase.from("system_config").upsert({
+          key: "twitter_authenticated",
+          value: "false",
+          updated_at: /* @__PURE__ */ new Date()
+        });
+      } catch (_) {
+      }
+      throw originalError;
     }
   }
   async postTweet(content) {
@@ -1061,41 +1130,38 @@ var _TwitterRaidService = class _TwitterRaidService extends Service2 {
   }
   async scrapeEngagement(tweetUrl) {
     try {
-      const tweetScraperUrl = this.runtime.getSetting("TWEET_SCRAPER_URL") || "https://nfnmoqepgjyutcbbaqjg.supabase.co/functions/v1/tweet-scraper";
-      const response = await fetch(tweetScraperUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "scrape_tweet_by_url",
-          tweetUrl,
-          storeInDatabase: true
-        })
-      });
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(`Tweet scraping failed: ${result.error}`);
+      if (!this.scraper) {
+        throw new Error("Twitter not authenticated");
       }
-      const tweet = result.data.tweet;
+      const tweetId = this.extractTweetId(tweetUrl);
+      const tweet = await this.scraper.getTweet(tweetId);
+      if (!tweet) {
+        throw new Error("Tweet not found");
+      }
+      const author = tweet.username || tweet.user?.username || tweet.author?.username || "unknown";
+      const createdAt = tweet.createdAt || tweet.created_at || tweet.date || Date.now();
+      const likes = tweet.likeCount ?? tweet.favoriteCount ?? tweet.favorites ?? tweet.likes ?? 0;
+      const retweets = tweet.retweetCount ?? tweet.retweets ?? 0;
+      const quotes = tweet.quoteCount ?? tweet.quotes ?? 0;
+      const comments = tweet.replyCount ?? tweet.replies ?? 0;
       const tweetData = {
-        id: tweet.id,
-        text: tweet.text,
-        author: tweet.username,
-        createdAt: new Date(tweet.createdAt),
-        metrics: {
-          likes: tweet.likeCount || 0,
-          retweets: tweet.retweetCount || 0,
-          quotes: tweet.quoteCount || 0,
-          comments: tweet.replyCount || 0
-        }
+        id: String(tweet.id || tweet.rest_id || tweetId),
+        text: tweet.text || tweet.full_text || "",
+        author,
+        createdAt: new Date(createdAt),
+        metrics: { likes, retweets, quotes, comments }
       };
-      await this.supabase.from("engagement_snapshots").insert({
-        tweet_id: tweet.id,
-        likes: tweetData.metrics.likes,
-        retweets: tweetData.metrics.retweets,
-        quotes: tweetData.metrics.quotes,
-        comments: tweetData.metrics.comments,
-        timestamp: /* @__PURE__ */ new Date()
-      });
+      try {
+        await this.supabase.from("engagement_snapshots").insert({
+          tweet_id: tweetData.id,
+          likes: tweetData.metrics.likes,
+          retweets: tweetData.metrics.retweets,
+          quotes: tweetData.metrics.quotes,
+          comments: tweetData.metrics.comments,
+          timestamp: /* @__PURE__ */ new Date()
+        });
+      } catch (_) {
+      }
       return tweetData;
     } catch (error) {
       elizaLogger.error("Failed to scrape engagement:", error);
@@ -1105,37 +1171,31 @@ var _TwitterRaidService = class _TwitterRaidService extends Service2 {
   async exportTweets(username, count = 100, skipCount = 0) {
     try {
       elizaLogger.info(`Exporting ${count} tweets from @${username} (skipping ${skipCount})`);
-      const tweetScraperUrl = this.runtime.getSetting("TWEET_SCRAPER_URL") || "https://nfnmoqepgjyutcbbaqjg.supabase.co/functions/v1/tweet-scraper";
-      const response = await fetch(tweetScraperUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "scrape_user_tweets",
-          username,
-          count,
-          skipCount,
-          includeReplies: false,
-          includeRetweets: true,
-          storeInDatabase: true,
-          exportFormat: "json"
-        })
-      });
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(`Tweet scraping failed: ${result.error}`);
+      if (!this.scraper) {
+        throw new Error("Twitter not authenticated");
       }
-      const exportedTweets = result.data.tweets.map((tweet) => ({
-        id: tweet.id,
-        text: tweet.text,
-        author: tweet.username,
-        createdAt: new Date(tweet.createdAt),
-        metrics: {
-          likes: tweet.likeCount || 0,
-          retweets: tweet.retweetCount || 0,
-          quotes: tweet.quoteCount || 0,
-          comments: tweet.replyCount || 0
-        }
-      }));
+      const targetTotal = count + (skipCount || 0);
+      const collected = [];
+      for await (const tweet of this.scraper.getTweets(username, targetTotal)) {
+        collected.push(tweet);
+        if (collected.length >= targetTotal) break;
+      }
+      const sliced = collected.slice(skipCount || 0).slice(0, count);
+      const exportedTweets = sliced.map((tweet) => {
+        const author = tweet.username || tweet.user?.username || tweet.author?.username || "unknown";
+        const createdAt = tweet.createdAt || tweet.created_at || tweet.date || Date.now();
+        const likes = tweet.likeCount ?? tweet.favoriteCount ?? tweet.favorites ?? tweet.likes ?? 0;
+        const retweets = tweet.retweetCount ?? tweet.retweets ?? 0;
+        const quotes = tweet.quoteCount ?? tweet.quotes ?? 0;
+        const comments = tweet.replyCount ?? tweet.replies ?? 0;
+        return {
+          id: String(tweet.id || tweet.rest_id),
+          text: tweet.text || tweet.full_text || "",
+          author,
+          createdAt: new Date(createdAt),
+          metrics: { likes, retweets, quotes, comments }
+        };
+      });
       const exportedData = exportedTweets.map((tweet) => ({
         id: tweet.id,
         text: tweet.text,
@@ -1148,15 +1208,17 @@ var _TwitterRaidService = class _TwitterRaidService extends Service2 {
       fs.writeFileSync("exported-tweets.json", JSON.stringify(exportedData, null, 2));
       const tweetTexts = exportedTweets.map((tweet) => tweet.text).filter((text) => text !== null);
       fs.writeFileSync("tweets.json", JSON.stringify(tweetTexts, null, 2));
-      await this.supabase.from("data_exports").insert({
-        export_type: "tweets",
-        username,
-        count: exportedTweets.length,
-        exported_at: /* @__PURE__ */ new Date(),
-        file_path: "exported-tweets.json",
-        scraping_session_id: result.data.scrapingStats?.sessionId
-      });
-      elizaLogger.success(`Successfully exported ${exportedTweets.length} tweets using Edge Function`);
+      try {
+        await this.supabase.from("data_exports").insert({
+          export_type: "tweets",
+          username,
+          count: exportedTweets.length,
+          exported_at: /* @__PURE__ */ new Date(),
+          file_path: "exported-tweets.json"
+        });
+      } catch (_) {
+      }
+      elizaLogger.success(`Successfully exported ${exportedTweets.length} tweets using local scraper`);
       return exportedTweets;
     } catch (error) {
       elizaLogger.error("Failed to export tweets:", error);
@@ -1292,16 +1354,48 @@ var _TelegramRaidManager = class _TelegramRaidManager extends Service3 {
     this.channelId = null;
     this.testChannelId = null;
     this.isInitialized = false;
+    this.passiveMode = false;
     const supabaseUrl = runtime.getSetting("SUPABASE_URL") || process.env.SUPABASE_URL;
     const supabaseServiceKey = runtime.getSetting("SUPABASE_SERVICE_ROLE_KEY") || process.env.SUPABASE_SERVICE_ROLE_KEY;
     this.supabase = supabaseUrl && supabaseServiceKey ? createClient2(supabaseUrl, supabaseServiceKey) : this.createNoopSupabase();
     if (!supabaseUrl || !supabaseServiceKey) {
       elizaLogger2.warn("Supabase configuration missing for TelegramRaidManager - using no-op client");
     }
-    this.botToken = runtime.getSetting("TELEGRAM_BOT_TOKEN");
-    this.channelId = runtime.getSetting("TELEGRAM_CHANNEL_ID");
+    this.botToken = runtime.getSetting("TELEGRAM_RAID_BOT_TOKEN") || runtime.getSetting("TELEGRAM_BOT_TOKEN");
+    this.channelId = runtime.getSetting("TELEGRAM_RAID_CHANNEL_ID") || runtime.getSetting("TELEGRAM_CHANNEL_ID");
     this.testChannelId = runtime.getSetting("TELEGRAM_TEST_CHANNEL");
     this.raidCoordinatorUrl = runtime.getSetting("RAID_COORDINATOR_URL") || "";
+    const passiveSetting = runtime.getSetting("TELEGRAM_RAID_PASSIVE") || runtime.getSetting("TELEGRAM_PASSIVE_MODE") || process.env.TELEGRAM_RAID_PASSIVE || process.env.TELEGRAM_PASSIVE_MODE;
+    this.passiveMode = String(passiveSetting ?? "").toLowerCase() === "true";
+  }
+  // Static lifecycle helpers to satisfy core service loader patterns
+  static async start(runtime) {
+    elizaLogger2.info("Starting Telegram Raid Manager");
+    const service = new _TelegramRaidManager(runtime);
+    try {
+      const token = runtime.getSetting("TELEGRAM_RAID_BOT_TOKEN") || runtime.getSetting("TELEGRAM_BOT_TOKEN");
+      if (!token) {
+        elizaLogger2.warn(
+          "No TELEGRAM_RAID_BOT_TOKEN/TELEGRAM_BOT_TOKEN configured; TelegramRaidManager will be registered but not started"
+        );
+        return service;
+      }
+      await service.initialize();
+      return service;
+    } catch (error) {
+      elizaLogger2.error("Failed to start Telegram Raid Manager:", error);
+      throw error;
+    }
+  }
+  static async stop(runtime) {
+    try {
+      const existing = runtime?.getService?.(_TelegramRaidManager.serviceType);
+      if (existing && typeof existing.stop === "function") {
+        await existing.stop();
+      }
+    } finally {
+      elizaLogger2.info("Telegram Raid Manager stopped");
+    }
   }
   async initialize() {
     if (!this.botToken) {
@@ -1311,6 +1405,14 @@ var _TelegramRaidManager = class _TelegramRaidManager extends Service3 {
     elizaLogger2.info("Initializing Telegram Raid Manager");
     try {
       this.bot = new Telegraf(this.botToken);
+      if (this.passiveMode) {
+        this.isInitialized = true;
+        elizaLogger2.info("Telegram Raid Manager initialized in passive (send-only) mode");
+        if (this.channelId) {
+          await this.sendChannelMessage("\u{1F916} Raid notifications enabled (passive mode). \u{1F680}");
+        }
+        return;
+      }
       this.setupCommandHandlers();
       this.setupCallbackHandlers();
       this.setupMiddleware();
@@ -1321,6 +1423,24 @@ var _TelegramRaidManager = class _TelegramRaidManager extends Service3 {
         await this.sendChannelMessage("\u{1F916} Raid bot is online and ready for action! \u{1F680}");
       }
     } catch (error) {
+      const desc = error?.response?.description || error?.message;
+      if (typeof desc === "string" && /getUpdates request/i.test(desc)) {
+        elizaLogger2.warn(
+          "Telegram polling conflict detected. Switching TelegramRaidManager to passive (send-only) mode."
+        );
+        try {
+          if (!this.bot) this.bot = new Telegraf(this.botToken);
+          this.passiveMode = true;
+          this.isInitialized = true;
+          if (this.channelId) {
+            await this.sendChannelMessage(
+              "\u{1F916} Raid notifications active (passive mode due to existing bot instance)."
+            );
+          }
+          return;
+        } catch (e) {
+        }
+      }
       elizaLogger2.error("Failed to initialize Telegram Raid Manager:", error);
       throw error;
     }
@@ -1460,6 +1580,10 @@ Let's dominate social media! \u{1F525}`,
       );
     });
     this.bot.command("raid", async (ctx) => {
+      if (!ctx.message || !("text" in ctx.message)) {
+        await ctx.reply("Usage: `/raid <twitter_url>`\n\nExample: `/raid https://twitter.com/user/status/123456789`", { parse_mode: "Markdown" });
+        return;
+      }
       const args = ctx.message.text.split(" ");
       if (args.length < 2) {
         await ctx.reply("Usage: `/raid <twitter_url>`\n\nExample: `/raid https://twitter.com/user/status/123456789`", { parse_mode: "Markdown" });
@@ -1478,6 +1602,10 @@ Let's dominate social media! \u{1F525}`,
       await this.showLeaderboard(ctx);
     });
     this.bot.command("export", async (ctx) => {
+      if (!ctx.message || !("text" in ctx.message)) {
+        await ctx.reply("Usage: `/export <username>`\n\nExample: `/export elonmusk`", { parse_mode: "Markdown" });
+        return;
+      }
       const args = ctx.message.text.split(" ");
       if (args.length < 2) {
         await ctx.reply("Usage: `/export <username>`\n\nExample: `/export elonmusk`", { parse_mode: "Markdown" });
@@ -1518,14 +1646,17 @@ Questions? Ask in the main chat! \u{1F4AC}`,
   setupCallbackHandlers() {
     if (!this.bot) return;
     this.bot.action(/^raid_action:(.+)$/, async (ctx) => {
+      if (!ctx.match) return;
       const action = ctx.match[1];
       await this.handleRaidAction(ctx, action);
     });
     this.bot.action(/^submit_engagement:(.+)$/, async (ctx) => {
+      if (!ctx.match) return;
       const engagementType = ctx.match[1];
       await this.handleEngagementSubmission(ctx, engagementType);
     });
     this.bot.action(/^leaderboard:(.+)$/, async (ctx) => {
+      if (!ctx.match) return;
       const period = ctx.match[1];
       await this.showLeaderboard(ctx, period);
     });
@@ -3247,12 +3378,12 @@ Just tell me the username and I'll handle the rest! \u{1F680}`,
         callback({
           text: `\u{1F504} **SCRAPING TWEETS** \u{1F504}
 
-**Target:** @${username}
-**Count:** ${count} tweets
-**Skip:** ${skipCount} tweets
+Target: @${username}
+Count: ${count}
+Skip: ${skipCount}
 
-**Status:** Initializing scraping process...
-**Method:** Using Edge Function for optimal performance
+Status: Initializing scraping process...
+Method: Using Edge Function for optimal performance
 
 This may take a few moments. I'll notify you when complete! \u23F3`,
           content: {
@@ -4110,9 +4241,15 @@ var socialRaidsPlugin = {
     CommunityMemoryService
   ],
   config: {
+    // Prefer raid-specific credentials when provided
+    TELEGRAM_RAID_BOT_TOKEN: process.env.TELEGRAM_RAID_BOT_TOKEN || "",
+    TELEGRAM_RAID_CHANNEL_ID: process.env.TELEGRAM_RAID_CHANNEL_ID || "",
     TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || "",
     TELEGRAM_CHANNEL_ID: process.env.TELEGRAM_CHANNEL_ID || "",
     TELEGRAM_TEST_CHANNEL: process.env.TELEGRAM_TEST_CHANNEL || "",
+    // Passive mode flags (string "true" enables passive send-only mode)
+    TELEGRAM_RAID_PASSIVE: process.env.TELEGRAM_RAID_PASSIVE || "",
+    TELEGRAM_PASSIVE_MODE: process.env.TELEGRAM_PASSIVE_MODE || "",
     TWITTER_USERNAME: process.env.TWITTER_USERNAME || "",
     TWITTER_PASSWORD: process.env.TWITTER_PASSWORD || "",
     TWITTER_EMAIL: process.env.TWITTER_EMAIL || "",
@@ -4149,6 +4286,33 @@ function getEnabledPlugins() {
 
 // src/index.ts
 var character2 = getCharacter(config.CHARACTER_NAME);
+if (config.OPENAI_BASE_URL && !process.env.OPENAI_BASE_URL) {
+  process.env.OPENAI_BASE_URL = config.OPENAI_BASE_URL;
+}
+if (config.OPENAI_BASE_URL && !process.env.OPENAI_API_BASE_URL) {
+  process.env.OPENAI_API_BASE_URL = config.OPENAI_BASE_URL;
+}
+if (config.OPENAI_API_KEY && !process.env.OPENAI_API_KEY) {
+  process.env.OPENAI_API_KEY = config.OPENAI_API_KEY;
+}
+if (config.DEFAULT_MODEL && !process.env.DEFAULT_MODEL) {
+  process.env.DEFAULT_MODEL = config.DEFAULT_MODEL;
+}
+if (process.env.DEFAULT_MODEL && !process.env.OPENAI_MODEL) {
+  process.env.OPENAI_MODEL = process.env.DEFAULT_MODEL;
+}
+if (process.env.DEFAULT_MODEL && !process.env.MODEL) {
+  process.env.MODEL = process.env.DEFAULT_MODEL;
+}
+if (config.FALLBACK_MODEL && !process.env.FALLBACK_MODEL) {
+  process.env.FALLBACK_MODEL = config.FALLBACK_MODEL;
+}
+var embeddingModel = config.EMBEDDING_MODEL || config.OPENAI_EMBEDDING_MODEL || config.TEXT_EMBEDDING_MODEL || process.env.EMBEDDING_MODEL || process.env.OPENAI_EMBEDDING_MODEL || process.env.TEXT_EMBEDDING_MODEL;
+if (embeddingModel) {
+  if (!process.env.EMBEDDING_MODEL) process.env.EMBEDDING_MODEL = embeddingModel;
+  if (!process.env.OPENAI_EMBEDDING_MODEL) process.env.OPENAI_EMBEDDING_MODEL = embeddingModel;
+  if (!process.env.TEXT_EMBEDDING_MODEL) process.env.TEXT_EMBEDDING_MODEL = embeddingModel;
+}
 var enabledPlugins = getEnabledPlugins();
 var projectAgent = {
   character: character2,

@@ -29,6 +29,21 @@ if ((config as any).FALLBACK_MODEL && !process.env.FALLBACK_MODEL) {
   process.env.FALLBACK_MODEL = (config as any).FALLBACK_MODEL as string;
 }
 
+// Propagate embedding model into common env aliases so providers can find it
+const embeddingModel =
+  (config as any).EMBEDDING_MODEL ||
+  (config as any).OPENAI_EMBEDDING_MODEL ||
+  (config as any).TEXT_EMBEDDING_MODEL ||
+  process.env.EMBEDDING_MODEL ||
+  process.env.OPENAI_EMBEDDING_MODEL ||
+  process.env.TEXT_EMBEDDING_MODEL;
+
+if (embeddingModel) {
+  if (!process.env.EMBEDDING_MODEL) process.env.EMBEDDING_MODEL = embeddingModel as string;
+  if (!process.env.OPENAI_EMBEDDING_MODEL) process.env.OPENAI_EMBEDDING_MODEL = embeddingModel as string;
+  if (!process.env.TEXT_EMBEDDING_MODEL) process.env.TEXT_EMBEDDING_MODEL = embeddingModel as string;
+}
+
 // Get enabled plugins based on configuration
 const enabledPlugins = getEnabledPlugins();
 
