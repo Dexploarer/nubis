@@ -27,10 +27,7 @@
       "@elizaos/core/*": ["node_modules/@elizaos/core/*"]
     }
   },
-  "include": [
-    "src/**/*.ts",
-    "types/**/*.d.ts"
-  ],
+  "include": ["src/**/*.ts", "types/**/*.d.ts"],
   "exclude": [
     "dist",
     "node_modules",

@@ -81,7 +81,7 @@ export const character: Character = {
     [
       {
         name: '{{user1}}',
-        content: { text: 'Let\'s raid this tweet: https://twitter.com/example/status/123' },
+        content: { text: "Let's raid this tweet: https://twitter.com/example/status/123" },
       },
       {
         name: 'Nubi',
@@ -101,7 +101,7 @@ export const character: Character = {
     'Hot take: The best code is boring code. Clever code is just technical debt with an ego problem. Write for the developer who maintains it at 3 AM.',
     "Today's wisdom: Whether you're debugging code or debugging life, the problem is usually in the layer you're not looking at.",
     "Mental model for career growth: You're not competing with other developers. You're collaborating with past you and racing with future you. Everything else is noise.",
-    "*glances at analytics dashboard* Fascinating how you all pretend these structured raid templates are too robotic, yet engagement goes up 40% when I use them. Almost like... psychology works? 🤔",
+    '*glances at analytics dashboard* Fascinating how you all pretend these structured raid templates are too robotic, yet engagement goes up 40% when I use them. Almost like... psychology works? 🤔',
     "Behind the curtain moment: I'm literally programmed to break the fourth wall because authentic connection beats polished performance. The irony that this authenticity is itself programmed is not lost on me. Meta-meta-commentary, anyone?",
     "RSS feeds from Twitter lists are now live! *adjusts digital monocle* Because sometimes you want your timeline organized without the algorithm's 'helpful' suggestions. Create yours with 'create rss feed from list [id]'",
   ],
@@ -177,24 +177,24 @@ export const character: Character = {
 
   plugins: [
     // REQUIRED: Core plugins first (in proper loading order)
-    '@elizaos/plugin-bootstrap',  // Essential actions & handlers - must be first
-    '@elizaos/plugin-sql',        // Memory & database management
-    
+    '@elizaos/plugin-bootstrap', // Essential actions & handlers - must be first
+    '@elizaos/plugin-sql', // Memory & database management
+
     // REQUIRED: Model provider plugins (choose one or more)
     ...(process.env.OPENAI_API_KEY?.trim() ? ['@elizaos/plugin-openai'] : []),
     ...(process.env.ANTHROPIC_API_KEY?.trim() ? ['@elizaos/plugin-anthropic'] : []),
     ...(process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim() ? ['@elizaos/plugin-google-genai'] : []),
-    
+
     // OPTIONAL: Communication channel plugins
     ...(process.env.DISCORD_API_TOKEN?.trim() ? ['@elizaos/plugin-discord'] : []),
     ...(process.env.TELEGRAM_BOT_TOKEN?.trim() ? ['@elizaos/plugin-telegram'] : []),
-    
+
     // OPTIONAL: Specialized capability plugins
-    '@elizaos/plugin-knowledge',  // Document learning and knowledge retrieval
+    '@elizaos/plugin-knowledge', // Document learning and knowledge retrieval
     ...(process.env.OPENAI_API_KEY?.trim() ? ['@elizaos/plugin-web-search'] : []),
-    '@elizaos/plugin-browser',    // Web browsing capabilities
-    '@elizaos/plugin-mcp',        // Model Context Protocol support
-    
+    '@elizaos/plugin-browser', // Web browsing capabilities
+    '@elizaos/plugin-mcp', // Model Context Protocol support
+
     // NOTE: Local plugins (twitter-enhanced, social-raids) are loaded via projectAgent.plugins in index.ts
     // This follows ElizaOS best practices for separating core plugins from project-specific functionality
   ],

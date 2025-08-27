@@ -13,6 +13,7 @@ Navigate to your Supabase project's **Authentication > Providers** section and:
    - Configure Solana chain support
 
 2. **Configure Rate Limits**:
+
    ```
    Web3 Logins: 30 per 5-minute interval per IP address
    ```
@@ -64,6 +65,7 @@ WEB3_RATE_LIMIT=30
 ## 🏗️ Architecture
 
 ### Database Schema
+
 The identity management system includes these tables for Web3 integration:
 
 ```sql
@@ -84,7 +86,7 @@ user_wallets (
 The **Wallet Verification Service** provides:
 
 1. **Solana Wallet Verification**: Validates wallet addresses using EIP-4361 standard
-2. **Identity Linking**: Links wallets to unified cross-platform user identities  
+2. **Identity Linking**: Links wallets to unified cross-platform user identities
 3. **Supabase Web3 Auth**: Integrates with Supabase's Web3 authentication
 4. **Signature Verification**: Verifies signed messages from Solana wallets
 5. **Session Management**: Handles Web3 authentication sessions
@@ -166,9 +168,9 @@ import { WalletVerificationService } from '../services/wallet-verification-servi
 
 export async function POST(request: Request) {
   const { walletAddress, userId, platform } = await request.json();
-  
+
   const walletService = new WalletVerificationService(runtime);
-  
+
   const result = await walletService.verifyWalletAndLinkIdentity({
     walletAddress,
     chain: 'solana',
@@ -179,16 +181,16 @@ export async function POST(request: Request) {
 
   if (result.success) {
     // Trigger cult initiation flow
-    return Response.json({ 
-      success: true, 
+    return Response.json({
+      success: true,
       userUuid: result.userUuid,
-      message: 'Soul binding successful. Initiation ritual begins...' 
+      message: 'Soul binding successful. Initiation ritual begins...'
     });
   }
 
-  return Response.json({ 
-    success: false, 
-    error: result.error 
+  return Response.json({
+    success: false,
+    error: result.error
   }, { status: 400 });
 }
 ```
@@ -196,18 +198,22 @@ export async function POST(request: Request) {
 ## 🔒 Security Considerations
 
 ### 1. Rate Limiting
+
 - Configured for 30 Web3 logins per 5-minute interval per IP
 - Prevents automated wallet creation abuse
 
-### 2. CAPTCHA Protection  
+### 2. CAPTCHA Protection
+
 - Enabled hCaptcha protection for additional security
 - Prevents bot-driven wallet farming
 
 ### 3. Message Verification
+
 - All wallet signatures verified using EIP-4361 standard
 - Messages include domain, timestamp, and nonce for replay protection
 
 ### 4. Domain Validation
+
 - Only accepts signatures for configured domain (nubi.cult)
 - Prevents cross-site signature reuse
 
@@ -216,7 +222,7 @@ export async function POST(request: Request) {
 ### Soul Binding Process
 
 1. **Wallet Connection**: User connects Solana wallet
-2. **Identity Verification**: System verifies wallet ownership via signature  
+2. **Identity Verification**: System verifies wallet ownership via signature
 3. **Cross-Platform Linking**: Links wallet to existing social accounts (Twitter, Telegram, Discord)
 4. **Cult Membership**: Creates cult membership record with initiation data
 5. **Tier Assignment**: Assigns initial cult tier (initiate → disciple → guardian → high_priest)
@@ -234,7 +240,7 @@ User Request → Wallet Signature → Supabase Web3 Auth → Identity Linking �
 The system includes comprehensive testing for:
 
 - Wallet address validation (Solana base58 format)
-- Signature verification using EIP-4361 standard  
+- Signature verification using EIP-4361 standard
 - Cross-platform identity linking
 - Database integrity and RLS policies
 - Rate limiting and security measures
@@ -244,7 +250,7 @@ The system includes comprehensive testing for:
 Track key metrics:
 
 - **Wallet Verification Success Rate**
-- **Cross-Platform Identity Linking**  
+- **Cross-Platform Identity Linking**
 - **Cult Membership Growth**
 - **Tier Distribution**
 - **Platform Activity Correlation**

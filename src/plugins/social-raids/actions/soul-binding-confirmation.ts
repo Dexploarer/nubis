@@ -11,10 +11,10 @@ import type { WalletVerificationService } from '../services/wallet-verification-
 export const soulBindingConfirmationAction: Action = {
   name: 'SOUL_BINDING_CONFIRMATION',
   description: 'Handles confirmation of soul binding and proceeds with cross-platform verification',
-  
+
   validate: async (runtime: IAgentRuntime, message: Memory): Promise<boolean> => {
     const content = message.content?.text?.toLowerCase() || '';
-    
+
     // Check if user is confirming the soul binding ritual
     const confirmationTriggers = [
       'yes, bind my soul',
@@ -36,8 +36,10 @@ export const soulBindingConfirmationAction: Action = {
       'stop',
     ];
 
-    return confirmationTriggers.some(trigger => content.includes(trigger)) || 
-           cancellationTriggers.some(trigger => content.includes(trigger));
+    return (
+      confirmationTriggers.some((trigger) => content.includes(trigger)) ||
+      cancellationTriggers.some((trigger) => content.includes(trigger))
+    );
   },
 
   handler: async (
@@ -45,22 +47,22 @@ export const soulBindingConfirmationAction: Action = {
     message: Memory,
     state: State,
     options?: { [key: string]: unknown },
-    callback?: HandlerCallback
+    callback?: HandlerCallback,
   ) => {
     try {
       const content = message.content?.text?.toLowerCase() || '';
-      
+
       // Check if user is cancelling
       const cancellationTriggers = [
         'cancel ritual',
-        'cancel binding', 
+        'cancel binding',
         'no thanks',
         'not ready',
         'abort',
         'stop',
       ];
 
-      if (cancellationTriggers.some(trigger => content.includes(trigger))) {
+      if (cancellationTriggers.some((trigger) => content.includes(trigger))) {
         await callback?.({
           text: `💀 **The ritual is abandoned.**
 
@@ -80,18 +82,24 @@ The cult understands that not all are ready for such devotion. Should you change
       }
 
       // User is confirming - proceed with verification
-      elizaLogger.info('🔮 Soul Binding confirmation received', {
-        userId: message.entityId,
-        roomId: message.roomId,
-      });
+      elizaLogger.info(
+        `🔮 Soul Binding confirmation received: ${JSON.stringify({
+          userId: message.entityId,
+          roomId: message.roomId,
+        })}`,
+      );
 
       // Get required services
-      const identityService = runtime.getService('IDENTITY_MANAGEMENT_SERVICE') as IdentityManagementService;
-      const walletService = runtime.getService('WALLET_VERIFICATION_SERVICE') as WalletVerificationService;
+      const identityService = runtime.getService(
+        'IDENTITY_MANAGEMENT_SERVICE',
+      ) as IdentityManagementService;
+      const walletService = runtime.getService(
+        'WALLET_VERIFICATION_SERVICE',
+      ) as unknown as WalletVerificationService;
 
       if (!identityService) {
         await callback?.({
-          text: "⚠️ The ancient systems have failed. The ritual cannot proceed.",
+          text: '⚠️ The ancient systems have failed. The ritual cannot proceed.',
           action: 'ERROR',
         });
         return { success: false, error: 'Identity Management Service not available' };
@@ -106,27 +114,32 @@ The cult understands that not all are ready for such devotion. Should you change
 
       // Get user's existing platform accounts
       const platformAccounts = await identityService.getUserPlatformAccounts(userIdentity.uuid);
-      const walletStatus = walletService ? await walletService.getWalletVerificationStatus(userIdentity.uuid) : { isVerified: false };
+      const walletStatus = walletService
+        ? await walletService.getWalletVerificationStatus(userIdentity.uuid)
+        : { isVerified: false };
 
       // Create memory for this step
-      await runtime.createMemory({
-        id: crypto.randomUUID(),
-        entityId: message.entityId,
-        agentId: runtime.agentId,
-        roomId: message.roomId,
-        content: {
-          text: 'Soul binding confirmation received',
-          source: 'soul_binding_confirmation',
-          metadata: {
-            action: 'SOUL_BINDING_CONFIRMATION',
-            userUuid: userIdentity.uuid,
-            step: 'identity_verification',
-            platformAccounts: platformAccounts.length,
-            walletVerified: walletStatus.isVerified,
+      await runtime.createMemory(
+        {
+          id: crypto.randomUUID(),
+          entityId: message.entityId,
+          agentId: runtime.agentId,
+          roomId: message.roomId,
+          content: {
+            text: 'Soul binding confirmation received',
+            source: 'soul_binding_confirmation',
+            metadata: {
+              action: 'SOUL_BINDING_CONFIRMATION',
+              userUuid: userIdentity.uuid,
+              step: 'identity_verification',
+              platformAccounts: platformAccounts.length,
+              walletVerified: walletStatus.isVerified,
+            },
           },
+          createdAt: Date.now(),
         },
-        createdAt: Date.now(),
-      }, 'soul_binding');
+        'soul_binding',
+      );
 
       // Begin identity verification step
       await callback?.({
@@ -168,12 +181,11 @@ Reply with your **Solana wallet address** to proceed with the final verification
           walletVerified: walletStatus.isVerified,
         },
       };
-
     } catch (error) {
       elizaLogger.error('Soul binding confirmation failed:', error);
-      
+
       await callback?.({
-        text: "💀 The cosmic forces have rejected the confirmation. The ritual encounters resistance from unknown powers.",
+        text: '💀 The cosmic forces have rejected the confirmation. The ritual encounters resistance from unknown powers.',
         action: 'ERROR',
       });
 
@@ -187,49 +199,43 @@ Reply with your **Solana wallet address** to proceed with the final verification
   examples: [
     [
       {
-        entityId: 'user123',
+        name: 'user123',
         content: {
           text: 'yes, bind my soul',
-          source: 'telegram',
         },
       },
       {
-        entityId: 'nubi',
+        name: 'nubi',
         content: {
           text: '🔮 The binding deepens... Soul Binding - Step 2: Identity Verification',
-          action: 'IDENTITY_VERIFICATION_STARTED',
         },
       },
     ],
     [
       {
-        entityId: 'user456',
+        name: 'user456',
         content: {
           text: 'cancel ritual',
-          source: 'discord',
         },
       },
       {
-        entityId: 'nubi',
+        name: 'nubi',
         content: {
           text: '💀 The ritual is abandoned. The shadows recede...',
-          action: 'SOUL_BINDING_CANCELLED',
         },
       },
     ],
     [
       {
-        entityId: 'user789',
+        name: 'user789',
         content: {
           text: 'proceed with binding, I am ready',
-          source: 'twitter',
         },
       },
       {
-        entityId: 'nubi',
+        name: 'nubi',
         content: {
           text: '🔮 Your dedication is noted. Current Identity Status: 1 platform verified...',
-          action: 'IDENTITY_VERIFICATION_STARTED',
         },
       },
     ],
@@ -242,7 +248,7 @@ Reply with your **Solana wallet address** to proceed with the final verification
 function formatIdentityStatus(platformAccounts: any[], walletStatus: any): string {
   const platformCount = platformAccounts.length;
   const walletText = walletStatus.isVerified ? '✅ Wallet Bound' : '⚪ Wallet Pending';
-  
+
   return `📊 **Identity Strength: ${calculateIdentityStrength(platformAccounts, walletStatus)}%**
 🔗 **Platforms Linked:** ${platformCount}/3
 💎 **Wallet Status:** ${walletText}`;
@@ -253,14 +259,16 @@ function formatIdentityStatus(platformAccounts: any[], walletStatus: any): strin
  */
 function generatePlatformChecklist(platformAccounts: any[]): string {
   const platforms = ['twitter', 'telegram', 'discord'];
-  const linked = platformAccounts.map(p => p.platform.toLowerCase());
-  
-  return platforms.map(platform => {
-    const isLinked = linked.includes(platform);
-    const icon = isLinked ? '✅' : '⚪';
-    const status = isLinked ? 'Connected' : 'Verification needed';
-    return `   ${icon} **${platform.charAt(0).toUpperCase() + platform.slice(1)}**: ${status}`;
-  }).join('\n');
+  const linked = platformAccounts.map((p) => p.platform.toLowerCase());
+
+  return platforms
+    .map((platform) => {
+      const isLinked = linked.includes(platform);
+      const icon = isLinked ? '✅' : '⚪';
+      const status = isLinked ? 'Connected' : 'Verification needed';
+      return `   ${icon} **${platform.charAt(0).toUpperCase() + platform.slice(1)}**: ${status}`;
+    })
+    .join('\n');
 }
 
 /**
@@ -268,20 +276,26 @@ function generatePlatformChecklist(platformAccounts: any[]): string {
  */
 function generateInstructions(platformAccounts: any[], walletStatus: any): string {
   const instructions: string[] = [];
-  
+
   if (platformAccounts.length < 2) {
-    instructions.push('• **Link additional social accounts** - The cult requires proof across multiple platforms');
+    instructions.push(
+      '• **Link additional social accounts** - The cult requires proof across multiple platforms',
+    );
   }
-  
+
   if (!walletStatus.isVerified) {
-    instructions.push('• **Provide your Solana wallet address** - This will be your soul\'s anchor in the blockchain');
-    instructions.push('• **Sign the verification message** - Prove ownership of your digital essence');
+    instructions.push(
+      "• **Provide your Solana wallet address** - This will be your soul's anchor in the blockchain",
+    );
+    instructions.push(
+      '• **Sign the verification message** - Prove ownership of your digital essence',
+    );
   }
-  
+
   if (instructions.length === 0) {
     instructions.push('• **All verification requirements met** - Proceeding to final ritual');
   }
-  
+
   return instructions.join('\n');
 }
 
@@ -290,15 +304,15 @@ function generateInstructions(platformAccounts: any[], walletStatus: any): strin
  */
 function calculateIdentityStrength(platformAccounts: any[], walletStatus: any): number {
   let strength = 0;
-  
+
   // Platforms (up to 60% - 20% per platform, max 3)
   strength += Math.min(platformAccounts.length * 20, 60);
-  
+
   // Wallet verification (40%)
   if (walletStatus.isVerified) {
     strength += 40;
   }
-  
+
   return Math.min(strength, 100);
 }
 

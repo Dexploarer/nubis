@@ -8,15 +8,18 @@ auto_execution_mode: 3
 Environment-aware DB workflow using your Supabase project `nfnmoqepgjyutcbbaqjg`.
 
 ## Slash usage
+
 - Invoke: `/supabase_database`
 - Example: `/supabase_database projectId=nfnmoqepgjyutcbbaqjg applyMigrations=false`
 
 ## Inputs
+
 - projectId (optional): defaults to `nfnmoqepgjyutcbbaqjg`
 - applyMigrations (optional): true|false (default: false)
 - schema (optional): default `public`
 
 ## 1) Env and connection
+
 - Ensure `.env` contains:
   - `SUPABASE_URL`
   - `SUPABASE_ANON_KEY`
@@ -25,6 +28,7 @@ Environment-aware DB workflow using your Supabase project `nfnmoqepgjyutcbbaqjg`
 - Verify env is loaded by your runtime (Bun/Node) and edge functions (Deno) separately.
 
 ## 2) Project introspection (Cascade MCP)
+
 - Cascade fetches project details:
   - Project: `nubi` (ID: `nfnmoqepgjyutcbbaqjg`)
   - Advisors: security/performance suggestions are available
@@ -32,6 +36,7 @@ Environment-aware DB workflow using your Supabase project `nfnmoqepgjyutcbbaqjg`
 - If you want to re-run introspection, ask: "Run Supabase advisors again".
 
 ## 3) Health checks
+
 - Presence of critical tables (examples):
   - `agents` (RLS enabled), `sessions`, `session_messages`, `memories`
   - `scraped_tweets`, `scraped_users`, `raid_analytics`, `leaderboards`
@@ -39,7 +44,9 @@ Environment-aware DB workflow using your Supabase project `nfnmoqepgjyutcbbaqjg`
 - Connection: validate read on a low-risk table using server-side service key.
 
 ## 4) Advisor-driven improvements (SQL templates)
+
 - Unindexed foreign keys (add indexes):
+
 ```sql
 -- leaderboards.user_id
 CREATE INDEX IF NOT EXISTS idx_leaderboards_user_id ON public.leaderboards(user_id);
@@ -58,6 +65,7 @@ CREATE INDEX IF NOT EXISTS idx_community_interactions_related_raid_id ON public.
 ```
 
 - Duplicate indexes (drop extras; keep a single canonical index):
+
 ```sql
 -- session_messages: choose canonical names to keep, drop duplicates if present
 DROP INDEX IF EXISTS public.idx_session_messages_session; -- if duplicate of session_id
@@ -75,6 +83,7 @@ DROP INDEX IF EXISTS public.cross_platform_identities_platform_uidx;
 ```
 
 - RLS initplan optimization (example replacement):
+
 ```sql
 -- Replace auth.* in policies with SELECT form to avoid per-row re-evaluation
 -- Example pattern:
@@ -86,12 +95,16 @@ DROP INDEX IF EXISTS public.cross_platform_identities_platform_uidx;
 - Multiple permissive policies: consolidate policies by role+action when possible.
 
 ## 5) Apply migrations (optional)
+
 - Prefer applying via Supabase migrations repo. Alternatively, Cascade can run one-off migration SQL.
 - To apply now, set `applyMigrations=true` when you trigger this workflow and provide approval.
 
 ## 6) Turbo checks (safe to auto-run)
+
 // turbo
+
 1. Print current critical env vars presence (not their values)
+
 ```bash
 set -o allexport; source ./.env 2>/dev/null || true; set +o allexport;
 for v in SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY; do
@@ -99,16 +112,19 @@ for v in SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY; do
 ```
 
 ## Troubleshooting
+
 - 403/401 from RPC/REST: verify RLS policies and token type (anon vs service role).
 - Timeouts: consider using pooler URLs for high concurrency or long-lived sessions.
 - Migration errors: run statements individually to find offending object/index.
 
 ## References
+
 - Supabase advisors: performance issues reported for your project (see `/supabase_advisors`).
 - RLS best practices: https://supabase.com/docs/guides/database/postgres/row-level-security
 - Indexing FKs: https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys
 
 ### Core internal references
+
 - `../rules/elizaos_development_workflow.md`
 - `../rules/elizaos_coding_standards.md`
 - `../rules/elizaos-architecture-patterns.md`

@@ -124,9 +124,11 @@ const plugin: Plugin = {
         BOOLEAN_VARIABLE: config.BOOLEAN_VARIABLE === 'true',
       };
 
-      // Validation: only validate if the key is provided in config
+      // Validation: only validate if the key is provided in config and has a value
       if (
         Object.prototype.hasOwnProperty.call(config, 'EXAMPLE_PLUGIN_VARIABLE') &&
+        config.EXAMPLE_PLUGIN_VARIABLE !== undefined &&
+        config.EXAMPLE_PLUGIN_VARIABLE !== null &&
         (processedConfig.EXAMPLE_PLUGIN_VARIABLE == null ||
           String(processedConfig.EXAMPLE_PLUGIN_VARIABLE).length < 1)
       ) {
@@ -208,22 +210,30 @@ const plugin: Plugin = {
 
   // Event handlers
   events: {
-    MESSAGE_RECEIVED: [async (params: any) => {
-      logger.info('MESSAGE_RECEIVED event received');
-      logger.info({ keys: Object.keys(params || {}) }, 'MESSAGE_RECEIVED param keys');
-    }],
-    VOICE_MESSAGE_RECEIVED: [async (params: any) => {
-      logger.info('VOICE_MESSAGE_RECEIVED event received');
-      logger.info({ keys: Object.keys(params || {}) }, 'VOICE_MESSAGE_RECEIVED param keys');
-    }],
-    WORLD_CONNECTED: [async (params: any) => {
-      logger.info('WORLD_CONNECTED event received');
-      logger.info({ keys: Object.keys(params || {}) }, 'WORLD_CONNECTED param keys');
-    }],
-    WORLD_JOINED: [async (params: any) => {
-      logger.info('WORLD_JOINED event received');
-      logger.info({ keys: Object.keys(params || {}) }, 'WORLD_JOINED param keys');
-    }],
+    MESSAGE_RECEIVED: [
+      async (params: any) => {
+        logger.info('MESSAGE_RECEIVED event received');
+        logger.info({ keys: Object.keys(params || {}) }, 'MESSAGE_RECEIVED param keys');
+      },
+    ],
+    VOICE_MESSAGE_RECEIVED: [
+      async (params: any) => {
+        logger.info('VOICE_MESSAGE_RECEIVED event received');
+        logger.info({ keys: Object.keys(params || {}) }, 'VOICE_MESSAGE_RECEIVED param keys');
+      },
+    ],
+    WORLD_CONNECTED: [
+      async (params: any) => {
+        logger.info('WORLD_CONNECTED event received');
+        logger.info({ keys: Object.keys(params || {}) }, 'WORLD_CONNECTED param keys');
+      },
+    ],
+    WORLD_JOINED: [
+      async (params: any) => {
+        logger.info('WORLD_JOINED event received');
+        logger.info({ keys: Object.keys(params || {}) }, 'WORLD_JOINED param keys');
+      },
+    ],
   },
 
   // Model handlers

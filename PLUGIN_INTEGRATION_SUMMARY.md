@@ -3,12 +3,14 @@
 ## ✅ Successfully Installed Plugin
 
 ### **Knowledge Plugin** (`@elizaos/plugin-knowledge`)
+
 - **Version**: 1.2.2 ✅
 - **Status**: Installed and configured
 - **Purpose**: Document learning and knowledge retrieval
 - **Integration**: Added to both Eliza and Nubi characters
 
 #### Features:
+
 - ✅ Automatic document processing from `docs/` folder
 - ✅ Support for multiple file types (PDF, txt, markdown, code files)
 - ✅ Zero configuration required
@@ -16,6 +18,7 @@
 - ✅ Search and retrieve knowledge capabilities
 
 #### Configuration:
+
 ```bash
 # Environment Variables (already in env.example)
 LOAD_DOCS_ON_STARTUP=true
@@ -24,7 +27,7 @@ KNOWLEDGE_BASE_ENABLED=true
 # Documents folder
 /root/project/docs/knowledge/
 ├── base.md
-├── community.md  
+├── community.md
 └── prompt-or-die-cult-lore.md
 ```
 
@@ -33,30 +36,33 @@ KNOWLEDGE_BASE_ENABLED=true
 ### Character Configurations Updated:
 
 #### **Eliza Character** (`src/character.ts`)
+
 ```typescript
 plugins: [
   // ... existing plugins
   '@elizaos/plugin-knowledge', // Document learning and knowledge retrieval
   // ... other plugins
-]
+];
 ```
 
 #### **Nubi Character** (`src/nubi.ts`)
+
 ```typescript
 plugins: [
   '@elizaos/plugin-bootstrap',
   '@elizaos/plugin-sql',
   '@elizaos/plugin-discord',
   '@elizaos/plugin-telegram',
-  
+
   // Knowledge plugin
   '@elizaos/plugin-knowledge', // Document learning and knowledge retrieval
-]
+];
 ```
 
 ## 🧪 Test Results
 
 ### Plugin Integration Tests: **✅ ALL PASSING**
+
 - ✅ Knowledge plugin properly integrated
 - ✅ Plugin loading order correct
 - ✅ Character integrity maintained
@@ -64,6 +70,7 @@ plugins: [
 - ✅ Recall plugin completely removed
 
 ### Combined System Tests: **✅ ALL PASSING**
+
 - ✅ 245+ tests pass across all plugins
 - ✅ RSS functionality working
 - ✅ Social raids integration maintained
@@ -74,6 +81,7 @@ plugins: [
 ### Using the Knowledge Plugin:
 
 1. **Add documents** to the `docs/` folder:
+
    ```bash
    # Any of these file types:
    docs/my-document.pdf
@@ -83,6 +91,7 @@ plugins: [
    ```
 
 2. **Enable auto-loading** in `.env`:
+
    ```bash
    LOAD_DOCS_ON_STARTUP=true
    ```
@@ -93,14 +102,15 @@ plugins: [
    "Search for information about [specific topic]"
    ```
 
-
 ## 🚀 Next Steps
 
 ### Immediate Actions:
+
 1. **Add Documents**: Place learning materials in `docs/` folder
 2. **Test Functionality**: Start the agent and test knowledge queries
 
 ### Optional Enhancements:
+
 - Add more documents to the knowledge base
 - Set up automated document processing workflows
 

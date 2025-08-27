@@ -1,52 +1,452 @@
 [
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"agents","index":"idx_agents_settings_gin","idx_scan":0,"index_size_bytes":557056,"index_size":"544 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"logs","index":"idx_logs_body_gin","idx_scan":0,"index_size_bytes":49152,"index_size":"48 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"embeddings","index":"idx_embeddings_dim1536_hnsw","idx_scan":0,"index_size_bytes":40960,"index_size":"40 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"telegram_raids","index":"idx_telegram_raids_post_url","idx_scan":0,"index_size_bytes":32768,"index_size":"32 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"archive","table":"telegram_raids__20250826_044033","index":"telegram_raids__20250826_044033_post_url_idx","idx_scan":0,"index_size_bytes":32768,"index_size":"32 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"entities","index":"idx_entities_metadata_gin","idx_scan":0,"index_size_bytes":24576,"index_size":"24 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"entities","index":"idx_entities_names_gin","idx_scan":0,"index_size_bytes":24576,"index_size":"24 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"agents","index":"idx_agents_plugins_gin","idx_scan":0,"index_size_bytes":24576,"index_size":"24 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"memories","index":"idx_memories_metadata_gin","idx_scan":0,"index_size_bytes":24576,"index_size":"24 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"agents","index":"idx_agents_enabled_created","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"participants","index":"idx_participants_room_agent","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"participants","index":"idx_participants_entity_id","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"worlds","index":"idx_worlds_metadata_gin","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"entities","index":"idx_entities_agent_created","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"participants","index":"idx_participants_entity_room","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"components","index":"idx_components_data_gin","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"participants","index":"idx_participants_agent_room","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"cache","index":"idx_cache_key","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"logs","index":"idx_logs_entity_type","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"relationships","index":"idx_relationships_metadata_gin","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"worlds","index":"idx_worlds_agent_id","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"participants","index":"idx_participants_room_entity","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"worlds","index":"idx_worlds_agent_name","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"rooms","index":"idx_rooms_agent_type","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"worlds","index":"idx_worlds_server_created","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"participants","index":"idx_participants_room_id","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"embeddings","index":"embeddings_pkey","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"embeddings","index":"idx_embeddings_dim384_hnsw","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"embeddings","index":"idx_embeddings_dim512_hnsw","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"embeddings","index":"idx_embeddings_dim768_hnsw","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"participants","index":"idx_participants_created_desc","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"entities","index":"idx_entities_created_agent","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"logs","index":"idx_logs_entity_id","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"logs","index":"logs_pkey","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"entities","index":"idx_entities_agent_id","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"cache","index":"idx_cache_agent_id","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"logs","index":"idx_logs_room_id","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"logs","index":"idx_logs_type_created","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"logs","index":"idx_logs_room_type","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"logs","index":"idx_logs_room_created","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"rooms","index":"idx_rooms_type_server","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"rooms","index":"idx_rooms_agent_id","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"central_messages","index":"idx_messages_metadata_gin","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"rooms","index":"idx_rooms_created_desc","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"rooms","index":"idx_rooms_metadata_gin","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"relationships","index":"idx_relationships_tags_gin","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"logs","index":"idx_logs_entity_created","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"central_messages","index":"idx_central_messages_metadata_gin","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"server_agents","index":"idx_server_agents_agent","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"},
-  {"snapshot_time":"2025-08-26 05:00:38.195323+00","schemaname":"public","table":"agents","index":"idx_agents_username_lower","idx_scan":0,"index_size_bytes":16384,"index_size":"16 kB"}
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "agents",
+    "index": "idx_agents_settings_gin",
+    "idx_scan": 0,
+    "index_size_bytes": 557056,
+    "index_size": "544 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "logs",
+    "index": "idx_logs_body_gin",
+    "idx_scan": 0,
+    "index_size_bytes": 49152,
+    "index_size": "48 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "embeddings",
+    "index": "idx_embeddings_dim1536_hnsw",
+    "idx_scan": 0,
+    "index_size_bytes": 40960,
+    "index_size": "40 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "telegram_raids",
+    "index": "idx_telegram_raids_post_url",
+    "idx_scan": 0,
+    "index_size_bytes": 32768,
+    "index_size": "32 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "archive",
+    "table": "telegram_raids__20250826_044033",
+    "index": "telegram_raids__20250826_044033_post_url_idx",
+    "idx_scan": 0,
+    "index_size_bytes": 32768,
+    "index_size": "32 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "entities",
+    "index": "idx_entities_metadata_gin",
+    "idx_scan": 0,
+    "index_size_bytes": 24576,
+    "index_size": "24 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "entities",
+    "index": "idx_entities_names_gin",
+    "idx_scan": 0,
+    "index_size_bytes": 24576,
+    "index_size": "24 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "agents",
+    "index": "idx_agents_plugins_gin",
+    "idx_scan": 0,
+    "index_size_bytes": 24576,
+    "index_size": "24 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "memories",
+    "index": "idx_memories_metadata_gin",
+    "idx_scan": 0,
+    "index_size_bytes": 24576,
+    "index_size": "24 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "agents",
+    "index": "idx_agents_enabled_created",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "participants",
+    "index": "idx_participants_room_agent",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "participants",
+    "index": "idx_participants_entity_id",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "worlds",
+    "index": "idx_worlds_metadata_gin",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "entities",
+    "index": "idx_entities_agent_created",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "participants",
+    "index": "idx_participants_entity_room",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "components",
+    "index": "idx_components_data_gin",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "participants",
+    "index": "idx_participants_agent_room",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "cache",
+    "index": "idx_cache_key",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "logs",
+    "index": "idx_logs_entity_type",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "relationships",
+    "index": "idx_relationships_metadata_gin",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "worlds",
+    "index": "idx_worlds_agent_id",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "participants",
+    "index": "idx_participants_room_entity",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "worlds",
+    "index": "idx_worlds_agent_name",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "rooms",
+    "index": "idx_rooms_agent_type",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "worlds",
+    "index": "idx_worlds_server_created",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "participants",
+    "index": "idx_participants_room_id",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "embeddings",
+    "index": "embeddings_pkey",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "embeddings",
+    "index": "idx_embeddings_dim384_hnsw",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "embeddings",
+    "index": "idx_embeddings_dim512_hnsw",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "embeddings",
+    "index": "idx_embeddings_dim768_hnsw",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "participants",
+    "index": "idx_participants_created_desc",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "entities",
+    "index": "idx_entities_created_agent",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "logs",
+    "index": "idx_logs_entity_id",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "logs",
+    "index": "logs_pkey",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "entities",
+    "index": "idx_entities_agent_id",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "cache",
+    "index": "idx_cache_agent_id",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "logs",
+    "index": "idx_logs_room_id",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "logs",
+    "index": "idx_logs_type_created",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "logs",
+    "index": "idx_logs_room_type",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "logs",
+    "index": "idx_logs_room_created",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "rooms",
+    "index": "idx_rooms_type_server",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "rooms",
+    "index": "idx_rooms_agent_id",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "central_messages",
+    "index": "idx_messages_metadata_gin",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "rooms",
+    "index": "idx_rooms_created_desc",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "rooms",
+    "index": "idx_rooms_metadata_gin",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "relationships",
+    "index": "idx_relationships_tags_gin",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "logs",
+    "index": "idx_logs_entity_created",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "central_messages",
+    "index": "idx_central_messages_metadata_gin",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "server_agents",
+    "index": "idx_server_agents_agent",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  },
+  {
+    "snapshot_time": "2025-08-26 05:00:38.195323+00",
+    "schemaname": "public",
+    "table": "agents",
+    "index": "idx_agents_username_lower",
+    "idx_scan": 0,
+    "index_size_bytes": 16384,
+    "index_size": "16 kB"
+  }
 ]

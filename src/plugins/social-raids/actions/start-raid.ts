@@ -116,7 +116,7 @@ export const startRaidAction: Action = {
               raidId: result.raidId,
               targetUrl: twitterUrl,
               participantCount: 1, // Initial count
-              platform: 'elizaos'
+              platform: 'elizaos',
             });
             elizaLogger.info('Raid status posted to Twitter');
           }

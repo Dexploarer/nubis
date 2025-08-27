@@ -8,22 +8,27 @@ auto_execution_mode: 3
 Use Supabase Advisors via Cascade MCP to surface security and performance findings and apply fixes.
 
 ## Slash usage
+
 - Invoke: `/supabase_advisors`
 - Examples:
   - `/supabase_advisors type=performance`
   - `/supabase_advisors type=security`
 
 ## Inputs
+
 - type (optional): performance | security (default: both)
 - projectId (optional): defaults to `nfnmoqepgjyutcbbaqjg`
 
 ## 1) What this does
+
 - Cascade queries advisors for your project
 - Summarizes key findings
 - Proposes SQL or policy changes
 
 ## 2) Common findings and fixes (from your project)
+
 - Unindexed foreign keys → add indexes
+
 ```sql
 CREATE INDEX IF NOT EXISTS idx_leaderboards_user_id ON public.leaderboards(user_id);
 CREATE INDEX IF NOT EXISTS idx_nubi_sessions_agent_id ON public.nubi_sessions(agent_id);
@@ -36,6 +41,7 @@ CREATE INDEX IF NOT EXISTS idx_community_interactions_related_raid_id ON public.
 ```
 
 - Duplicate indexes → drop extras, keep canonical
+
 ```sql
 DROP INDEX IF EXISTS public.idx_session_messages_session; -- if duplicate of session_id
 DROP INDEX IF EXISTS public.idx_session_messages_sequence; -- if duplicate of session_seq
@@ -44,6 +50,7 @@ DROP INDEX IF EXISTS public.cross_platform_identities_platform_uidx; -- keep uq_
 ```
 
 - RLS initplan perf → use SELECT form in policies
+
 ```sql
 -- Replace auth.* calls with SELECT wrappers
 -- USING (auth.role() = 'authenticated')
@@ -54,29 +61,37 @@ DROP INDEX IF EXISTS public.cross_platform_identities_platform_uidx; -- keep uq_
 - Multiple permissive policies → consolidate by role+action per table
 
 ## 3) Apply changes
+
 - Prefer a migration file checked into your repo. Keep reversible.
 - For immediate fixes, apply using SQL console or request Cascade to run a controlled migration.
 
 ## 4) Re-check advisors
+
 - After changes, run this workflow again to confirm lints are resolved.
 
 ## 5) Turbo checks (safe to auto-run)
+
 // turbo
+
 1. Print project URL and presence of anon key (not the value)
+
 ```bash
 set -o allexport; source ./.env 2>/dev/null || true; set +o allexport;
 echo "SUPABASE_URL=${SUPABASE_URL:+SET}"; echo "SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:+SET}"
 ```
 
 ## Notes
+
 - Never expose service role key in client contexts.
 - Validate changes in staging before production.
 
 ## References
+
 - `../knowledge/supabase_rules.md`
 - `../rules/performance-guidelines.md`
 
 ### Core internal references
+
 - `../rules/elizaos_development_workflow.md`
 - `../rules/elizaos_coding_standards.md`
 - `../rules/elizaos-architecture-patterns.md`

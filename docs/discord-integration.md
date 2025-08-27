@@ -24,6 +24,7 @@ DISCORD_APPLICATION_ID=your_application_id
 ### Bot Permissions
 
 Ensure your Discord bot has the following permissions:
+
 - Send Messages
 - Read Message History
 - Use Slash Commands
@@ -44,9 +45,9 @@ ELIZAOS_DATABASE_URL="postgresql://username:password@localhost:5432/database_nam
 ### Database Tables
 
 The following tables are automatically created:
+
 - `messages` - Discord message history
 - `users` - Discord user information
 - `roles` - Community role assignments
 - `moderation_actions` - Moderation history
 - `community_guidelines` - Community rules
-

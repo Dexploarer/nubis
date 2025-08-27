@@ -5,41 +5,46 @@ This page summarizes all core message, character, and action templates that ship
 Note: For authoritative rules, see `../rules/elizaos_template_system.md` and `../rules/elizaos_template-quick-reference.md`.
 
 ## Message Templates
-- __shouldRespondTemplate__ — Decide RESPOND | IGNORE | STOP
+
+- **shouldRespondTemplate** — Decide RESPOND | IGNORE | STOP
   - Upstream: `packages/core/src/prompts.ts`
-- __messageHandlerTemplate__ — Generate dialog and an ordered list of actions; provider selection rules
+- **messageHandlerTemplate** — Generate dialog and an ordered list of actions; provider selection rules
   - Upstream: `packages/core/src/prompts.ts`
-- __postCreationTemplate__ — Create social posts in the agent voice
+- **postCreationTemplate** — Create social posts in the agent voice
   - Upstream: `packages/core/src/prompts.ts`
-- __imageDescriptionTemplate__ — Multi-level image analysis (title, description, detailed text)
+- **imageDescriptionTemplate** — Multi-level image analysis (title, description, detailed text)
   - Upstream: `packages/core/src/prompts.ts`
-- __booleanFooter__ — Constraint hint: respond strictly YES or NO (used as a footer)
+- **booleanFooter** — Constraint hint: respond strictly YES or NO (used as a footer)
   - Upstream: `packages/core/src/prompts.ts`
 
 ## Action-Specific Templates
-- __replyTemplate__ — Character dialog reply XML
+
+- **replyTemplate** — Character dialog reply XML
   - Upstream: `packages/plugin-bootstrap/src/actions/reply.ts`
-- __imageGenerationTemplate__ — Prompt for IMAGE model generation
+- **imageGenerationTemplate** — Prompt for IMAGE model generation
   - Upstream: `packages/plugin-bootstrap/src/actions/imageGeneration.ts`
 
 ## Character Templates (Agent Presets)
-- __none__ — Blank starter
-- __discord-bot__ — Discord server assistant
-- __telegram-bot__ — Telegram channels/groups assistant
-- __slack-bot__ — Slack workspace assistant
-- __twitter-agent__ — Twitter/X engagement agent
-- __github-bot__ — GitHub repository assistant
-- __instagram-agent__ — Instagram content manager
+
+- **none** — Blank starter
+- **discord-bot** — Discord server assistant
+- **telegram-bot** — Telegram channels/groups assistant
+- **slack-bot** — Slack workspace assistant
+- **twitter-agent** — Twitter/X engagement agent
+- **github-bot** — GitHub repository assistant
+- **instagram-agent** — Instagram content manager
   - Upstream: `packages/client/src/config/agent-templates.ts`
 
 ## Base Character
-- __Eliza__ — Default versatile AI assistant with full configuration
+
+- **Eliza** — Default versatile AI assistant with full configuration
   - Upstream: `packages/cli/src/characters/eliza.ts`
 
 ## Actions: Interface and Built-ins
-- __Action interface__ includes: `name`, `description`, `validate()`, `handler()`, `examples`
+
+- **Action interface** includes: `name`, `description`, `validate()`, `handler()`, `examples`
   - Upstream reference: `packages/plugin-bootstrap/src/actions/components.ts` (interface shape)
-- __Built-in actions__ (names only):
+- **Built-in actions** (names only):
   - REPLY
   - GENERATE_IMAGE
   - CHOICE
@@ -56,6 +61,7 @@ Note: For authoritative rules, see `../rules/elizaos_template_system.md` and `..
   - Upstream index: `packages/plugin-bootstrap/src/actions/index.ts`
 
 ## Setup and Configuration Notes
+
 - Templates use XML output blocks, e.g. `<response>...</response>` with strict “no pre/post text” rule.
 - Templates support `{{placeholders}}` populated from state/providers; double braces are converted to triple braces for non-escaped rendering.
 - Provider selection is critical for accuracy and performance (ATTACHMENTS, ENTITIES, RELATIONSHIPS, FACTS, WORLD).
@@ -63,6 +69,7 @@ Note: For authoritative rules, see `../rules/elizaos_template_system.md` and `..
 - Plugin discovery is filtered by available environment variables (API keys) in upstream `getElizaCharacter()`.
 
 ## How to use this list locally
+
 - Reference these templates in custom actions via `runtime.character.templates?.<name> || defaultTemplate`.
 - Keep local knowledge and workflows aligned with upstream changes by running the `/templates_audit` workflow.
 

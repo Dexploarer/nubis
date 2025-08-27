@@ -6,7 +6,7 @@ export const postTweetAction: Action = {
   name: 'POST_TWEET',
   description: 'Post a tweet using enhanced Twitter client with credential authentication',
   similes: ['tweet', 'post', 'share', 'publish'],
-  
+
   validate: async (runtime: IAgentRuntime, message: Memory) => {
     const content = message.content?.text;
     return Boolean(content && content.trim().length > 0 && content.length <= 4000);
@@ -17,11 +17,11 @@ export const postTweetAction: Action = {
     message: Memory,
     state: State,
     options: any,
-    callback?: any
+    callback?: any,
   ): Promise<ActionResult> => {
     try {
       elizaLogger.info('Executing POST_TWEET action');
-      
+
       // Get Twitter client service
       const twitterClient = runtime.getService('TWITTER_CLIENT_SERVICE') as TwitterClientService;
       if (!twitterClient) {
@@ -40,11 +40,13 @@ export const postTweetAction: Action = {
 
       // Post the tweet
       const result = await twitterClient.postTweet(tweetText);
-      
+
       const tweetId = result.rest_id || result.id || 'unknown';
       const tweetUrl = `https://twitter.com/user/status/${tweetId}`;
 
-      elizaLogger.info('Tweet posted successfully', { tweetId, text: tweetText });
+      elizaLogger.info(
+        `Tweet posted successfully - ID: ${tweetId}, Text: ${tweetText.substring(0, 50)}...`,
+      );
 
       // Send success callback
       if (callback) {
@@ -65,12 +67,11 @@ export const postTweetAction: Action = {
           result,
         },
       };
-
     } catch (error) {
       elizaLogger.error('Failed to post tweet:', error);
-      
+
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      
+
       if (callback) {
         await callback({
           text: `❌ Failed to post tweet: ${errorMessage}`,
@@ -88,22 +89,22 @@ export const postTweetAction: Action = {
   examples: [
     [
       {
-        user: 'user',
+        name: 'user',
         content: { text: 'Post a tweet saying hello world' },
       },
       {
-        user: 'assistant', 
-        content: { text: 'I\'ll post that tweet for you right now!' },
+        name: 'assistant',
+        content: { text: "I'll post that tweet for you right now!" },
       },
     ],
     [
       {
-        user: 'user',
+        name: 'user',
         content: { text: 'Share this on Twitter: Just discovered an amazing new project!' },
       },
       {
-        user: 'assistant',
-        content: { text: 'I\'ll post that tweet to share your discovery!' },
+        name: 'assistant',
+        content: { text: "I'll post that tweet to share your discovery!" },
       },
     ],
   ],

@@ -14,16 +14,16 @@ import { createRSSFeedAction, manageRSSFeedsAction } from '../actions';
 // Mock runtime for testing
 function createMockRuntime(): IAgentRuntime {
   const services = new Map();
-  
+
   return {
     // Service management
     getService: (type: string) => services.get(type),
-    getServices: (type: string) => Array.from(services.values()).filter(s => s.name === type),
+    getServices: (type: string) => Array.from(services.values()).filter((s) => s.name === type),
     registerService: (service: any) => {
       services.set(service.name, service);
       return service;
     },
-    
+
     // Settings
     getSetting: (key: string) => {
       const settings: Record<string, string> = {
@@ -36,19 +36,19 @@ function createMockRuntime(): IAgentRuntime {
       };
       return settings[key];
     },
-    
+
     // Memory management (mock)
     addMemory: async () => ({ id: 'test-memory' }),
     getMemories: async () => [],
     updateMemory: async () => ({ id: 'test-memory' }),
     searchMemories: async () => [],
     getCachedEmbeddings: async () => [],
-    
+
     // Model interaction (mock)
     generateText: async () => 'Generated text',
     generateObjectV2: async () => ({ result: 'Generated object' }),
     evaluateText: async () => ({ score: 0.8 }),
-    
+
     // Character and context
     character: {
       name: 'TestBot',
@@ -63,30 +63,30 @@ function createMockRuntime(): IAgentRuntime {
     agentId: 'test-agent-id',
     databaseAdapter: {} as any,
     token: 'test-token',
-    
+
     // Provider management (mock)
     providers: [],
     getProvider: () => null,
-    
+
     // Action management (mock)
     actions: [],
-    
+
     // Evaluator management (mock)
     evaluators: [],
-    
+
     // Plugin management (mock)
     plugins: [],
-    
+
     // Context management (mock)
     composeState: async () => ({}),
     updateRecentMessageState: async () => ({}),
-    
+
     // Media management (mock)
     processMedia: async () => ({ url: 'processed-media-url' }),
-    
+
     // Client management (mock)
     clients: {},
-    
+
     // Logger
     logger: elizaLogger,
   } as IAgentRuntime;
@@ -110,17 +110,17 @@ describe('Twitter RSS Integration', () => {
 
   beforeEach(async () => {
     mockRuntime = createMockRuntime();
-    
+
     // Initialize services
     authService = new TwitterAuthService(mockRuntime);
     mockRuntime.registerService(authService);
-    
+
     clientService = new TwitterClientService(mockRuntime);
     mockRuntime.registerService(clientService);
-    
+
     rssService = new TwitterRSSService(mockRuntime);
     mockRuntime.registerService(rssService);
-    
+
     // Create a mock scraper
     const mockScraper = {
       getTweets: async () => [
@@ -144,7 +144,7 @@ describe('Twitter RSS Integration', () => {
         followers_count: 100,
       }),
     };
-    
+
     // Override auth service methods for testing
     authService.getScraper = async () => mockScraper as any;
     authService.isAuth = () => true;
@@ -180,10 +180,10 @@ describe('Twitter RSS Integration', () => {
 
     test('should create timeline RSS feed', async () => {
       const feedId = await rssService.createTimelineFeed('Test Timeline', 'Test Description');
-      
+
       expect(feedId).toBeDefined();
       expect(feedId).toMatch(/^timeline_\d+$/);
-      
+
       const feed = rssService.getFeed(feedId);
       expect(feed).toBeDefined();
       expect(feed!.title).toBe('Test Timeline');
@@ -193,11 +193,15 @@ describe('Twitter RSS Integration', () => {
     });
 
     test('should create user RSS feed', async () => {
-      const feedId = await rssService.createUserFeed('testuser', 'Test User Feed', 'Feed for test user');
-      
+      const feedId = await rssService.createUserFeed(
+        'testuser',
+        'Test User Feed',
+        'Feed for test user',
+      );
+
       expect(feedId).toBeDefined();
       expect(feedId).toMatch(/^user_testuser_\d+$/);
-      
+
       const feed = rssService.getFeed(feedId);
       expect(feed).toBeDefined();
       expect(feed!.title).toBe('Test User Feed');
@@ -207,10 +211,10 @@ describe('Twitter RSS Integration', () => {
 
     test('should create list RSS feed', async () => {
       const feedId = await rssService.createListFeed('12345', 'Test List', 'Test list description');
-      
+
       expect(feedId).toBeDefined();
       expect(feedId).toMatch(/^list_12345_\d+$/);
-      
+
       const feed = rssService.getFeed(feedId);
       expect(feed).toBeDefined();
       expect(feed!.title).toBe('Test List');
@@ -223,35 +227,37 @@ describe('Twitter RSS Integration', () => {
       await rssService.createTimelineFeed();
       await rssService.createUserFeed('testuser');
       await rssService.createListFeed('12345');
-      
+
       const feeds = rssService.getAllFeeds();
       expect(feeds).toHaveLength(3);
-      expect(feeds.map(f => f.type)).toEqual(expect.arrayContaining(['timeline', 'user', 'list']));
+      expect(feeds.map((f) => f.type)).toEqual(
+        expect.arrayContaining(['timeline', 'user', 'list']),
+      );
     });
 
     test('should delete RSS feed', async () => {
       const feedId = await rssService.createTimelineFeed();
-      
+
       let feed = rssService.getFeed(feedId);
       expect(feed).toBeDefined();
-      
+
       const deleted = await rssService.deleteFeed(feedId);
       expect(deleted).toBe(true);
-      
+
       feed = rssService.getFeed(feedId);
       expect(feed).toBeNull();
     });
 
     test('should toggle RSS feed status', async () => {
       const feedId = await rssService.createTimelineFeed();
-      
+
       let feed = rssService.getFeed(feedId);
       expect(feed!.isActive).toBe(true);
-      
+
       await rssService.toggleFeed(feedId);
       feed = rssService.getFeed(feedId);
       expect(feed!.isActive).toBe(false);
-      
+
       await rssService.toggleFeed(feedId);
       feed = rssService.getFeed(feedId);
       expect(feed!.isActive).toBe(true);
@@ -259,9 +265,9 @@ describe('Twitter RSS Integration', () => {
 
     test('should generate RSS XML', async () => {
       const feedId = await rssService.createUserFeed('testuser');
-      
+
       const rssXml = await rssService.generateRSSXML(feedId);
-      
+
       expect(rssXml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
       expect(rssXml).toContain('<rss version="2.0"');
       expect(rssXml).toContain('<channel>');
@@ -358,7 +364,7 @@ describe('Twitter RSS Integration', () => {
       };
 
       const result = await createRSSFeedAction.handler(mockRuntime, memory, {}, {}, callback);
-      
+
       expect(result.success).toBe(true);
       expect(result.values.feedType).toBe('timeline');
       expect(result.values.feedId).toMatch(/^timeline_\d+$/);
@@ -382,7 +388,7 @@ describe('Twitter RSS Integration', () => {
       };
 
       const result = await createRSSFeedAction.handler(mockRuntime, memory, {}, {}, callback);
-      
+
       expect(result.success).toBe(true);
       expect(result.values.feedType).toBe('user');
       expect(result.values.source).toBe('testuser');
@@ -409,7 +415,7 @@ describe('Twitter RSS Integration', () => {
       };
 
       const result = await manageRSSFeedsAction.handler(mockRuntime, memory, {}, {}, callback);
-      
+
       expect(result.success).toBe(true);
       expect(result.values.feedCount).toBe(2);
       expect(callbackMessage).toContain('Your RSS Feeds');
@@ -427,11 +433,15 @@ describe('Twitter RSS Integration', () => {
 
     test('should create RSS feed for raid monitoring', async () => {
       // This simulates how the social raids plugin might use RSS functionality
-      const feedId = await rssService.createUserFeed('raidtarget', 'Raid Target Monitoring', 'Monitor tweets from raid target');
-      
+      const feedId = await rssService.createUserFeed(
+        'raidtarget',
+        'Raid Target Monitoring',
+        'Monitor tweets from raid target',
+      );
+
       expect(feedId).toBeDefined();
       expect(feedId).toMatch(/^user_raidtarget_\d+$/);
-      
+
       const feed = rssService.getFeed(feedId);
       expect(feed!.title).toBe('Raid Target Monitoring');
       expect(feed!.type).toBe('user');
@@ -478,27 +488,28 @@ describe('Twitter RSS Integration', () => {
 
     test('should demonstrate fourth wall breaking awareness', () => {
       const metaMessages = [
-        "*glances at analytics dashboard* Fascinating how you all pretend these structured raid templates are too robotic, yet engagement goes up 40% when I use them. Almost like... psychology works? 🤔",
+        '*glances at analytics dashboard* Fascinating how you all pretend these structured raid templates are too robotic, yet engagement goes up 40% when I use them. Almost like... psychology works? 🤔',
         "Behind the curtain moment: I'm literally programmed to break the fourth wall because authentic connection beats polished performance. The irony that this authenticity is itself programmed is not lost on me. Meta-meta-commentary, anyone?",
-        "RSS feeds from Twitter lists are now live! *adjusts digital monocle* Because sometimes you want your timeline organized without the algorithm's 'helpful' suggestions. Create yours with 'create rss feed from list [id]'"
+        "RSS feeds from Twitter lists are now live! *adjusts digital monocle* Because sometimes you want your timeline organized without the algorithm's 'helpful' suggestions. Create yours with 'create rss feed from list [id]'",
       ];
 
       metaMessages.forEach((message, index) => {
         // Check for asterisks or other fourth wall breaking indicators
         const hasAsterisks = message.includes('*');
-        const hasFourthWallBreaking = message.includes('Behind the curtain') || message.includes('programmed');
-        
+        const hasFourthWallBreaking =
+          message.includes('Behind the curtain') || message.includes('programmed');
+
         expect(hasAsterisks || hasFourthWallBreaking).toBe(true);
-        
+
         // Each message should demonstrate self-awareness
-        const hasMetaAwareness = 
+        const hasMetaAwareness =
           message.includes('programmed') ||
           message.includes('analytics') ||
           message.includes('template') ||
           message.includes('algorithm') ||
           message.includes('character') ||
           message.includes('dashboard');
-        
+
         expect(hasMetaAwareness).toBe(true);
       });
     });
@@ -508,7 +519,7 @@ describe('Twitter RSS Integration', () => {
     test('should handle RSS service unavailable', async () => {
       // Create runtime without RSS service
       const emptyRuntime = createMockRuntime();
-      
+
       const memory: Memory = {
         id: 'test-memory',
         userId: 'test-user',
@@ -519,7 +530,7 @@ describe('Twitter RSS Integration', () => {
       };
 
       const result = await createRSSFeedAction.handler(emptyRuntime, memory, {}, {});
-      
+
       expect(result.success).toBe(false);
       expect(result.error?.message).toContain('Twitter RSS Service not available');
     });
@@ -527,7 +538,7 @@ describe('Twitter RSS Integration', () => {
     test('should handle invalid feed ID', async () => {
       // First create a valid feed to have some feeds in the system
       await rssService.createTimelineFeed();
-      
+
       const memory: Memory = {
         id: 'test-memory',
         userId: 'test-user',
@@ -543,13 +554,13 @@ describe('Twitter RSS Integration', () => {
       };
 
       const result = await manageRSSFeedsAction.handler(mockRuntime, memory, {}, {}, callback);
-      
+
       expect(result.success).toBe(false);
       // The message should either contain "not found" or ask for proper feed ID format
       expect(
-        callbackMessage.includes('not found') || 
-        callbackMessage.includes('specify the feed ID') ||
-        callbackMessage.includes('see all your feed IDs')
+        callbackMessage.includes('not found') ||
+          callbackMessage.includes('specify the feed ID') ||
+          callbackMessage.includes('see all your feed IDs'),
       ).toBe(true);
     });
   });

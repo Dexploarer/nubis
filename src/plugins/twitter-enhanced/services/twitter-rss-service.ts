@@ -39,7 +39,8 @@ export class TwitterRSSService extends Service {
   static serviceType = 'TWITTER_RSS_SERVICE';
 
   public name: string = TwitterRSSService.serviceType;
-  public capabilityDescription = 'RSS feed generation from Twitter lists, communities, and timeline';
+  public capabilityDescription =
+    'RSS feed generation from Twitter lists, communities, and timeline';
 
   private twitterClient: TwitterClientService | null = null;
   private feeds: Map<string, RSSFeed> = new Map();
@@ -50,7 +51,7 @@ export class TwitterRSSService extends Service {
   constructor(runtime: IAgentRuntime) {
     super(runtime);
     this.app = express();
-    
+
     // Configure RSS server port to avoid conflicts with ElizaOS services
     // ElizaOS typically uses:
     // - 3000: Main server
@@ -58,7 +59,7 @@ export class TwitterRSSService extends Service {
     // - 3002: WebRTC (if enabled)
     // We use 8080 as it's a common HTTP alternative port that's unlikely to conflict
     this.serverPort = Number(process.env.RSS_SERVER_PORT) || 8080;
-    
+
     this.setupRoutes();
   }
 
@@ -83,16 +84,20 @@ export class TwitterRSSService extends Service {
   async initialize(): Promise<void> {
     try {
       elizaLogger.info('Initializing Twitter RSS Service');
-      
+
       // Get Twitter client service (may not be available immediately)
-      this.twitterClient = this.runtime.getService('TWITTER_CLIENT_SERVICE') as TwitterClientService;
+      this.twitterClient = this.runtime.getService(
+        'TWITTER_CLIENT_SERVICE',
+      ) as TwitterClientService;
       if (!this.twitterClient) {
-        elizaLogger.warn('TwitterClientService not found during initialization - will attempt to connect later');
+        elizaLogger.warn(
+          'TwitterClientService not found during initialization - will attempt to connect later',
+        );
       }
 
       // Start RSS server
       await this.startServer();
-      
+
       // Load existing feeds from storage
       await this.loadFeeds();
 
@@ -126,10 +131,10 @@ export class TwitterRSSService extends Service {
       try {
         const feedId = req.params.feedId;
         const rssXml = await this.generateRSSXML(feedId);
-        
+
         res.setHeader('Content-Type', 'application/rss+xml; charset=utf-8');
         res.send(rssXml);
-        
+
         elizaLogger.debug(`Served RSS feed: ${feedId}`);
       } catch (error) {
         elizaLogger.error(`Failed to serve RSS feed ${req.params.feedId}:`, error);
@@ -139,7 +144,7 @@ export class TwitterRSSService extends Service {
 
     // List all available feeds
     this.app.get('/feeds', (req, res) => {
-      const feedList = Array.from(this.feeds.values()).map(feed => ({
+      const feedList = Array.from(this.feeds.values()).map((feed) => ({
         id: feed.id,
         title: feed.title,
         description: feed.description,
@@ -147,7 +152,7 @@ export class TwitterRSSService extends Service {
         url: `http://localhost:${this.serverPort}/rss/${feed.id}`,
         isActive: feed.isActive,
         lastUpdated: feed.lastUpdated,
-        tweetCount: feed.tweetCount
+        tweetCount: feed.tweetCount,
       }));
 
       res.json({ feeds: feedList, total: feedList.length });
@@ -155,11 +160,11 @@ export class TwitterRSSService extends Service {
 
     // Health check endpoint
     this.app.get('/health', (req, res) => {
-      res.json({ 
-        status: 'healthy', 
+      res.json({
+        status: 'healthy',
         service: 'TwitterRSSService',
         activeFeeds: this.feeds.size,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     });
   }
@@ -184,9 +189,12 @@ export class TwitterRSSService extends Service {
   /**
    * Create RSS feed from Twitter timeline
    */
-  async createTimelineFeed(title: string = 'My Timeline', description: string = 'My Twitter Timeline'): Promise<string> {
+  async createTimelineFeed(
+    title: string = 'My Timeline',
+    description: string = 'My Twitter Timeline',
+  ): Promise<string> {
     const feedId = `timeline_${Date.now()}`;
-    
+
     const feed: RSSFeed = {
       id: feedId,
       title,
@@ -195,7 +203,7 @@ export class TwitterRSSService extends Service {
       source: 'timeline',
       lastUpdated: new Date(),
       tweetCount: 0,
-      isActive: true
+      isActive: true,
     };
 
     this.feeds.set(feedId, feed);
@@ -210,7 +218,7 @@ export class TwitterRSSService extends Service {
    */
   async createListFeed(listId: string, title?: string, description?: string): Promise<string> {
     const feedId = `list_${listId}_${Date.now()}`;
-    
+
     const feed: RSSFeed = {
       id: feedId,
       title: title || `Twitter List ${listId}`,
@@ -219,7 +227,7 @@ export class TwitterRSSService extends Service {
       source: listId,
       lastUpdated: new Date(),
       tweetCount: 0,
-      isActive: true
+      isActive: true,
     };
 
     this.feeds.set(feedId, feed);
@@ -234,7 +242,7 @@ export class TwitterRSSService extends Service {
    */
   async createUserFeed(username: string, title?: string, description?: string): Promise<string> {
     const feedId = `user_${username}_${Date.now()}`;
-    
+
     const feed: RSSFeed = {
       id: feedId,
       title: title || `@${username} Tweets`,
@@ -243,7 +251,7 @@ export class TwitterRSSService extends Service {
       source: username,
       lastUpdated: new Date(),
       tweetCount: 0,
-      isActive: true
+      isActive: true,
     };
 
     this.feeds.set(feedId, feed);
@@ -256,9 +264,13 @@ export class TwitterRSSService extends Service {
   /**
    * Create RSS feed from Twitter community (placeholder - requires community API access)
    */
-  async createCommunityFeed(communityId: string, title?: string, description?: string): Promise<string> {
+  async createCommunityFeed(
+    communityId: string,
+    title?: string,
+    description?: string,
+  ): Promise<string> {
     const feedId = `community_${communityId}_${Date.now()}`;
-    
+
     const feed: RSSFeed = {
       id: feedId,
       title: title || `Twitter Community ${communityId}`,
@@ -267,7 +279,7 @@ export class TwitterRSSService extends Service {
       source: communityId,
       lastUpdated: new Date(),
       tweetCount: 0,
-      isActive: true
+      isActive: true,
     };
 
     this.feeds.set(feedId, feed);
@@ -293,17 +305,17 @@ export class TwitterRSSService extends Service {
     try {
       // Fetch tweets based on feed type
       const tweets = await this.fetchTweetsForFeed(feed);
-      
+
       // Convert tweets to RSS items
-      const rssItems = tweets.map(tweet => this.tweetToRSSItem(tweet));
-      
+      const rssItems = tweets.map((tweet) => this.tweetToRSSItem(tweet));
+
       // Update feed stats
       feed.tweetCount = rssItems.length;
       feed.lastUpdated = new Date();
 
       // Generate RSS XML
       const rssXml = this.generateRSSXMLContent(feed, rssItems);
-      
+
       elizaLogger.debug(`Generated RSS XML for feed ${feedId}: ${rssItems.length} items`);
       return rssXml;
     } catch (error) {
@@ -318,9 +330,11 @@ export class TwitterRSSService extends Service {
   private async fetchTweetsForFeed(feed: RSSFeed): Promise<any[]> {
     // Try to get TwitterClientService if not already connected
     if (!this.twitterClient) {
-      this.twitterClient = this.runtime.getService('TWITTER_CLIENT_SERVICE') as TwitterClientService;
+      this.twitterClient = this.runtime.getService(
+        'TWITTER_CLIENT_SERVICE',
+      ) as TwitterClientService;
     }
-    
+
     if (!this.twitterClient) {
       elizaLogger.warn('TwitterClientService not available for RSS feed generation');
       return [];
@@ -363,7 +377,7 @@ export class TwitterRSSService extends Service {
     // Note: agent-twitter-client may not have direct list support
     // This is a placeholder for list tweet fetching
     elizaLogger.warn(`List tweet fetching not fully implemented for list: ${listId}`);
-    
+
     try {
       // Fallback: could search for list-related tweets or use alternative methods
       return [];
@@ -378,18 +392,15 @@ export class TwitterRSSService extends Service {
    */
   private tweetToRSSItem(tweet: any): RSSItem {
     const tweetId = tweet.rest_id || tweet.id_str || tweet.id;
-    const username = tweet.core?.user_results?.result?.legacy?.screen_name || 
-                     tweet.user?.screen_name || 
-                     tweet.username || 'unknown';
-    
-    const text = tweet.legacy?.full_text || 
-                 tweet.full_text || 
-                 tweet.text || 
-                 'No content available';
+    const username =
+      tweet.core?.user_results?.result?.legacy?.screen_name ||
+      tweet.user?.screen_name ||
+      tweet.username ||
+      'unknown';
 
-    const createdAt = tweet.legacy?.created_at || 
-                      tweet.created_at || 
-                      new Date().toISOString();
+    const text = tweet.legacy?.full_text || tweet.full_text || tweet.text || 'No content available';
+
+    const createdAt = tweet.legacy?.created_at || tweet.created_at || new Date().toISOString();
 
     const tweetUrl = `https://twitter.com/${username}/status/${tweetId}`;
 
@@ -400,7 +411,7 @@ export class TwitterRSSService extends Service {
       pubDate: new Date(createdAt),
       guid: tweetId,
       author: `@${username}`,
-      content: this.generateRSSContent(tweet, text, username, tweetUrl)
+      content: this.generateRSSContent(tweet, text, username, tweetUrl),
     };
   }
 
@@ -411,7 +422,7 @@ export class TwitterRSSService extends Service {
     let content = `<![CDATA[`;
     content += `<p><strong>@${username}</strong></p>`;
     content += `<p>${text}</p>`;
-    
+
     // Add media if available
     const media = tweet.legacy?.extended_entities?.media || tweet.extended_entities?.media || [];
     if (media.length > 0) {
@@ -449,7 +460,7 @@ export class TwitterRSSService extends Service {
     xml += `<generator>TwitterRSSService - ElizaOS Enhanced Twitter Plugin</generator>`;
 
     // Add items
-    items.forEach(item => {
+    items.forEach((item) => {
       xml += `<item>`;
       xml += `<title><![CDATA[${item.title}]]></title>`;
       xml += `<description><![CDATA[${item.description}]]></description>`;
@@ -502,7 +513,7 @@ export class TwitterRSSService extends Service {
 
     feed.isActive = !feed.isActive;
     await this.saveFeeds();
-    
+
     elizaLogger.info(`Toggled RSS feed ${feedId} to ${feed.isActive ? 'active' : 'inactive'}`);
     return feed.isActive;
   }
@@ -522,7 +533,7 @@ export class TwitterRSSService extends Service {
       // This would load feeds from persistent storage (database, file, etc.)
       // For now, we'll just log that we're loading
       elizaLogger.debug('Loading RSS feeds from storage...');
-      
+
       // Placeholder - in a real implementation, this would restore feeds from database
       elizaLogger.debug(`Loaded ${this.feeds.size} RSS feeds`);
     } catch (error) {
@@ -537,7 +548,7 @@ export class TwitterRSSService extends Service {
     try {
       // This would save feeds to persistent storage
       elizaLogger.debug(`Saving ${this.feeds.size} RSS feeds to storage...`);
-      
+
       // Placeholder - in a real implementation, this would persist feeds to database
     } catch (error) {
       elizaLogger.warn('Failed to save RSS feeds to storage:', error);

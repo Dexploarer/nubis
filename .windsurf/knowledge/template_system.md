@@ -13,6 +13,7 @@ Authoritative sources under `../rules/`:
 - Avoid duplicating multiple character configuration files for variations.
 
 Example matrix snippet:
+
 ```yaml
 matrix:
   - parameter: 'character.llm.model'
@@ -22,5 +23,6 @@ matrix:
 ```
 
 See also:
+
 - `./architecture_patterns.md` → Template Override and Matrix Testing Patterns
 - `../workflows/elizaos_development.md` → Development guidance note

@@ -6,36 +6,39 @@ import { NotificationMonitor } from '../services/notification-monitor';
 import { EngagementTracker } from '../services/engagement-tracker';
 
 // Mock runtime for testing
-const createMockRuntime = (): IAgentRuntime => ({
-  getSetting: (key: string) => {
-    const settings: Record<string, string> = {
-      TWITTER_USERNAME: process.env.TWITTER_USERNAME || 'test_user',
-      TWITTER_PASSWORD: process.env.TWITTER_PASSWORD || 'test_password',
-      TWITTER_EMAIL: process.env.TWITTER_EMAIL || 'test@example.com',
-      TWITTER_COOKIES: process.env.TWITTER_COOKIES || '',
-      TWITTER_NOTIFICATION_POLL_INTERVAL: '30000',
-      TWITTER_ENGAGEMENT_TRACKING: 'true',
-      TWITTER_RAID_MONITORING: 'true',
-      SUPABASE_URL: 'http://localhost:3000',
-      SUPABASE_SERVICE_ROLE_KEY: 'test_key',
-    };
-    return settings[key];
-  },
-  getService: (serviceType: string) => {
-    // Mock service registry
-    if (serviceType === 'TWITTER_AUTH_SERVICE' && mockServices.auth) return mockServices.auth;
-    if (serviceType === 'TWITTER_CLIENT_SERVICE' && mockServices.client) return mockServices.client;
-    if (serviceType === 'NOTIFICATION_MONITOR' && mockServices.monitor) return mockServices.monitor;
-    if (serviceType === 'ENGAGEMENT_TRACKER' && mockServices.tracker) return mockServices.tracker;
-    return null;
-  },
-} as IAgentRuntime);
+const createMockRuntime = (): IAgentRuntime =>
+  ({
+    getSetting: (key: string) => {
+      const settings: Record<string, string> = {
+        TWITTER_USERNAME: process.env.TWITTER_USERNAME || 'test_user',
+        TWITTER_PASSWORD: process.env.TWITTER_PASSWORD || 'test_password',
+        TWITTER_EMAIL: process.env.TWITTER_EMAIL || 'test@example.com',
+        TWITTER_COOKIES: process.env.TWITTER_COOKIES || '',
+        TWITTER_NOTIFICATION_POLL_INTERVAL: '30000',
+        TWITTER_ENGAGEMENT_TRACKING: 'true',
+        TWITTER_RAID_MONITORING: 'true',
+        SUPABASE_URL: 'http://localhost:3000',
+        SUPABASE_SERVICE_ROLE_KEY: 'test_key',
+      };
+      return settings[key];
+    },
+    getService: (serviceType: string) => {
+      // Mock service registry
+      if (serviceType === 'TWITTER_AUTH_SERVICE' && mockServices.auth) return mockServices.auth;
+      if (serviceType === 'TWITTER_CLIENT_SERVICE' && mockServices.client)
+        return mockServices.client;
+      if (serviceType === 'NOTIFICATION_MONITOR' && mockServices.monitor)
+        return mockServices.monitor;
+      if (serviceType === 'ENGAGEMENT_TRACKER' && mockServices.tracker) return mockServices.tracker;
+      return null;
+    },
+  }) as IAgentRuntime;
 
 // Mock services registry
 const mockServices: {
   auth?: TwitterAuthService;
   client?: TwitterClientService;
-  monitor?: NotificationMonitor;  
+  monitor?: NotificationMonitor;
   tracker?: EngagementTracker;
 } = {};
 
@@ -70,7 +73,7 @@ describe('Enhanced Twitter Plugin Integration', () => {
     it('should build auth configuration correctly', async () => {
       const authConfig = authService.getAuthConfig();
       expect(authConfig).toBeTruthy();
-      
+
       if (process.env.TWITTER_COOKIES) {
         expect(authConfig.cookies).toBeTruthy();
       } else {
@@ -149,7 +152,7 @@ describe('Enhanced Twitter Plugin Integration', () => {
 
     it('should manage callback registration', () => {
       const testCallback = () => {};
-      
+
       notificationMonitor.registerCallback('test', testCallback);
       let status = notificationMonitor.getStatus();
       expect(status.callbackCount).toBeGreaterThan(0);
@@ -163,7 +166,7 @@ describe('Enhanced Twitter Plugin Integration', () => {
     it('should maintain engagement history', () => {
       const history = notificationMonitor.getEngagementHistory();
       expect(Array.isArray(history)).toBe(true);
-      
+
       const mentionHistory = notificationMonitor.getEngagementHistory('mention', 5);
       expect(Array.isArray(mentionHistory)).toBe(true);
       expect(mentionHistory.length).toBeLessThanOrEqual(5);
@@ -255,7 +258,7 @@ describe('Enhanced Twitter Plugin Integration', () => {
     it('should use default values when configuration is missing', () => {
       const monitor = new NotificationMonitor(runtime);
       const status = monitor.getStatus();
-      
+
       // Should have reasonable defaults
       expect(status.pollInterval).toBeGreaterThan(0);
       expect(status.pollInterval).toBeLessThanOrEqual(300000); // Max 5 minutes

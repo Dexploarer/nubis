@@ -74,13 +74,15 @@ export class TwitterRaidService extends Service {
     try {
       // Validate and format created_by as UUID
       let createdByUuid = params.createdBy;
-      
+
       // Check if it's already a valid UUID format
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(params.createdBy)) {
         // If not a UUID, use default system UUID
         createdByUuid = '00000000-0000-0000-0000-000000000000';
-        elizaLogger.warn(`Invalid UUID format for createdBy: ${params.createdBy}, using system default`);
+        elizaLogger.warn(
+          `Invalid UUID format for createdBy: ${params.createdBy}, using system default`,
+        );
       }
 
       const payload = {
@@ -101,9 +103,14 @@ export class TwitterRaidService extends Service {
       // Register the new raid with the engagement tracker for real-time monitoring
       try {
         const engagementTracker = this.runtime.getService('ENGAGEMENT_TRACKER');
-        if (engagementTracker && typeof (engagementTracker as any).addRaidForTracking === 'function') {
+        if (
+          engagementTracker &&
+          typeof (engagementTracker as any).addRaidForTracking === 'function'
+        ) {
           await (engagementTracker as any).addRaidForTracking(data[0]?.id, params.targetUrl);
-          elizaLogger.info(`Registered raid ${data[0]?.id} with engagement tracker for real-time monitoring`);
+          elizaLogger.info(
+            `Registered raid ${data[0]?.id} with engagement tracker for real-time monitoring`,
+          );
         }
       } catch (error) {
         elizaLogger.warn('Failed to register raid with engagement tracker:', error);
@@ -246,8 +253,10 @@ export class TwitterRaidService extends Service {
       // 🧠 Store in ElizaOS memory system via Community Memory Service
       try {
         const communityMemoryService = this.runtime.getService('COMMUNITY_MEMORY_SERVICE');
-        if (communityMemoryService && typeof (communityMemoryService as any).recordInteraction === 'function') {
-          
+        if (
+          communityMemoryService &&
+          typeof (communityMemoryService as any).recordInteraction === 'function'
+        ) {
           const interaction = {
             userId: 'agent', // This is the agent posting
             interactionType: 'twitter_post',
@@ -290,15 +299,18 @@ export class TwitterRaidService extends Service {
   async scrapeEngagement(tweetUrl: string): Promise<TweetData> {
     try {
       elizaLogger.debug('TwitterRaidService: Fetching engagement data for', tweetUrl);
-      
+
       // First, try to get real-time engagement data from the enhanced Twitter plugin
       try {
         const engagementTracker = this.runtime.getService('ENGAGEMENT_TRACKER');
-        if (engagementTracker && typeof (engagementTracker as any).getRaidEngagement === 'function') {
+        if (
+          engagementTracker &&
+          typeof (engagementTracker as any).getRaidEngagement === 'function'
+        ) {
           const engagement = await (engagementTracker as any).getRaidEngagement(tweetUrl);
           if (engagement) {
             elizaLogger.info('Using real-time engagement data from enhanced Twitter plugin');
-            
+
             const tweetId = this.extractTweetId(tweetUrl);
             const tweetData: TweetData = {
               id: tweetId,
@@ -337,14 +349,16 @@ export class TwitterRaidService extends Service {
         const twitterClient = this.runtime.getService('TWITTER_CLIENT_SERVICE');
         if (twitterClient && typeof (twitterClient as any).getTweet === 'function') {
           elizaLogger.info('Using enhanced Twitter client for engagement scraping');
-          
+
           const tweetId = this.extractTweetId(tweetUrl);
           const tweet = await (twitterClient as any).getTweet(tweetId);
-          
+
           if (tweet) {
-            const author = tweet.username || tweet.user?.username || tweet.author?.username || 'unknown';
+            const author =
+              tweet.username || tweet.user?.username || tweet.author?.username || 'unknown';
             const createdAt = tweet.createdAt || tweet.created_at || tweet.date || Date.now();
-            const likes = tweet.likeCount ?? tweet.favoriteCount ?? tweet.favorites ?? tweet.likes ?? 0;
+            const likes =
+              tweet.likeCount ?? tweet.favoriteCount ?? tweet.favorites ?? tweet.likes ?? 0;
             const retweets = tweet.retweetCount ?? tweet.retweets ?? 0;
             const quotes = tweet.quoteCount ?? tweet.quotes ?? 0;
             const comments = tweet.replyCount ?? tweet.replies ?? 0;
@@ -535,8 +549,10 @@ export class TwitterRaidService extends Service {
         // 🧠 Store engagement in ElizaOS memory system via Community Memory Service
         try {
           const communityMemoryService = this.runtime.getService('COMMUNITY_MEMORY_SERVICE');
-          if (communityMemoryService && typeof (communityMemoryService as any).recordInteraction === 'function') {
-            
+          if (
+            communityMemoryService &&
+            typeof (communityMemoryService as any).recordInteraction === 'function'
+          ) {
             const interaction = {
               userId: 'agent', // Agent performing engagement
               interactionType: `twitter_${engagementType}`,
@@ -632,9 +648,9 @@ export class TwitterRaidService extends Service {
     try {
       const statusText = this.formatRaidStatusTweet(raidData);
       const result = await this.postTweet(statusText);
-      
+
       elizaLogger.info('Raid status posted to Twitter:', String(result?.id || 'ok'));
-      
+
       // Log the raid status tweet
       await this.supabase.from('agent_tweets').insert({
         tweet_id: result?.id || result?.rest_id || result?.data?.id,
@@ -661,9 +677,9 @@ export class TwitterRaidService extends Service {
     try {
       const completionText = this.formatRaidCompletionTweet(raidData, stats);
       const result = await this.postTweet(completionText);
-      
+
       elizaLogger.info('Raid completion posted to Twitter:', String(result?.id || 'ok'));
-      
+
       // Log the completion tweet
       await this.supabase.from('agent_tweets').insert({
         tweet_id: result?.id || result?.rest_id || result?.data?.id,
@@ -691,9 +707,9 @@ export class TwitterRaidService extends Service {
       // Add raid indicators to the content
       const enhancedContent = this.enhanceContentForRaid(content, context);
       const result = await this.postTweet(enhancedContent);
-      
+
       elizaLogger.info('Self-raid tweet posted:', String(result?.id || 'ok'));
-      
+
       // Log as self-raid tweet
       await this.supabase.from('agent_tweets').insert({
         tweet_id: result?.id || result?.rest_id || result?.data?.id,
@@ -715,63 +731,71 @@ export class TwitterRaidService extends Service {
   private formatRaidStatusTweet(raidData: any): string {
     const participantCount = raidData.participantCount || 0;
     const targetUrl = raidData.targetUrl || raidData.target_url;
-    
-    return `🚨 RAID ACTIVE! 🚨\n\n` +
-           `${participantCount} warriors mobilized!\n` +
-           `Target acquired: ${targetUrl}\n\n` +
-           `Join the coordination in our Telegram! 🔥\n\n` +
-           `#SocialRaid #CommunityPower #NUBI`;
+
+    return (
+      `🚨 RAID ACTIVE! 🚨\n\n` +
+      `${participantCount} warriors mobilized!\n` +
+      `Target acquired: ${targetUrl}\n\n` +
+      `Join the coordination in our Telegram! 🔥\n\n` +
+      `#SocialRaid #CommunityPower #NUBI`
+    );
   }
 
   private formatRaidCompletionTweet(raidData: any, stats: any): string {
     const participants = stats.participants || 0;
     const engagements = stats.totalEngagements || 0;
     const targetUrl = raidData.targetUrl || raidData.target_url;
-    
-    return `✅ RAID COMPLETED! ✅\n\n` +
-           `Mission accomplished with ${participants} participants!\n` +
-           `Total engagements: ${engagements}\n\n` +
-           `Target: ${targetUrl}\n\n` +
-           `Community power unleashed! 💪\n\n` +
-           `#RaidComplete #CommunityWin #NUBI`;
+
+    return (
+      `✅ RAID COMPLETED! ✅\n\n` +
+      `Mission accomplished with ${participants} participants!\n` +
+      `Total engagements: ${engagements}\n\n` +
+      `Target: ${targetUrl}\n\n` +
+      `Community power unleashed! 💪\n\n` +
+      `#RaidComplete #CommunityWin #NUBI`
+    );
   }
 
   private enhanceContentForRaid(content: string, context?: any): string {
     // Add engaging elements to make the tweet more raid-worthy
     const hashtags = ['#NUBI', '#Community', '#Web3'];
     const callToAction = '\n\nWhat do you think? 👇';
-    
+
     let enhanced = content;
-    
+
     // Add call to action if not too long
     if (enhanced.length + callToAction.length <= 240) {
       enhanced += callToAction;
     }
-    
+
     // Add hashtags if there's room
     const availableSpace = 280 - enhanced.length;
     const hashtagText = '\n\n' + hashtags.join(' ');
-    
+
     if (availableSpace >= hashtagText.length) {
       enhanced += hashtagText;
     }
-    
+
     return enhanced;
   }
 
   async getEngagementMetrics(tweetUrl: string): Promise<any> {
     try {
       const tweetData = await this.scrapeEngagement(tweetUrl);
-      
+
       return {
         likes: tweetData.metrics.likes,
         retweets: tweetData.metrics.retweets,
         quotes: tweetData.metrics.quotes,
         comments: tweetData.metrics.comments,
-        total: tweetData.metrics.likes + tweetData.metrics.retweets + tweetData.metrics.quotes + tweetData.metrics.comments,
+        total:
+          tweetData.metrics.likes +
+          tweetData.metrics.retweets +
+          tweetData.metrics.quotes +
+          tweetData.metrics.comments,
         author: tweetData.author,
         createdAt: tweetData.createdAt,
-        text: tweetData.text
+        text: tweetData.text,
       };
     } catch (error) {
       elizaLogger.error('Failed to get engagement metrics:', error);

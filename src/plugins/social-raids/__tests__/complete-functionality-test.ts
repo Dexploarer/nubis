@@ -54,20 +54,20 @@ describe('Complete Social Raids Functionality', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup comprehensive mock settings
     mockRuntime.getSetting.mockImplementation((key: string) => {
       const settings: { [key: string]: string } = {
-        'TELEGRAM_BOT_TOKEN': 'test-bot-token',
-        'TELEGRAM_RAID_CHANNEL_ID': '-100123456789',
-        'TELEGRAM_ADMIN_USERS': '12345,67890',
-        'TWITTER_USERNAME': 'UnderworldAgent',
-        'TWITTER_PASSWORD': 'test-password',
-        'TWITTER_EMAIL': 'test@example.com',
-        'AUTH_METHOD': 'credentials',
-        'SUPABASE_URL': 'http://localhost:54321',
-        'SUPABASE_SERVICE_ROLE_KEY': 'test-service-key',
-        'RAID_COORDINATOR_URL': 'http://localhost:3000/raid-coordinator',
+        TELEGRAM_BOT_TOKEN: 'test-bot-token',
+        TELEGRAM_RAID_CHANNEL_ID: '-100123456789',
+        TELEGRAM_ADMIN_USERS: '12345,67890',
+        TWITTER_USERNAME: 'UnderworldAgent',
+        TWITTER_PASSWORD: 'test-password',
+        TWITTER_EMAIL: 'test@example.com',
+        AUTH_METHOD: 'credentials',
+        SUPABASE_URL: 'http://localhost:54321',
+        SUPABASE_SERVICE_ROLE_KEY: 'test-service-key',
+        RAID_COORDINATOR_URL: 'http://localhost:3000/raid-coordinator',
       };
       return settings[key];
     });
@@ -104,7 +104,7 @@ describe('Complete Social Raids Functionality', () => {
       // Mock URL detection
       const urlRegex = /https?:\/\/(www\.)?(twitter\.com|x\.com)\/\w+\/status\/\d+/g;
       const detectedUrls = messageWithUrl.message.text.match(urlRegex);
-      
+
       expect(detectedUrls).toContain(twitterUrl);
       expect(detectedUrls).toHaveLength(1);
 
@@ -123,7 +123,7 @@ describe('Complete Social Raids Functionality', () => {
       };
 
       jest.spyOn(twitterService, 'scrapeEngagement').mockResolvedValue(mockTweetData);
-      
+
       const analysisResult = await twitterService.scrapeEngagement(twitterUrl);
       expect(analysisResult.metrics.likes).toBe(500);
       expect(analysisResult.author).toBe('elonmusk');
@@ -135,12 +135,14 @@ describe('Complete Social Raids Functionality', () => {
         success: true,
       };
 
-      jest.spyOn(twitterService, 'createRaid').mockResolvedValue([{
-        id: mockRaidData.raidId,
-        target_url: twitterUrl,
-        status: 'active',
-        created_at: new Date().toISOString(),
-      }]);
+      jest.spyOn(twitterService, 'createRaid').mockResolvedValue([
+        {
+          id: mockRaidData.raidId,
+          target_url: twitterUrl,
+          status: 'active',
+          created_at: new Date().toISOString(),
+        },
+      ]);
 
       const raidResult = await twitterService.createRaid({
         targetUrl: twitterUrl,
@@ -159,7 +161,7 @@ describe('Complete Social Raids Functionality', () => {
       };
 
       jest.spyOn(twitterService, 'postRaidStatus').mockResolvedValue(mockTweetResult);
-      
+
       const statusResult = await twitterService.postRaidStatus({
         raidId: mockRaidData.raidId,
         targetUrl: twitterUrl,
@@ -185,11 +187,13 @@ describe('Complete Social Raids Functionality', () => {
         text: selfRaidContent + '\n\nWhat do you think? 👇\n\n#NUBI #Community #Web3',
       };
 
-      const mockRaid = [{
-        id: 'self-raid-456',
-        target_url: 'https://twitter.com/UnderworldAgent/status/self-tweet-123',
-        status: 'active',
-      }];
+      const mockRaid = [
+        {
+          id: 'self-raid-456',
+          target_url: 'https://twitter.com/UnderworldAgent/status/self-tweet-123',
+          status: 'active',
+        },
+      ];
 
       jest.spyOn(twitterService, 'postSelfRaidTweet').mockResolvedValue(mockSelfTweet);
       jest.spyOn(twitterService, 'createRaid').mockResolvedValue(mockRaid);
@@ -270,14 +274,14 @@ describe('Complete Social Raids Functionality', () => {
 
       // Test engagement submission callbacks
       const engagementTypes = ['like', 'retweet', 'quote', 'comment'];
-      engagementTypes.forEach(type => {
+      engagementTypes.forEach((type) => {
         const callback = `submit_engagement:${type}`;
         expect(callback).toContain(type);
       });
 
       // Test raid menu navigation
       const menuActions = ['status', 'participants', 'leaderboard'];
-      menuActions.forEach(action => {
+      menuActions.forEach((action) => {
         const callback = `raid_menu:${action}`;
         expect(callback).toContain(action);
       });
@@ -292,9 +296,10 @@ describe('Complete Social Raids Functionality', () => {
         quotes: 50,
       };
 
-      const total = mockMetrics.likes + mockMetrics.retweets + mockMetrics.comments + mockMetrics.quotes;
+      const total =
+        mockMetrics.likes + mockMetrics.retweets + mockMetrics.comments + mockMetrics.quotes;
       const engagementRate = Math.round((total / Math.max(mockMetrics.likes * 10, 1)) * 100);
-      
+
       expect(total).toBe(1400);
       expect(engagementRate).toBe(14); // 1400 / 10000 * 100 = 14%
 
@@ -308,9 +313,15 @@ describe('Complete Social Raids Functionality', () => {
       };
 
       expect(assessRaidPotential(mockMetrics)).toBe('HIGH 🔥'); // 1350 total
-      expect(assessRaidPotential({ likes: 50, retweets: 30, comments: 20, quotes: 5 })).toBe('LOW 📈'); // 100 total
-      expect(assessRaidPotential({ likes: 80, retweets: 30, comments: 20, quotes: 5 })).toBe('MEDIUM ⚡'); // 130 total  
-      expect(assessRaidPotential({ likes: 1, retweets: 0, comments: 0, quotes: 0 })).toBe('STARTER 🌱');
+      expect(assessRaidPotential({ likes: 50, retweets: 30, comments: 20, quotes: 5 })).toBe(
+        'LOW 📈',
+      ); // 100 total
+      expect(assessRaidPotential({ likes: 80, retweets: 30, comments: 20, quotes: 5 })).toBe(
+        'MEDIUM ⚡',
+      ); // 130 total
+      expect(assessRaidPotential({ likes: 1, retweets: 0, comments: 0, quotes: 0 })).toBe(
+        'STARTER 🌱',
+      );
     });
   });
 
@@ -318,8 +329,10 @@ describe('Complete Social Raids Functionality', () => {
     it('should coordinate between Telegram and Twitter platforms', async () => {
       // Step 1: Telegram message triggers Twitter analysis
       const telegramMessage = 'Check this tweet: https://twitter.com/example/status/123';
-      const extractedUrl = telegramMessage.match(/https?:\/\/(www\.)?(twitter\.com|x\.com)\/\w+\/status\/\d+/)?.[0];
-      
+      const extractedUrl = telegramMessage.match(
+        /https?:\/\/(www\.)?(twitter\.com|x\.com)\/\w+\/status\/\d+/,
+      )?.[0];
+
       expect(extractedUrl).toBe('https://twitter.com/example/status/123');
 
       // Step 2: Twitter analysis feeds back to Telegram
@@ -358,7 +371,7 @@ describe('Complete Social Raids Functionality', () => {
     it('should handle error scenarios gracefully', async () => {
       // Test Twitter service unavailable
       mockRuntime.getService.mockReturnValue(null);
-      
+
       const result = mockRuntime.getService('TWITTER_RAID_SERVICE');
       expect(result).toBeNull();
 
@@ -371,8 +384,8 @@ describe('Complete Social Raids Functionality', () => {
       ];
 
       const twitterRegex = /^https?:\/\/(www\.)?(twitter\.com|x\.com)\/\w+\/status\/\d+$/;
-      
-      invalidUrls.forEach(url => {
+
+      invalidUrls.forEach((url) => {
         expect(twitterRegex.test(url)).toBe(false);
       });
 
@@ -380,7 +393,9 @@ describe('Complete Social Raids Functionality', () => {
       const mockNetworkError = new Error('Network request failed');
       jest.spyOn(twitterService, 'scrapeEngagement').mockRejectedValue(mockNetworkError);
 
-      await expect(twitterService.scrapeEngagement('https://twitter.com/test/status/123')).rejects.toThrow('Network request failed');
+      await expect(
+        twitterService.scrapeEngagement('https://twitter.com/test/status/123'),
+      ).rejects.toThrow('Network request failed');
 
       // Reset mock
       jest.restoreAllMocks();
@@ -399,10 +414,12 @@ describe('Complete Social Raids Functionality', () => {
 
       // Test URL extraction performance
       const startTime = Date.now();
-      const extractedUrls = concurrentUrls.map(url => {
-        const match = url.match(/https?:\/\/(www\.)?(twitter\.com|x\.com)\/\w+\/status\/\d+/);
-        return match ? match[0] : null;
-      }).filter(Boolean);
+      const extractedUrls = concurrentUrls
+        .map((url) => {
+          const match = url.match(/https?:\/\/(www\.)?(twitter\.com|x\.com)\/\w+\/status\/\d+/);
+          return match ? match[0] : null;
+        })
+        .filter(Boolean);
       const extractionTime = Date.now() - startTime;
 
       expect(extractedUrls).toHaveLength(5);
@@ -450,7 +467,7 @@ describe('Complete Social Raids Functionality', () => {
       };
 
       // Add participants
-      ['user1', 'user2', 'user3'].forEach(user => {
+      ['user1', 'user2', 'user3'].forEach((user) => {
         raidData.participants.add(user);
         raidData.engagements.set(user, 0);
       });
@@ -464,8 +481,11 @@ describe('Complete Social Raids Functionality', () => {
       expect(raidData.participants.size).toBe(3);
       expect(raidData.engagements.size).toBe(3);
       expect(Array.from(raidData.participants)).toEqual(['user1', 'user2', 'user3']);
-      
-      const totalEngagements = Array.from(raidData.engagements.values()).reduce((sum, eng) => sum + eng, 0);
+
+      const totalEngagements = Array.from(raidData.engagements.values()).reduce(
+        (sum, eng) => sum + eng,
+        0,
+      );
       expect(totalEngagements).toBe(16); // 5 + 3 + 8
 
       // Test state transitions

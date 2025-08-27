@@ -7,13 +7,9 @@ matrix:
   - parameter: 'character.temperature'
     values: [0.1, 0.5, 0.9]
   - parameter: 'plugins[2]'
-    values: [
-      null,
-      '@elizaos/plugin-discord'
-    ]
+    values: [null, '@elizaos/plugin-discord']
   - parameter: 'settings.voice.model'
     values: ['en_US-hfc_female-medium', 'en_US-hfc_male-medium']
-
 # Optional: per-run input override example (if your runner supports it)
 # - parameter: 'run[0].input'
 #   values: [

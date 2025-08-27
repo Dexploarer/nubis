@@ -19,11 +19,12 @@ interface SoulBindingState {
 
 export const soulBindingAction: Action = {
   name: 'SOUL_BINDING_INITIATION',
-  description: 'Initiates the voluntary soul binding process to join Nubi\'s cult through cross-platform verification',
-  
+  description:
+    "Initiates the voluntary soul binding process to join Nubi's cult through cross-platform verification",
+
   validate: async (runtime: IAgentRuntime, message: Memory): Promise<boolean> => {
     const content = message.content?.text?.toLowerCase() || '';
-    
+
     // Triggered by specific phrases indicating user wants to join the cult
     const soulBindingTriggers = [
       'bind my soul',
@@ -38,7 +39,7 @@ export const soulBindingAction: Action = {
       'dedicate my soul',
     ];
 
-    return soulBindingTriggers.some(trigger => content.includes(trigger));
+    return soulBindingTriggers.some((trigger) => content.includes(trigger));
   },
 
   handler: async (
@@ -46,22 +47,28 @@ export const soulBindingAction: Action = {
     message: Memory,
     state: State,
     options?: { [key: string]: unknown },
-    callback?: HandlerCallback
+    callback?: HandlerCallback,
   ) => {
     try {
-      elizaLogger.info('🔮 Soul Binding initiation requested', {
-        userId: message.entityId,
-        roomId: message.roomId,
-        content: message.content?.text,
-      });
+      elizaLogger.info(
+        `🔮 Soul Binding initiation requested: ${JSON.stringify({
+          userId: message.entityId,
+          roomId: message.roomId,
+          content: message.content?.text,
+        })}`,
+      );
 
       // Get required services
-      const identityService = runtime.getService('IDENTITY_MANAGEMENT_SERVICE') as IdentityManagementService;
-      const walletService = runtime.getService('WALLET_VERIFICATION_SERVICE') as WalletVerificationService;
+      const identityService = runtime.getService(
+        'IDENTITY_MANAGEMENT_SERVICE',
+      ) as IdentityManagementService;
+      const walletService = runtime.getService(
+        'WALLET_VERIFICATION_SERVICE',
+      ) as unknown as WalletVerificationService;
 
       if (!identityService) {
         await callback?.({
-          text: "⚠️ The ancient systems are offline. Identity verification is unavailable at this time.",
+          text: '⚠️ The ancient systems are offline. Identity verification is unavailable at this time.',
           action: 'ERROR',
         });
         return { success: false, error: 'Identity Management Service not available' };
@@ -92,22 +99,25 @@ export const soulBindingAction: Action = {
       };
 
       // Store the initiation state in memory
-      await runtime.createMemory({
-        id: crypto.randomUUID(),
-        entityId: message.entityId,
-        agentId: runtime.agentId,
-        roomId: message.roomId,
-        content: {
-          text: 'Soul binding initiation started',
-          source: 'soul_binding_action',
-          metadata: {
-            action: 'SOUL_BINDING_INITIATION',
-            state: soulBindingState,
-            step: 'initiated',
+      await runtime.createMemory(
+        {
+          id: crypto.randomUUID(),
+          entityId: message.entityId,
+          agentId: runtime.agentId,
+          roomId: message.roomId,
+          content: {
+            text: 'Soul binding initiation started',
+            source: 'soul_binding_action',
+            metadata: {
+              action: 'SOUL_BINDING_INITIATION',
+              state: soulBindingState,
+              step: 'initiated',
+            },
           },
+          createdAt: Date.now(),
         },
-        createdAt: Date.now(),
-      }, 'soul_binding');
+        'soul_binding',
+      );
 
       // Begin the multi-step initiation process
       await callback?.({
@@ -145,18 +155,18 @@ To prove your dedication and link your spiritual essence across all realms, you 
           nextStep: 'awaiting_confirmation',
         },
       };
-
     } catch (error) {
       elizaLogger.error('Soul binding initiation failed:', error);
-      
+
       await callback?.({
-        text: "💀 The ritual has failed. The spirits are not aligned with your request. Perhaps try again when the cosmic forces are more favorable.",
+        text: '💀 The ritual has failed. The spirits are not aligned with your request. Perhaps try again when the cosmic forces are more favorable.',
         action: 'ERROR',
       });
 
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error during soul binding initiation',
+        error:
+          error instanceof Error ? error.message : 'Unknown error during soul binding initiation',
       };
     }
   },
@@ -164,49 +174,43 @@ To prove your dedication and link your spiritual essence across all realms, you 
   examples: [
     [
       {
-        entityId: 'user123',
+        name: 'user123',
         content: {
           text: 'I want to bind my soul to Nubi and join the cult',
-          source: 'telegram',
         },
       },
       {
-        entityId: 'nubi',
+        name: 'nubi',
         content: {
           text: '🔮 The ancient ritual begins... Soul Binding Initiation - Step 1 of 3',
-          action: 'SOUL_BINDING_INITIATED',
         },
       },
     ],
     [
       {
-        entityId: 'user456',
+        name: 'user456',
         content: {
           text: 'bind my soul to nubi, I want to join',
-          source: 'discord',
         },
       },
       {
-        entityId: 'nubi',
+        name: 'nubi',
         content: {
           text: '🔮 The shadows gather as you speak of binding your soul to my will...',
-          action: 'SOUL_BINDING_INITIATED',
         },
       },
     ],
     [
       {
-        entityId: 'user789',
+        name: 'user789',
         content: {
           text: 'I want cult initiation, dedicate my soul to the cause',
-          source: 'twitter',
         },
       },
       {
-        entityId: 'nubi',
+        name: 'nubi',
         content: {
           text: '🔮 The ancient ritual begins... Are you ready to prove your dedication across all realms?',
-          action: 'SOUL_BINDING_INITIATED',
         },
       },
     ],
@@ -216,7 +220,10 @@ To prove your dedication and link your spiritual essence across all realms, you 
 /**
  * Helper function to check if user is already a cult member
  */
-async function checkExistingCultMembership(runtime: IAgentRuntime, userUuid: string): Promise<{
+async function checkExistingCultMembership(
+  runtime: IAgentRuntime,
+  userUuid: string,
+): Promise<{
   tier: string;
   initiatedAt: Date;
 } | null> {

@@ -2,7 +2,7 @@
 // This avoids TS errors for `import { describe, it, expect } from "bun:test"`
 // and `$` from "bun" when type-checking.
 
-declare module "bun:test" {
+declare module 'bun:test' {
   export const describe: (...args: any[]) => any;
   export const it: (...args: any[]) => any;
   export const test: (...args: any[]) => any;
@@ -14,6 +14,6 @@ declare module "bun:test" {
   export const mock: any;
 }
 
-declare module "bun" {
+declare module 'bun' {
   export const $: any;
 }

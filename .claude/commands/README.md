@@ -3,6 +3,7 @@
 This directory contains concise, actionable workflows for use in the Windsurf IDE.
 
 ## Slash commands
+
 - `/development` → `./development.md`
 - `/compose_state_development` → `./compose_state_development.md`
 - `/scaffold_plugin` → `./scaffold_plugin.md`
@@ -22,21 +23,22 @@ This directory contains concise, actionable workflows for use in the Windsurf ID
 - `/supabase_database` → `./supabase_database.md`
 - `/supabase_edge_functions` → `./supabase_edge_functions.md`
 - `/supabase_advisors` → `./supabase_advisors.md`
- - `/community_management` → `./community_management.md`
- - `/platform_setup` → `./platform_setup.md`
- - `/roles_and_permissions` → `./roles_and_permissions.md`
- - `/room_controls` → `./room_controls.md`
- - `/templates_audit` → `./templates_audit.md`
- - `/extend_memory_system` → `./extend_memory_system.md`
- - `/generate_character` → `./generate_character.md`
- - `/create_knowledge_base` → `./create_knowledge_base.md`
- - `/create_database_service` → `./create_database_service.md`
- - `/create_conversation_template` → `./create_conversation_template.md`
- - `/update_message_examples` → `./update_message_examples.md`
- - `/create_edge_function` → `./create_edge_function.md`
- - `/create_community_management_plugin` → `./create_community_management_plugin.md`
+- `/community_management` → `./community_management.md`
+- `/platform_setup` → `./platform_setup.md`
+- `/roles_and_permissions` → `./roles_and_permissions.md`
+- `/room_controls` → `./room_controls.md`
+- `/templates_audit` → `./templates_audit.md`
+- `/extend_memory_system` → `./extend_memory_system.md`
+- `/generate_character` → `./generate_character.md`
+- `/create_knowledge_base` → `./create_knowledge_base.md`
+- `/create_database_service` → `./create_database_service.md`
+- `/create_conversation_template` → `./create_conversation_template.md`
+- `/update_message_examples` → `./update_message_examples.md`
+- `/create_edge_function` → `./create_edge_function.md`
+- `/create_community_management_plugin` → `./create_community_management_plugin.md`
 
 ## How to pass inputs
+
 - Append space-separated `key=value` pairs after the slash command.
 - Examples:
   - `/scaffold_plugin id=my-analytics featureFlag=hasAnalytics`
@@ -61,6 +63,7 @@ This directory contains concise, actionable workflows for use in the Windsurf ID
   - `/create_community_management_plugin plugin_name=community-management with_db=true`
 
 ## Files
+
 - Development: `./development.md`
 - Compose State Development: `./compose_state_development.md`
 - Twitter Integration: `./twitter.md`
@@ -81,22 +84,23 @@ This directory contains concise, actionable workflows for use in the Windsurf ID
 - Supabase Database: `./supabase_database.md`
 - Supabase Edge Functions: `./supabase_edge_functions.md`
 - Supabase Advisors: `./supabase_advisors.md`
- - Community Management: `./community_management.md`
- - Platform Setup: `./platform_setup.md`
- - Roles and Permissions: `./roles_and_permissions.md`
- - Room Controls: `./room_controls.md`
- - Templates Audit: `./templates_audit.md`
- - Extend Memory System: `./extend_memory_system.md`
- - Generate Character: `./generate_character.md`
- - Create Knowledge Base: `./create_knowledge_base.md`
- - Create Database Service: `./create_database_service.md`
- - Create Conversation Template: `./create_conversation_template.md`
- - Update Message Examples: `./update_message_examples.md`
- - Create Edge Function: `./create_edge_function.md`
- - Create Community Management Plugin: `./create_community_management_plugin.md`
+- Community Management: `./community_management.md`
+- Platform Setup: `./platform_setup.md`
+- Roles and Permissions: `./roles_and_permissions.md`
+- Room Controls: `./room_controls.md`
+- Templates Audit: `./templates_audit.md`
+- Extend Memory System: `./extend_memory_system.md`
+- Generate Character: `./generate_character.md`
+- Create Knowledge Base: `./create_knowledge_base.md`
+- Create Database Service: `./create_database_service.md`
+- Create Conversation Template: `./create_conversation_template.md`
+- Update Message Examples: `./update_message_examples.md`
+- Create Edge Function: `./create_edge_function.md`
+- Create Community Management Plugin: `./create_community_management_plugin.md`
 - For the full, detailed guide see: `../rules/elizaos_development_workflow.md`
 
 ## References
+
 - `../rules/elizaos_development_workflow.md`
 - `../rules/elizaos_coding_standards.md`
 - `../rules/elizaos-architecture-patterns.md`

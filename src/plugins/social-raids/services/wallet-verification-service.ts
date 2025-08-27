@@ -34,36 +34,41 @@ interface WalletVerificationConfig {
   statement: string;
   enableCaptcha?: boolean;
   rateLimit?: number;
+  [key: string]: any; // Index signature to match Metadata type
 }
 
 export class WalletVerificationService extends Service {
   static serviceType = 'WALLET_VERIFICATION_SERVICE';
-  
+
   public name: string = WalletVerificationService.serviceType;
-  public capabilityDescription = 'Manages Solana wallet verification and Web3 authentication using Supabase';
-  
+  public capabilityDescription =
+    'Manages Solana wallet verification and Web3 authentication using Supabase';
+
   private supabase: any;
   private identityService: IdentityManagementService | null = null;
-  private config: WalletVerificationConfig;
-  
+  public config: WalletVerificationConfig;
+
   constructor(runtime: IAgentRuntime) {
     super(runtime);
-    
+
     // Initialize Supabase client for Web3 auth
     const supabaseUrl = this.runtime.getSetting('SUPABASE_URL') || process.env.SUPABASE_URL;
-    const supabaseServiceKey = this.runtime.getSetting('SUPABASE_SERVICE_ROLE_KEY') || process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
+    const supabaseServiceKey =
+      this.runtime.getSetting('SUPABASE_SERVICE_ROLE_KEY') || process.env.SUPABASE_SERVICE_ROLE_KEY;
+
     if (supabaseUrl && supabaseServiceKey) {
       this.supabase = createClient(supabaseUrl, supabaseServiceKey);
     } else {
       elizaLogger.warn('Supabase credentials not available for Wallet Verification Service');
       this.supabase = this.createNoopSupabase();
     }
-    
+
     // Configuration for Web3 auth
     this.config = {
       projectUrl: process.env.PROJECT_URL || 'https://nubi.cult',
-      statement: process.env.WEB3_STATEMENT || 'I accept the Terms of Service and will bind my soul to Nubi\'s divine will',
+      statement:
+        process.env.WEB3_STATEMENT ||
+        "I accept the Terms of Service and will bind my soul to Nubi's divine will",
       enableCaptcha: process.env.WEB3_CAPTCHA_ENABLED === 'true',
       rateLimit: parseInt(process.env.WEB3_RATE_LIMIT || '30'),
     };
@@ -74,12 +79,16 @@ export class WalletVerificationService extends Service {
 
     try {
       // Get reference to Identity Management Service
-      this.identityService = this.runtime.getService('IDENTITY_MANAGEMENT_SERVICE') as IdentityManagementService;
-      
+      this.identityService = this.runtime.getService(
+        'IDENTITY_MANAGEMENT_SERVICE',
+      ) as IdentityManagementService;
+
       if (!this.identityService) {
-        elizaLogger.warn('Identity Management Service not found - wallet verification will work in standalone mode');
+        elizaLogger.warn(
+          'Identity Management Service not found - wallet verification will work in standalone mode',
+        );
       }
-      
+
       elizaLogger.success('Wallet Verification Service initialized successfully');
     } catch (error) {
       elizaLogger.error('Failed to initialize Wallet Verification Service:', error);
@@ -93,7 +102,7 @@ export class WalletVerificationService extends Service {
    */
   async verifyWalletAndLinkIdentity(request: WalletVerificationRequest): Promise<WalletAuthResult> {
     elizaLogger.info(`🔗 Starting Solana wallet verification for ${request.walletAddress}`);
-    
+
     try {
       // Step 1: Validate wallet address format (Solana public key format)
       if (!this.isValidSolanaAddress(request.walletAddress)) {
@@ -106,13 +115,15 @@ export class WalletVerificationService extends Service {
 
       // Step 2: Check if wallet is already linked to an identity
       const existingWalletLink = await this.findExistingWalletLink(request.walletAddress);
-      
+
       let userUuid: UUID;
       let isNewWallet = false;
 
       if (existingWalletLink) {
         userUuid = existingWalletLink.user_uuid;
-        elizaLogger.info(`🔍 Found existing wallet link for ${request.walletAddress} -> ${userUuid}`);
+        elizaLogger.info(
+          `🔍 Found existing wallet link for ${request.walletAddress} -> ${userUuid}`,
+        );
       } else {
         // Step 3: Get or create unified user identity through Identity Management Service
         if (this.identityService) {
@@ -145,16 +156,25 @@ export class WalletVerificationService extends Service {
 
       // Step 5: Link wallet to user identity in our database
       if (isNewWallet) {
-        await this.linkWalletToIdentity(userUuid, request.walletAddress, request.chain, authResult.supabaseSession);
+        await this.linkWalletToIdentity(
+          userUuid,
+          request.walletAddress,
+          request.chain,
+          authResult.supabaseSession,
+        );
       }
 
       // Step 6: Update user metadata with wallet verification status
       if (this.identityService && authResult.supabaseSession) {
-        await this.updateIdentityWithWalletVerification(userUuid, request.walletAddress, authResult.supabaseSession);
+        await this.updateIdentityWithWalletVerification(
+          userUuid,
+          request.walletAddress,
+          authResult.supabaseSession,
+        );
       }
 
       elizaLogger.success(`✅ Wallet verification successful for ${request.walletAddress}`);
-      
+
       return {
         success: true,
         userUuid,
@@ -162,7 +182,6 @@ export class WalletVerificationService extends Service {
         isNewWallet,
         supabaseSession: authResult.supabaseSession,
       };
-
     } catch (error) {
       elizaLogger.error('Wallet verification failed:', error);
       return {
@@ -177,11 +196,13 @@ export class WalletVerificationService extends Service {
    * Authenticate with Supabase using Web3 Solana wallet
    * Implements the official Supabase signInWithWeb3 method
    */
-  private async authenticateWithSupabaseWeb3(request: WalletVerificationRequest & { userUuid: UUID }): Promise<WalletAuthResult> {
+  private async authenticateWithSupabaseWeb3(
+    request: WalletVerificationRequest & { userUuid: UUID },
+  ): Promise<WalletAuthResult> {
     try {
       // For server-side authentication, we need to use the client-side pattern
       // This would typically be called from the frontend, but we can prepare the data
-      
+
       const authData = {
         chain: 'solana' as const,
         statement: request.statement || this.config.statement,
@@ -189,7 +210,7 @@ export class WalletVerificationService extends Service {
         userUuid: request.userUuid,
       };
 
-      elizaLogger.info('🔐 Preparing Solana Web3 authentication data', authData);
+      elizaLogger.info(`🔐 Preparing Solana Web3 authentication data: ${JSON.stringify(authData)}`);
 
       // In a real implementation, this would be handled on the client side
       // For now, we simulate the successful auth and store the wallet link
@@ -210,7 +231,6 @@ export class WalletVerificationService extends Service {
         isNewWallet: true,
         supabaseSession: mockSession,
       };
-
     } catch (error) {
       elizaLogger.error('Supabase Web3 authentication failed:', error);
       return {
@@ -232,7 +252,8 @@ export class WalletVerificationService extends Service {
         .eq('wallet_address', walletAddress)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 = no rows returned
         throw error;
       }
 
@@ -250,25 +271,23 @@ export class WalletVerificationService extends Service {
     userUuid: UUID,
     walletAddress: string,
     chain: string,
-    session: any
+    session: any,
   ): Promise<void> {
     try {
-      const { error } = await this.supabase
-        .from('user_wallets')
-        .insert({
-          id: crypto.randomUUID(),
-          user_uuid: userUuid,
-          wallet_address: walletAddress,
-          wallet_type: 'primary',
-          verified_at: new Date().toISOString(),
-          verification_signature: session?.access_token || null,
-          metadata: {
-            chain,
-            verificationMethod: 'supabase_web3',
-            sessionId: session?.user?.id,
-            verifiedAt: new Date().toISOString(),
-          },
-        });
+      const { error } = await this.supabase.from('user_wallets').insert({
+        id: crypto.randomUUID(),
+        user_uuid: userUuid,
+        wallet_address: walletAddress,
+        wallet_type: 'primary',
+        verified_at: new Date().toISOString(),
+        verification_signature: session?.access_token || null,
+        metadata: {
+          chain,
+          verificationMethod: 'supabase_web3',
+          sessionId: session?.user?.id,
+          verifiedAt: new Date().toISOString(),
+        },
+      });
 
       if (error) {
         throw error;
@@ -287,7 +306,7 @@ export class WalletVerificationService extends Service {
   private async updateIdentityWithWalletVerification(
     userUuid: UUID,
     walletAddress: string,
-    session: any
+    session: any,
   ): Promise<void> {
     try {
       // Update user_identities table with wallet verification status
@@ -365,14 +384,17 @@ export class WalletVerificationService extends Service {
    * Generate Web3 authentication message for frontend use
    * Follows EIP-4361 standard with Solana adaptations
    */
-  generateWeb3AuthMessage(walletAddress: string, nonce: string = crypto.randomUUID()): {
+  generateWeb3AuthMessage(
+    walletAddress: string,
+    nonce: string = crypto.randomUUID(),
+  ): {
     message: string;
     nonce: string;
     statement: string;
   } {
     const domain = new URL(this.config.projectUrl).hostname;
     const timestamp = new Date().toISOString();
-    
+
     const message = `${domain} wants you to sign in with your Solana account:
 ${walletAddress}
 
@@ -398,26 +420,27 @@ Issued At: ${timestamp}`;
   async verifySignedMessage(
     walletAddress: string,
     message: string,
-    signature: string
+    signature: string,
   ): Promise<boolean> {
     try {
       // In a real implementation, you would:
       // 1. Import @solana/web3.js
       // 2. Use PublicKey.verify() or similar method
       // 3. Verify the signature against the message and public key
-      
-      elizaLogger.info('🔍 Verifying Solana wallet signature', {
-        walletAddress,
-        messageLength: message.length,
-        signatureLength: signature.length,
-      });
+
+      elizaLogger.info(
+        `🔍 Verifying Solana wallet signature: ${JSON.stringify({
+          walletAddress,
+          messageLength: message.length,
+          signatureLength: signature.length,
+        })}`,
+      );
 
       // Mock verification for now - in production, implement proper signature verification
       const isValid = signature.length > 0 && message.includes(walletAddress);
-      
+
       elizaLogger.info(`🔐 Signature verification result: ${isValid ? 'VALID' : 'INVALID'}`);
       return isValid;
-      
     } catch (error) {
       elizaLogger.error('Signature verification failed:', error);
       return false;
@@ -427,12 +450,14 @@ Issued At: ${timestamp}`;
   /**
    * Get user's wallet addresses
    */
-  async getUserWallets(userUuid: UUID): Promise<{
-    walletAddress: string;
-    walletType: string;
-    chain: string;
-    verifiedAt?: Date;
-  }[]> {
+  async getUserWallets(userUuid: UUID): Promise<
+    {
+      walletAddress: string;
+      walletType: string;
+      chain: string;
+      verifiedAt?: Date;
+    }[]
+  > {
     try {
       const { data, error } = await this.supabase
         .from('user_wallets')
@@ -475,6 +500,6 @@ Issued At: ${timestamp}`;
 }
 
 // Ensure the class constructor reports the expected static identifier when accessed as `.name`
-Object.defineProperty(WalletVerificationService, 'name', { 
-  value: WalletVerificationService.serviceType 
+Object.defineProperty(WalletVerificationService, 'name', {
+  value: WalletVerificationService.serviceType,
 });

@@ -8,14 +8,15 @@ description: Documentation Guidlin
 ## Code Documentation
 
 ### JSDoc Standards
-```typescript
+
+````typescript
 /**
  * Processes user messages and generates appropriate responses
- * 
+ *
  * @param message - The user message to process
  * @param context - Additional context for message processing
  * @returns Promise resolving to the processed response
- * 
+ *
  * @example
  * ```typescript
  * const response = await messageService.processMessage({
@@ -24,20 +25,21 @@ description: Documentation Guidlin
  *   roomId: 'room-456'
  * });
  * ```
- * 
+ *
  * @throws {ValidationError} When message format is invalid
  * @throws {ServiceError} When processing fails
  */
 async processMessage(message: Message, context?: MessageContext): Promise<Response> {
   // Implementation
 }
-```
+````
 
 ### Interface Documentation
+
 ```typescript
 /**
  * Configuration for plugin initialization
- * 
+ *
  * @interface PluginConfig
  * @property {string} id - Unique plugin identifier
  * @property {string} name - Human-readable plugin name
@@ -55,23 +57,24 @@ interface PluginConfig {
 ```
 
 ### Class Documentation
-```typescript
+
+````typescript
 /**
  * Service for managing ElizaOS logging operations
- * 
+ *
  * Provides centralized logging functionality with support for:
  * - Multiple log levels (DEBUG, INFO, WARN, ERROR)
  * - Structured logging with metadata
  * - Log aggregation and analysis
  * - Performance monitoring
- * 
+ *
  * @example
  * ```typescript
  * const logger = new ElizaOSLoggerService(runtime, {
  *   logLevel: 'INFO',
  *   outputFile: 'logs/app.log'
  * });
- * 
+ *
  * await logger.log('INFO', 'Application started', {
  *   version: '1.0.0',
  *   environment: 'production'
@@ -81,27 +84,28 @@ interface PluginConfig {
 class ElizaOSLoggerService extends Service {
   // Implementation
 }
-```
+````
 
 ## API Documentation
 
 ### REST API Documentation
+
 ```typescript
 /**
  * @api {post} /api/messages Send Message
  * @apiName SendMessage
  * @apiGroup Messages
  * @apiVersion 1.0.0
- * 
+ *
  * @apiParam {string} content Message content
  * @apiParam {string} roomId Room identifier
  * @apiParam {string} userId User identifier
- * 
+ *
  * @apiSuccess {string} id Message identifier
  * @apiSuccess {string} content Processed message content
  * @apiSuccess {string} timestamp ISO timestamp
  * @apiSuccess {object} metadata Additional message metadata
- * 
+ *
  * @apiError {400} ValidationError Invalid message format
  * @apiError {401} Unauthorized Invalid authentication
  * @apiError {500} InternalError Processing failed
@@ -109,38 +113,40 @@ class ElizaOSLoggerService extends Service {
 ```
 
 ### Plugin API Documentation
-```typescript
+
+````typescript
 /**
  * @plugin @elizaos/plugin-bootstrap
  * @version 1.0.0
  * @description Core bootstrap plugin for ElizaOS
- * 
+ *
  * @method initialize
  * @description Initializes the plugin with configuration
  * @param {PluginConfig} config Plugin configuration
  * @returns {Promise<void>}
- * 
+ *
  * @method register
  * @description Registers a new plugin with the system
  * @param {IPlugin} plugin Plugin instance to register
  * @returns {Promise<void>}
- * 
+ *
  * @example
  * ```typescript
  * import { PluginBootstrap } from '@elizaos/plugin-bootstrap';
- * 
+ *
  * const bootstrap = new PluginBootstrap(runtime);
  * await bootstrap.initialize({
  *   plugins: ['@elizaos/plugin-github', '@elizaos/plugin-sql']
  * });
  * ```
  */
-```
+````
 
 ## README Documentation
 
 ### Project README Structure
-```markdown
+
+````markdown
 # ElizaOS
 
 Advanced AI agent framework with plugin architecture and matrix testing capabilities.
@@ -165,6 +171,7 @@ bun run dev
 # Run tests
 bun test
 ```
+````
 
 ## Architecture
 
@@ -186,7 +193,8 @@ See [API Documentation](./docs/api.md) for complete API reference.
 ## Contributing
 
 See [Contributing Guide](./CONTRIBUTING.md) for development guidelines.
-```
+
+````
 
 ### Plugin README Template
 ```markdown
@@ -198,7 +206,7 @@ Brief description of the plugin functionality.
 
 ```bash
 bun add @elizaos/plugin-name
-```
+````
 
 ## Configuration
 
@@ -207,7 +215,7 @@ import { PluginName } from '@elizaos/plugin-name';
 
 const plugin = new PluginName(runtime, {
   apiKey: process.env.API_KEY,
-  endpoint: 'https://api.example.com'
+  endpoint: 'https://api.example.com',
 });
 ```
 
@@ -227,25 +235,27 @@ const result = await plugin.methodName(params);
 Description of the method.
 
 **Parameters:**
+
 - `param1` (string): Description
 - `param2` (number): Description
 
 **Returns:** Promise<ResultType>
 
 **Example:**
+
 ```typescript
 const result = await plugin.methodName({
   param1: 'value',
-  param2: 42
+  param2: 42,
 });
 ```
 
 ## Configuration Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `apiKey` | string | - | API key for external service |
-| `timeout` | number | 5000 | Request timeout in milliseconds |
+| Option    | Type   | Default | Description                     |
+| --------- | ------ | ------- | ------------------------------- |
+| `apiKey`  | string | -       | API key for external service    |
+| `timeout` | number | 5000    | Request timeout in milliseconds |
 
 ## Error Handling
 
@@ -258,7 +268,8 @@ The plugin throws the following errors:
 ## Examples
 
 See [examples](./examples/) directory for complete usage examples.
-```
+
+````
 
 ## Technical Documentation
 
@@ -270,16 +281,18 @@ See [examples](./examples/) directory for complete usage examples.
 
 ElizaOS is built on a modular architecture with clear separation of concerns:
 
-```
+````
+
 ┌─────────────────┐
-│   Plugin Layer  │  ← Extensible plugins
+│ Plugin Layer │ ← Extensible plugins
 ├─────────────────┤
-│  Service Layer  │  ← Core business logic
+│ Service Layer │ ← Core business logic
 ├─────────────────┤
-│  Memory Layer   │  ← Redis-based storage
+│ Memory Layer │ ← Redis-based storage
 ├─────────────────┤
-│ Template Layer  │  ← Character generation
+│ Template Layer │ ← Character generation
 └─────────────────┘
+
 ```
 
 ## Components
@@ -307,18 +320,19 @@ Redis-based memory with:
 ```
 
 ### Configuration Documentation
-```markdown
+
+````markdown
 # Configuration Guide
 
 ## Environment Variables
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `REDIS_HOST` | string | localhost | Redis server host |
-| `REDIS_PORT` | number | 6379 | Redis server port |
-| `REDIS_PASSWORD` | string | - | Redis authentication |
-| `JWT_SECRET` | string | - | JWT signing secret |
-| `LOG_LEVEL` | string | info | Logging level |
+| Variable         | Type   | Default   | Description          |
+| ---------------- | ------ | --------- | -------------------- |
+| `REDIS_HOST`     | string | localhost | Redis server host    |
+| `REDIS_PORT`     | number | 6379      | Redis server port    |
+| `REDIS_PASSWORD` | string | -         | Redis authentication |
+| `JWT_SECRET`     | string | -         | JWT signing secret   |
+| `LOG_LEVEL`      | string | info      | Logging level        |
 
 ## Plugin Configuration
 
@@ -328,13 +342,14 @@ plugins:
     enabled: true
     config:
       logLevel: 'INFO'
-  
+
   - name: '@elizaos/plugin-github'
     enabled: true
     config:
       apiKey: '${GITHUB_TOKEN}'
       rateLimit: 5000
 ```
+````
 
 ## Service Configuration
 
@@ -343,19 +358,20 @@ const config = {
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT) || 6379,
-    password: process.env.REDIS_PASSWORD
+    password: process.env.REDIS_PASSWORD,
   },
   logging: {
     level: process.env.LOG_LEVEL || 'info',
-    output: 'logs/app.log'
+    output: 'logs/app.log',
   },
   security: {
     jwtSecret: process.env.JWT_SECRET,
-    tokenExpiry: 3600
-  }
+    tokenExpiry: 3600,
+  },
 };
 ```
-```
+
+````
 
 ## User Documentation
 
@@ -403,11 +419,12 @@ const config = {
 - Getting help
 - Reporting bugs
 - Contributing
-```
+````
 
 ## Maintenance Documentation
 
 ### Changelog Format
+
 ```markdown
 # Changelog
 
@@ -419,44 +436,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - New feature A
 - New feature B
 
 ### Changed
+
 - Updated feature X
 - Improved performance
 
 ### Deprecated
+
 - Feature Y (will be removed in v2.0.0)
 
 ### Removed
+
 - Removed feature Z
 
 ### Fixed
+
 - Bug fix A
 - Bug fix B
 
 ### Security
+
 - Security fix A
 
 ## [1.0.0] - 2024-01-01
 
 ### Added
+
 - Initial release
 - Core plugin system
 - Memory management
 ```
 
 ### Migration Guides
-```markdown
+
+````markdown
 # Migration Guide v1.0.0 to v2.0.0
 
 ## Breaking Changes
 
 ### Plugin API Changes
+
 The plugin API has been updated with breaking changes:
 
 **Before:**
+
 ```typescript
 class MyPlugin {
   async init(config) {
@@ -464,8 +491,10 @@ class MyPlugin {
   }
 }
 ```
+````
 
 **After:**
+
 ```typescript
 class MyPlugin implements IPlugin {
   async initialize(config: PluginConfig): Promise<void> {
@@ -475,9 +504,11 @@ class MyPlugin implements IPlugin {
 ```
 
 ### Configuration Changes
+
 Update your configuration files:
 
 **Before:**
+
 ```yaml
 redis:
   host: localhost
@@ -485,6 +516,7 @@ redis:
 ```
 
 **After:**
+
 ```yaml
 redis:
   connection:
@@ -504,8 +536,12 @@ redis:
 ## Rollback Plan
 
 If issues occur:
+
 1. Revert to v1.0.0
 2. Check logs for errors
 3. Fix migration issues
 4. Retry migration
+
+```
+
 ```

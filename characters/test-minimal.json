@@ -1,0 +1,19 @@
+{
+  "name": "TestAgent",
+  "plugins": [
+    "@elizaos/plugin-bootstrap",
+    "@elizaos/plugin-sql",
+    "@elizaos/plugin-openai"
+  ],
+  "settings": {
+    "secrets": {},
+    "model": "gpt-4o-mini"
+  },
+  "system": "You are a test agent.",
+  "messageExamples": [
+    [
+      {"name": "user", "content": {"text": "Hello"}},
+      {"name": "TestAgent", "content": {"text": "Hello there!"}}
+    ]
+  ]
+}

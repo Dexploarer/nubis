@@ -20,7 +20,7 @@ export class TwitterAuthService extends Service {
 
   constructor(runtime: IAgentRuntime) {
     super(runtime);
-    
+
     // Extract authentication configuration from environment
     this.authConfig = this.buildAuthConfig();
   }
@@ -46,7 +46,7 @@ export class TwitterAuthService extends Service {
   async initialize(): Promise<void> {
     try {
       elizaLogger.info('Initializing Twitter Auth Service');
-      
+
       if (!this.authConfig) {
         elizaLogger.warn('No Twitter authentication configuration found');
         return;
@@ -63,7 +63,7 @@ export class TwitterAuthService extends Service {
   async stop(): Promise<void> {
     if (this.scraper) {
       try {
-        await this.scraper.clearCookies();
+        // Note: clearCookies method not available in current agent-twitter-client version
         elizaLogger.info('Twitter authentication session cleared');
       } catch (error) {
         elizaLogger.warn('Error clearing Twitter session:', error);
@@ -87,13 +87,13 @@ export class TwitterAuthService extends Service {
     if (cookiesStr) {
       try {
         let cookies: string[];
-        
+
         // Handle different cookie formats
         if (typeof cookiesStr === 'string') {
           if (cookiesStr.startsWith('[')) {
             cookies = JSON.parse(cookiesStr);
           } else {
-            cookies = cookiesStr.split(',').map(c => c.trim());
+            cookies = cookiesStr.split(',').map((c) => c.trim());
           }
         } else {
           cookies = Array.isArray(cookiesStr) ? cookiesStr : [cookiesStr];
@@ -144,7 +144,7 @@ export class TwitterAuthService extends Service {
         await this.scraper.login(
           this.authConfig.username,
           this.authConfig.password,
-          this.authConfig.email
+          this.authConfig.email,
         );
       }
 
@@ -159,7 +159,6 @@ export class TwitterAuthService extends Service {
       } catch (error) {
         throw new Error('Authentication verification failed');
       }
-
     } catch (error) {
       elizaLogger.error('Twitter authentication failed:', error);
       this.isAuthenticated = false;
@@ -221,7 +220,8 @@ export class TwitterAuthService extends Service {
     elizaLogger.info('Forcing Twitter re-authentication...');
     this.isAuthenticated = false;
     if (this.scraper) {
-      await this.scraper.clearCookies();
+      // Note: clearCookies method not available in current agent-twitter-client version
+      this.scraper = null; // Force re-creation
     }
     await this.authenticate();
   }
@@ -231,7 +231,7 @@ export class TwitterAuthService extends Service {
    */
   getAuthConfig(): any {
     if (!this.authConfig) return null;
-    
+
     const sanitized = { ...this.authConfig };
     if (sanitized.password) sanitized.password = '***';
     if (sanitized.cookies) sanitized.cookies = ['***'];

@@ -29,6 +29,7 @@ src/
 ### Character Configuration
 
 Characters can be configured through environment variables:
+
 - `CHARACTER_NAME`: Name of the character
 - `COMMUNITY_NAME`: Name of the community the character serves
 
@@ -40,8 +41,8 @@ The `createCharacterFromTemplate()` function provides a base character that can 
 import { createCharacterFromTemplate } from './characters/template.js';
 
 const myCharacter = createCharacterFromTemplate({
-  name: "CustomBot",
-  bio: ["Custom bio here"],
+  name: 'CustomBot',
+  bio: ['Custom bio here'],
   // ... other overrides
 });
 ```
@@ -51,6 +52,7 @@ const myCharacter = createCharacterFromTemplate({
 ### Custom Plugins
 
 Follow ElizaOS plugin patterns:
+
 1. Create plugin file in `src/plugins/`
 2. Export from `src/plugins/index.ts`
 3. Add to enabled plugins list based on configuration
@@ -58,8 +60,9 @@ Follow ElizaOS plugin patterns:
 ### Environment-Based Plugin Loading
 
 Plugins are conditionally loaded based on available configuration:
+
 - Discord: Requires `DISCORD_API_TOKEN`
-- Twitter: Requires `TWITTER_USERNAME` and `TWITTER_PASSWORD`  
+- Twitter: Requires `TWITTER_USERNAME` and `TWITTER_PASSWORD`
 - Telegram: Requires `TELEGRAM_BOT_TOKEN`
 
 ## Environment Configuration
@@ -100,17 +103,20 @@ DATABASE_URL=sqlite://./data/agent.db
 ## Best Practices
 
 ### Character Design
+
 - Keep personality consistent but adaptable
 - Provide diverse message examples
 - Include relevant knowledge areas
 - Make bio and lore engaging but professional
 
 ### Configuration
+
 - Use environment variables for all runtime configuration
 - Provide sensible defaults
 - Validate required configuration on startup
 
-### Plugin Development  
+### Plugin Development
+
 - Follow ElizaOS plugin interfaces
 - Handle errors gracefully
 - Provide clear logging

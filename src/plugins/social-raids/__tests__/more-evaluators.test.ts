@@ -121,9 +121,9 @@ describe('Social Raids Evaluators - Additional Coverage', () => {
   describe('ParticipationConsistencyEvaluator', () => {
     it('validate() returns true when history array provided', async () => {
       const msg = createMockMemory({ content: { text: 'anything', engagementHistory: [] } }) as any;
-      await expect(ParticipationConsistencyEvaluator.validate(runtime, msg as Memory)).resolves.toBe(
-        true,
-      );
+      await expect(
+        ParticipationConsistencyEvaluator.validate(runtime, msg as Memory),
+      ).resolves.toBe(true);
     });
 
     it('flags insufficient_history when fewer than 2 events', async () => {
@@ -143,13 +143,17 @@ describe('Social Raids Evaluators - Additional Coverage', () => {
         { raidId: 'C', timestamp: new Date(now - 2 * 1000) },
       ];
 
-      const msg = createMockMemory({ content: { text: 'engage', engagementHistory: history } }) as any;
+      const msg = createMockMemory({
+        content: { text: 'engage', engagementHistory: history },
+      }) as any;
       await ParticipationConsistencyEvaluator.handler(runtime, msg as Memory);
       const evaln = (msg as any).content?.evaluation;
       expect(typeof evaln.score).toBe('number');
       expect(Array.isArray(evaln.flags)).toBe(true);
       // We expect at least these flags to appear for this pattern
-      expect(evaln.flags).toEqual(expect.arrayContaining(['rapid_sequence_events', 'session_hopping']));
+      expect(evaln.flags).toEqual(
+        expect.arrayContaining(['rapid_sequence_events', 'session_hopping']),
+      );
     });
   });
 

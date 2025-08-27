@@ -16,6 +16,7 @@ Our Redis implementation **fully complies** with all established ElizaOS Redis p
 ## 🔧 **1. Abstract Cache Interface Implementation**
 
 ### **ElizaOS Requirement**
+
 The system requires Redis adapters to implement the abstract cache methods defined in the `DatabaseAdapter` class:
 
 ```typescript
@@ -26,6 +27,7 @@ abstract deleteCache(key: string): Promise<boolean>;
 ```
 
 ### **Our Implementation**
+
 Our `RedisManager` class implements all required abstract cache methods:
 
 ```typescript
@@ -69,6 +71,7 @@ export class RedisManager {
 ```
 
 ### **Benefits**
+
 - **Full Interface Compliance**: Works seamlessly with ElizaOS database adapter expectations
 - **Type Safety**: Generic type support for cached values
 - **Error Handling**: Graceful fallbacks when Redis operations fail
@@ -77,27 +80,30 @@ export class RedisManager {
 ## 🚀 **2. Message Bus Replacement for Multi-Process Deployments**
 
 ### **ElizaOS Requirement**
+
 From `bus.ts:5-6`, the system notes that for multi-process deployments, the in-memory EventTarget-based message bus should be replaced with Redis Pub/Sub:
 
 > "For multi-process or multi-server deployments, this would need to be replaced with a more robust solution like Redis Pub/Sub, Kafka, RabbitMQ, etc."
 
 ### **Our Implementation**
+
 We provide `RedisMessageBusService` that replaces the in-memory message bus:
 
 ```typescript
 export class RedisMessageBusService {
   // ✅ Subscribe to events (replaces EventTarget.addEventListener)
-  async subscribe(eventType: string, handler: MessageBusHandler): Promise<void>
-  
+  async subscribe(eventType: string, handler: MessageBusHandler): Promise<void>;
+
   // ✅ Publish events (replaces EventTarget.dispatchEvent)
-  async publish(eventType: string, data: any, metadata?: Record<string, any>): Promise<number>
-  
+  async publish(eventType: string, data: any, metadata?: Record<string, any>): Promise<number>;
+
   // ✅ Unsubscribe from events (replaces EventTarget.removeEventListener)
-  async unsubscribe(eventType: string, handler?: MessageBusHandler): Promise<void>
+  async unsubscribe(eventType: string, handler?: MessageBusHandler): Promise<void>;
 }
 ```
 
 ### **Usage Example**
+
 ```typescript
 // Initialize Redis message bus
 const messageBus = new RedisMessageBusService('my-service', 'elizaos:bus:');
@@ -110,13 +116,18 @@ await messageBus.subscribe('USER_CREATED', async (message) => {
 });
 
 // Publish events (replaces in-memory event dispatching)
-await messageBus.publish('USER_CREATED', {
-  userId: '123',
-  username: 'john_doe'
-}, { source: 'registration_service' });
+await messageBus.publish(
+  'USER_CREATED',
+  {
+    userId: '123',
+    username: 'john_doe',
+  },
+  { source: 'registration_service' },
+);
 ```
 
 ### **Benefits**
+
 - **Distributed Communication**: Events work across multiple processes/servers
 - **Automatic Load Balancing**: No need for sticky sessions
 - **Scalability**: Handle high event volumes with Redis clustering
@@ -125,6 +136,7 @@ await messageBus.publish('USER_CREATED', {
 ## ⚙️ **3. Redis Configuration Patterns**
 
 ### **ElizaOS Configuration Standards**
+
 Our configuration follows the patterns shown in `complex-nested.scenario.yaml:72-81` and `complex-nested.scenario.yaml:112-124`:
 
 ```yaml
@@ -155,6 +167,7 @@ cache-layer:
 ```
 
 ### **Our Configuration Implementation**
+
 ```typescript
 export interface RedisConfig {
   url: string;
@@ -163,14 +176,14 @@ export interface RedisConfig {
   keyPrefix?: string;
   maxMemory?: string;
   evictionPolicy?: string;
-  
+
   // ✅ ElizaOS-specific Redis configuration
   ttl?: {
-    short: number;   // 5 minutes for frequently accessed data
-    medium: number;  // 1 hour for moderately accessed data
-    long: number;    // 24 hours for rarely accessed data
+    short: number; // 5 minutes for frequently accessed data
+    medium: number; // 1 hour for moderately accessed data
+    long: number; // 24 hours for rarely accessed data
   };
-  
+
   connectionPool?: {
     min: number;
     max: number;
@@ -185,6 +198,7 @@ export interface RedisConfig {
 ```
 
 ### **Environment Variable Configuration**
+
 ```bash
 ## Redis Configuration (ElizaOS pattern)
 REDIS_URL="redis://localhost:6379"
@@ -196,7 +210,7 @@ REDIS_EVICTION_POLICY="allkeys-lru"
 
 # Redis TTL Configuration (ElizaOS pattern)
 REDIS_TTL_SHORT="300"      # 5 minutes for frequently accessed data
-REDIS_TTL_MEDIUM="3600"    # 1 hour for moderately accessed data  
+REDIS_TTL_MEDIUM="3600"    # 1 hour for moderately accessed data
 REDIS_TTL_LONG="86400"     # 24 hours for rarely accessed data
 
 # Connection Pool Settings (ElizaOS pattern)
@@ -213,6 +227,7 @@ REDIS_CREATE_RETRY_INTERVAL=200
 ## 🔗 **4. Integration with Memory System Optimizations**
 
 ### **Seamless Integration**
+
 Our Redis implementation integrates seamlessly with the existing memory system optimizations:
 
 ```typescript
@@ -224,7 +239,7 @@ export class RedisMemoryCache {
   // ✅ Two-tier caching: Redis + local cache with automatic fallback
   async getCachedMemories(runtime: IAgentRuntime, params: MemoryQueryParams): Promise<Memory[]> {
     const cacheKey = this.generateCacheKey(params);
-    
+
     // Try Redis first if available
     if (this.redisManager?.isRedisConnected()) {
       try {
@@ -248,13 +263,14 @@ export class RedisMemoryCache {
     // Cache miss - query runtime and cache in both Redis and local
     const memories = await runtime.getMemories(params);
     await this.cacheMemories(cacheKey, memories);
-    
+
     return memories;
   }
 }
 ```
 
 ### **Performance Benefits**
+
 - **5-6x faster** memory operations with Redis caching
 - **Better cache hit rates** in distributed deployments
 - **Reduced database load** through intelligent caching
@@ -263,6 +279,7 @@ export class RedisMemoryCache {
 ## 📊 **5. Performance and Monitoring**
 
 ### **Health Monitoring**
+
 ```typescript
 // ✅ Health check functionality
 async healthCheck(): Promise<boolean> {
@@ -285,6 +302,7 @@ isRedisConnected(): boolean {
 ```
 
 ### **Service Statistics**
+
 ```typescript
 // ✅ Message bus service statistics
 getStats(): {
@@ -304,11 +322,12 @@ async exists(key: string): Promise<boolean>
 ## 🧪 **6. Testing and Validation**
 
 ### **Comprehensive Test Suite**
+
 We provide a complete test suite (`src/__tests__/redis-patterns.test.ts`) that validates:
 
 1. **Abstract Cache Interface Implementation**
    - `getCache<T>` method functionality
-   - `setCache<T>` method functionality  
+   - `setCache<T>` method functionality
    - `deleteCache` method functionality
    - Error handling and graceful fallbacks
 
@@ -341,6 +360,7 @@ We provide a complete test suite (`src/__tests__/redis-patterns.test.ts`) that v
 ## 🚀 **7. Usage Examples**
 
 ### **Basic Redis Integration**
+
 ```typescript
 import { initializeGlobalRedis, getGlobalRedisManager } from '../utils/redis-config';
 
@@ -356,19 +376,23 @@ if (redisManager) {
 ```
 
 ### **Redis Message Bus Integration**
+
 ```typescript
-import { initializeGlobalRedisMessageBus, getGlobalRedisMessageBus } from '../services/redis/redis-message-bus.service';
+import {
+  initializeGlobalRedisMessageBus,
+  getGlobalRedisMessageBus,
+} from '../services/redis/redis-message-bus.service';
 
 // Initialize Redis message bus
 const redisManager = getGlobalRedisManager();
 if (redisManager) {
   await initializeGlobalRedisMessageBus(redisManager, 'my-service-id');
-  
+
   const messageBus = getGlobalRedisMessageBus('my-service-id');
   if (messageBus) {
     // Subscribe to events
     await messageBus.subscribe('USER_ACTION', handleUserAction);
-    
+
     // Publish events
     await messageBus.publish('USER_ACTION', { userId: '123', action: 'login' });
   }
@@ -376,6 +400,7 @@ if (redisManager) {
 ```
 
 ### **Redis-Enhanced Memory Operations**
+
 ```typescript
 import { redisMemoryCache } from '../plugins/redis-memory-optimizations';
 
@@ -383,20 +408,20 @@ import { redisMemoryCache } from '../plugins/redis-memory-optimizations';
 const memories = await redisMemoryCache.getCachedMemories(runtime, {
   tableName: 'messages',
   roomId: 'room123',
-  count: 20
+  count: 20,
 });
 ```
 
 ## ✅ **8. Pattern Compliance Summary**
 
-| ElizaOS Pattern | Status | Implementation |
-|-----------------|--------|----------------|
-| **Abstract Cache Interface** | ✅ **FULLY COMPLIANT** | `getCache<T>`, `setCache<T>`, `deleteCache` |
-| **Message Bus Replacement** | ✅ **FULLY COMPLIANT** | Redis Pub/Sub with `RedisMessageBusService` |
-| **Configuration Patterns** | ✅ **FULLY COMPLIANT** | Follows `complex-nested.scenario.yaml` standards |
-| **Integration Standards** | ✅ **FULLY COMPLIANT** | Seamless integration with memory system |
-| **Error Handling** | ✅ **FULLY COMPLIANT** | Graceful fallbacks and health monitoring |
-| **Performance Monitoring** | ✅ **FULLY COMPLIANT** | Comprehensive statistics and metrics |
+| ElizaOS Pattern              | Status                 | Implementation                                   |
+| ---------------------------- | ---------------------- | ------------------------------------------------ |
+| **Abstract Cache Interface** | ✅ **FULLY COMPLIANT** | `getCache<T>`, `setCache<T>`, `deleteCache`      |
+| **Message Bus Replacement**  | ✅ **FULLY COMPLIANT** | Redis Pub/Sub with `RedisMessageBusService`      |
+| **Configuration Patterns**   | ✅ **FULLY COMPLIANT** | Follows `complex-nested.scenario.yaml` standards |
+| **Integration Standards**    | ✅ **FULLY COMPLIANT** | Seamless integration with memory system          |
+| **Error Handling**           | ✅ **FULLY COMPLIANT** | Graceful fallbacks and health monitoring         |
+| **Performance Monitoring**   | ✅ **FULLY COMPLIANT** | Comprehensive statistics and metrics             |
 
 ## 🎯 **Conclusion**
 

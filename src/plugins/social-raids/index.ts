@@ -139,7 +139,17 @@ export const socialRaidsPlugin: Plugin = {
   },
 
   // Component definitions
-  services: [TwitterRaidService, TelegramService, TelegramRaidManager, CommunityMemoryService, IdentityManagementService, WalletVerificationService, EntitySyncService, ForumTopicManager, KnowledgeOptimizationService],
+  services: [
+    TwitterRaidService,
+    TelegramService,
+    TelegramRaidManager,
+    CommunityMemoryService,
+    IdentityManagementService,
+    WalletVerificationService,
+    EntitySyncService,
+    ForumTopicManager,
+    KnowledgeOptimizationService,
+  ],
   actions: [
     startRaidAction,
     joinRaidAction,

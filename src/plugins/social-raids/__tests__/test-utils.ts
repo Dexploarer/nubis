@@ -170,57 +170,54 @@ export const TEST_CONSTANTS = {
   USER_ID: 'test-user-id',
 };
 
-// Mock Supabase Client
+// Simplified Mock Supabase Client
 export function createMockSupabaseClient() {
-  // Base resolved shapes
-  const resolvedOk = { data: [], error: null } as const;
-  const resolvedNull = { data: null, error: null } as const;
+  const resolvedOk = { data: [], error: null };
+  const resolvedNull = { data: null, error: null };
 
-  // Primitive mocks (Bun mock)
-  const limitFn: any = bunMock().mockResolvedValue(resolvedOk);
-  const rangeFn: any = bunMock().mockResolvedValue(resolvedOk);
-  const singleFn: any = bunMock().mockResolvedValue(resolvedNull);
+  // Simple promise-like object that can be awaited and chained
+  function createMockPromise(defaultValue: any = resolvedNull) {
+    const promiseObj: any = {};
 
-  // order() returns object with limit() and range()
-  const orderReturn = { limit: limitFn, range: rangeFn };
-  const orderFn: any = bunMock().mockReturnValue(orderReturn);
+    // Make it thenable
+    promiseObj.then = (onResolve?: any) => Promise.resolve(defaultValue).then(onResolve);
+    promiseObj.catch = (onReject?: any) => Promise.resolve(defaultValue).catch(onReject);
 
-  // eq() returns object with single(), order(), limit()
-  const eqFn: any = bunMock().mockReturnValue({ single: singleFn, order: orderFn, limit: limitFn });
+    // Chain methods that return self
+    promiseObj.select = bunMock().mockReturnValue(promiseObj);
+    promiseObj.eq = bunMock().mockReturnValue(promiseObj);
+    promiseObj.order = bunMock().mockReturnValue(promiseObj);
+    promiseObj.gte = bunMock().mockReturnValue(promiseObj);
+    promiseObj.neq = bunMock().mockReturnValue(promiseObj);
+    promiseObj.in = bunMock().mockReturnValue(promiseObj);
+    promiseObj.not = bunMock().mockReturnValue(promiseObj);
 
-  // gte(): must support both chaining and .mockResolvedValue usage in tests
-  const gteFn: any = bunMock();
-  // Default: return itself so tests can call .gte().mockResolvedValue(...)
-  gteFn.mockImplementation(() => gteFn);
-  // Also support chaining .limit() when not overridden by tests
-  gteFn.limit = limitFn;
+    // Terminal methods
+    promiseObj.single = bunMock().mockResolvedValue(defaultValue);
+    promiseObj.limit = bunMock().mockResolvedValue(defaultValue);
+    promiseObj.range = bunMock().mockResolvedValue(defaultValue);
 
-  // select(): must support select().mockResolvedValue(...) and chaining
-  const selectFn: any = bunMock();
-  // Default: return itself so tests can call .select().mockResolvedValue(...)
-  selectFn.mockImplementation(() => selectFn);
-  // Attach chainable helpers
-  selectFn.eq = eqFn;
-  selectFn.order = orderFn;
-  selectFn.limit = limitFn;
-  selectFn.gte = gteFn;
+    // Allow value override
+    promiseObj.mockResolvedValue = (newValue: any) => {
+      promiseObj.then = (onResolve?: any) => Promise.resolve(newValue).then(onResolve);
+      promiseObj.single.mockResolvedValue(newValue);
+      promiseObj.limit.mockResolvedValue(newValue);
+      promiseObj.range.mockResolvedValue(newValue);
+      return promiseObj;
+    };
 
-  const insertSelect: any = bunMock().mockResolvedValue(resolvedNull);
-  const upsertSelect: any = bunMock().mockResolvedValue(resolvedNull);
-  const updateEqSelect: any = bunMock().mockResolvedValue(resolvedNull);
-  const updateEq: any = bunMock().mockReturnValue({ select: updateEqSelect });
-  const delEq: any = bunMock().mockResolvedValue(resolvedNull);
+    return promiseObj;
+  }
 
-  const fromReturnObj = {
-    select: selectFn,
-    insert: bunMock().mockReturnValue({ select: insertSelect }),
-    upsert: bunMock().mockReturnValue({ select: upsertSelect }),
-    update: bunMock().mockReturnValue({ eq: updateEq }),
-    delete: bunMock().mockReturnValue({ eq: delEq }),
+  const tableInterface = {
+    select: bunMock().mockImplementation(() => createMockPromise(resolvedOk)),
+    insert: bunMock().mockImplementation(() => createMockPromise(resolvedNull)),
+    update: bunMock().mockImplementation(() => createMockPromise(resolvedNull)),
+    delete: bunMock().mockImplementation(() => createMockPromise(resolvedNull)),
+    upsert: bunMock().mockImplementation(() => createMockPromise(resolvedNull)),
   };
 
-  const fromFn: any = bunMock().mockReturnValue(fromReturnObj);
-
+  const fromFn: any = bunMock().mockImplementation(() => tableInterface);
   const channelFn: any = bunMock().mockReturnValue({ send: bunMock().mockResolvedValue(true) });
   const rpcFn: any = bunMock().mockResolvedValue(resolvedNull);
 

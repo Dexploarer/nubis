@@ -22,27 +22,27 @@ describe('ElizaOS Architecture Compliance', () => {
     test('should conditionally load AI model providers', () => {
       const modelProviders = [
         '@elizaos/plugin-openai',
-        '@elizaos/plugin-anthropic', 
-        '@elizaos/plugin-google-genai'
+        '@elizaos/plugin-anthropic',
+        '@elizaos/plugin-google-genai',
       ];
-      
+
       // At least one model provider should be available if environment is configured
-      const hasModelProvider = character.plugins.some(plugin => 
-        modelProviders.includes(plugin as string)
+      const hasModelProvider = character.plugins.some((plugin) =>
+        modelProviders.includes(plugin as string),
       );
-      
+
       // This test passes if no model providers are configured (acceptable for basic setup)
       // or if at least one is properly configured
       expect(typeof hasModelProvider).toBe('boolean');
     });
 
     test('should conditionally load communication plugins based on environment', () => {
-      const commPlugins = character.plugins.filter(plugin => 
-        plugin === '@elizaos/plugin-discord' || plugin === '@elizaos/plugin-telegram'
+      const commPlugins = character.plugins.filter(
+        (plugin) => plugin === '@elizaos/plugin-discord' || plugin === '@elizaos/plugin-telegram',
       );
-      
+
       // Should only include plugins when environment variables are set
-      commPlugins.forEach(plugin => {
+      commPlugins.forEach((plugin) => {
         if (plugin === '@elizaos/plugin-discord') {
           // Would be loaded if DISCORD_API_TOKEN is set
           expect(typeof plugin).toBe('string');
@@ -62,19 +62,19 @@ describe('ElizaOS Architecture Compliance', () => {
     test('should include specialized capability plugins', () => {
       expect(character.plugins).toContain('@elizaos/plugin-browser');
       expect(character.plugins).toContain('@elizaos/plugin-mcp');
-      
+
       expect(buniCharacter.plugins).toContain('@elizaos/plugin-browser');
       expect(buniCharacter.plugins).toContain('@elizaos/plugin-mcp');
     });
 
     test('should NOT include local plugins in character config (separated to projectAgent)', () => {
-      const hasLocalPlugins = character.plugins.some(plugin => 
-        typeof plugin === 'string' && plugin.startsWith('./')
+      const hasLocalPlugins = character.plugins.some(
+        (plugin) => typeof plugin === 'string' && plugin.startsWith('./'),
       );
       expect(hasLocalPlugins).toBe(false);
-      
-      const hasBuniLocalPlugins = buniCharacter.plugins.some(plugin => 
-        typeof plugin === 'string' && plugin.startsWith('./')
+
+      const hasBuniLocalPlugins = buniCharacter.plugins.some(
+        (plugin) => typeof plugin === 'string' && plugin.startsWith('./'),
       );
       expect(hasBuniLocalPlugins).toBe(false);
     });
@@ -86,17 +86,17 @@ describe('ElizaOS Architecture Compliance', () => {
       const corePlugins = [
         '@elizaos/plugin-bootstrap',
         '@elizaos/plugin-sql',
-        '@elizaos/plugin-knowledge'
+        '@elizaos/plugin-knowledge',
       ];
-      
-      corePlugins.forEach(plugin => {
+
+      corePlugins.forEach((plugin) => {
         expect(character.plugins).toContain(plugin);
         expect(buniCharacter.plugins).toContain(plugin);
       });
-      
+
       // Local plugins should NOT be in character configuration
-      const localPluginPaths = character.plugins.filter(plugin => 
-        typeof plugin === 'string' && plugin.startsWith('./')
+      const localPluginPaths = character.plugins.filter(
+        (plugin) => typeof plugin === 'string' && plugin.startsWith('./'),
       );
       expect(localPluginPaths).toHaveLength(0);
     });
@@ -106,16 +106,16 @@ describe('ElizaOS Architecture Compliance', () => {
     test('should handle environment-based plugin loading gracefully', () => {
       // Test that plugins handle missing environment variables gracefully
       const beforeEnv = { ...process.env };
-      
+
       // Temporarily clear environment
       delete process.env.DISCORD_API_TOKEN;
       delete process.env.TELEGRAM_BOT_TOKEN;
       delete process.env.OPENAI_API_KEY;
-      
+
       // Plugins should still be structured correctly even without env vars
       expect(Array.isArray(character.plugins)).toBe(true);
       expect(character.plugins.length).toBeGreaterThan(0);
-      
+
       // Restore environment
       process.env = beforeEnv;
     });
@@ -143,7 +143,7 @@ describe('ElizaOS Architecture Compliance', () => {
     test('characters should have different personalities but same plugin architecture', () => {
       expect(character.name).not.toBe(buniCharacter.name);
       expect(character.system).not.toBe(buniCharacter.system);
-      
+
       // But should have same plugin structure
       expect(character.plugins).toEqual(buniCharacter.plugins);
     });
@@ -153,14 +153,14 @@ describe('ElizaOS Architecture Compliance', () => {
     test('should load core plugins before optional plugins', () => {
       const corePluginIndex = character.plugins.indexOf('@elizaos/plugin-bootstrap');
       const optionalPluginIndex = character.plugins.indexOf('@elizaos/plugin-knowledge');
-      
+
       expect(corePluginIndex).toBeLessThan(optionalPluginIndex);
     });
 
     test('should load database plugin early', () => {
       const sqlIndex = character.plugins.indexOf('@elizaos/plugin-sql');
       const knowledgeIndex = character.plugins.indexOf('@elizaos/plugin-knowledge');
-      
+
       expect(sqlIndex).toBeLessThan(knowledgeIndex);
     });
   });

@@ -23,11 +23,11 @@ export class EngagementTracker extends Service {
 
   constructor(runtime: IAgentRuntime) {
     super(runtime);
-    
+
     // Initialize Supabase client
     const supabaseUrl = runtime.getSetting('SUPABASE_URL') || process.env.SUPABASE_URL;
-    const supabaseServiceKey = runtime.getSetting('SUPABASE_SERVICE_ROLE_KEY') || 
-                              process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseServiceKey =
+      runtime.getSetting('SUPABASE_SERVICE_ROLE_KEY') || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (supabaseUrl && supabaseServiceKey) {
       this.supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -35,9 +35,12 @@ export class EngagementTracker extends Service {
       elizaLogger.warn('Supabase configuration missing for EngagementTracker');
     }
 
-    this.trackingEnabled = (runtime.getSetting('TWITTER_ENGAGEMENT_TRACKING') || 
-                           process.env.TWITTER_ENGAGEMENT_TRACKING || 
-                           'true').toLowerCase() === 'true';
+    this.trackingEnabled =
+      (
+        runtime.getSetting('TWITTER_ENGAGEMENT_TRACKING') ||
+        process.env.TWITTER_ENGAGEMENT_TRACKING ||
+        'true'
+      ).toLowerCase() === 'true';
   }
 
   static async start(runtime: IAgentRuntime): Promise<EngagementTracker> {
@@ -61,15 +64,19 @@ export class EngagementTracker extends Service {
   async initialize(): Promise<void> {
     try {
       elizaLogger.info('Initializing Engagement Tracker');
-      
+
       if (!this.trackingEnabled) {
         elizaLogger.info('Engagement tracking is disabled');
         return;
       }
 
       // Get required services
-      this.notificationMonitor = this.runtime.getService('NOTIFICATION_MONITOR') as NotificationMonitor;
-      this.clientService = this.runtime.getService('TWITTER_CLIENT_SERVICE') as TwitterClientService;
+      this.notificationMonitor = this.runtime.getService(
+        'NOTIFICATION_MONITOR',
+      ) as NotificationMonitor;
+      this.clientService = this.runtime.getService(
+        'TWITTER_CLIENT_SERVICE',
+      ) as TwitterClientService;
 
       if (!this.notificationMonitor) {
         throw new Error('NotificationMonitor service not found');
@@ -132,7 +139,7 @@ export class EngagementTracker extends Service {
         .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()); // Last 24 hours
 
       if (error) {
-        elizaLogger.error('Failed to load active raids:', error);
+        elizaLogger.error(`Failed to load active raids: ${error.message || String(error)}`);
         return;
       }
 
@@ -142,14 +149,14 @@ export class EngagementTracker extends Service {
           try {
             const tweetId = this.extractTweetId(raid.target_url);
             this.activeRaids.set(tweetId, raid);
-            
+
             // Initialize engagement counts
             this.engagementCounts.set(tweetId, {
               likes: 0,
               retweets: 0,
               quotes: 0,
               replies: 0,
-              lastUpdated: Date.now()
+              lastUpdated: Date.now(),
             });
           } catch (error) {
             elizaLogger.warn(`Invalid raid target URL: ${raid.target_url}`);
@@ -169,12 +176,11 @@ export class EngagementTracker extends Service {
   private async handleReply(engagementData: any): Promise<void> {
     try {
       const repliedToTweetId = engagementData.originalNotification?.in_reply_to_status_id;
-      
+
       if (repliedToTweetId && this.activeRaids.has(repliedToTweetId)) {
-        elizaLogger.info(`Reply detected for raid tweet ${repliedToTweetId}`, {
-          author: engagementData.author,
-          tweetId: engagementData.id
-        });
+        elizaLogger.info(
+          `Reply detected for raid tweet ${repliedToTweetId} from ${engagementData.author} (${engagementData.id})`,
+        );
 
         await this.recordEngagement(repliedToTweetId, 'reply', engagementData);
       }
@@ -189,13 +195,14 @@ export class EngagementTracker extends Service {
   private async handleRetweet(engagementData: any): Promise<void> {
     try {
       // Extract original tweet ID from retweet
-      const originalTweetId = this.extractOriginalTweetFromRetweet(engagementData.originalNotification);
-      
+      const originalTweetId = this.extractOriginalTweetFromRetweet(
+        engagementData.originalNotification,
+      );
+
       if (originalTweetId && this.activeRaids.has(originalTweetId)) {
-        elizaLogger.info(`Retweet detected for raid tweet ${originalTweetId}`, {
-          author: engagementData.author,
-          tweetId: engagementData.id
-        });
+        elizaLogger.info(
+          `Retweet detected for raid tweet ${originalTweetId} from ${engagementData.author} (${engagementData.id})`,
+        );
 
         await this.recordEngagement(originalTweetId, 'retweet', engagementData);
       }
@@ -209,14 +216,14 @@ export class EngagementTracker extends Service {
    */
   private async handleQuote(engagementData: any): Promise<void> {
     try {
-      const quotedTweetId = engagementData.originalNotification?.quoted_status?.id ||
-                           this.extractTweetIdFromText(engagementData.text);
-      
+      const quotedTweetId =
+        engagementData.originalNotification?.quoted_status?.id ||
+        this.extractTweetIdFromText(engagementData.text);
+
       if (quotedTweetId && this.activeRaids.has(quotedTweetId)) {
-        elizaLogger.info(`Quote tweet detected for raid tweet ${quotedTweetId}`, {
-          author: engagementData.author,
-          tweetId: engagementData.id
-        });
+        elizaLogger.info(
+          `Quote tweet detected for raid tweet ${quotedTweetId} from ${engagementData.author} (${engagementData.id})`,
+        );
 
         await this.recordEngagement(quotedTweetId, 'quote', engagementData);
       }
@@ -232,13 +239,13 @@ export class EngagementTracker extends Service {
     try {
       // Check if this mention is about any of our active raids
       for (const [tweetId, raid] of this.activeRaids) {
-        if (engagementData.text.includes(tweetId) || 
-            engagementData.text.includes(raid.target_url)) {
-          
-          elizaLogger.info(`Mention detected for raid tweet ${tweetId}`, {
-            author: engagementData.author,
-            tweetId: engagementData.id
-          });
+        if (
+          engagementData.text.includes(tweetId) ||
+          engagementData.text.includes(raid.target_url)
+        ) {
+          elizaLogger.info(
+            `Mention detected for raid tweet ${tweetId} from ${engagementData.author} (${engagementData.id})`,
+          );
 
           await this.recordEngagement(tweetId, 'mention', engagementData);
           break;
@@ -252,7 +259,11 @@ export class EngagementTracker extends Service {
   /**
    * Record engagement in database and update counts
    */
-  private async recordEngagement(tweetId: string, type: string, engagementData: any): Promise<void> {
+  private async recordEngagement(
+    tweetId: string,
+    type: string,
+    engagementData: any,
+  ): Promise<void> {
     if (!this.supabase) {
       elizaLogger.warn('Cannot record engagement - Supabase not configured');
       return;
@@ -266,30 +277,34 @@ export class EngagementTracker extends Service {
       }
 
       // Record in raid_engagements table
-      const { error: engagementError } = await this.supabase
-        .from('raid_engagements')
-        .insert({
-          raid_id: raid.id,
-          user_id: engagementData.author,
-          engagement_type: type,
-          tweet_id: engagementData.id,
-          original_tweet_id: tweetId,
-          timestamp: new Date(),
-          metadata: {
-            author: engagementData.author,
-            text: engagementData.text?.substring(0, 500), // Limit text length
-            originalNotification: engagementData.originalNotification
-          }
-        });
+      const { error: engagementError } = await this.supabase.from('raid_engagements').insert({
+        raid_id: raid.id,
+        user_id: engagementData.author,
+        engagement_type: type,
+        tweet_id: engagementData.id,
+        original_tweet_id: tweetId,
+        timestamp: new Date(),
+        metadata: {
+          author: engagementData.author,
+          text: engagementData.text?.substring(0, 500), // Limit text length
+          originalNotification: engagementData.originalNotification,
+        },
+      });
 
       if (engagementError) {
-        elizaLogger.error('Failed to record raid engagement:', engagementError);
+        elizaLogger.error(
+          `Failed to record raid engagement: ${engagementError.message || String(engagementError)}`,
+        );
         return;
       }
 
       // Update engagement counts
       const counts = this.engagementCounts.get(tweetId) || {
-        likes: 0, retweets: 0, quotes: 0, replies: 0, lastUpdated: 0
+        likes: 0,
+        retweets: 0,
+        quotes: 0,
+        replies: 0,
+        lastUpdated: 0,
       };
 
       switch (type) {
@@ -313,12 +328,9 @@ export class EngagementTracker extends Service {
       // Update raid statistics
       await this.updateRaidStatistics(raid.id, counts);
 
-      elizaLogger.info(`Recorded ${type} engagement for raid ${raid.id}`, {
-        tweetId,
-        author: engagementData.author,
-        newCounts: counts
-      });
-
+      elizaLogger.info(
+        `Recorded ${type} engagement for raid ${raid.id} - Tweet: ${tweetId}, Author: ${engagementData.author}, Counts: ${JSON.stringify(counts)}`,
+      );
     } catch (error) {
       elizaLogger.error('Failed to record engagement:', error);
     }
@@ -335,12 +347,12 @@ export class EngagementTracker extends Service {
         .from('raids')
         .update({
           engagement_stats: counts,
-          updated_at: new Date()
+          updated_at: new Date(),
         })
         .eq('id', raidId);
 
       if (error) {
-        elizaLogger.error('Failed to update raid statistics:', error);
+        elizaLogger.error(`Failed to update raid statistics: ${error.message || String(error)}`);
       }
     } catch (error) {
       elizaLogger.error('Failed to update raid statistics:', error);
@@ -353,7 +365,7 @@ export class EngagementTracker extends Service {
   async addRaidForTracking(raidId: string, targetUrl: string): Promise<void> {
     try {
       const tweetId = this.extractTweetId(targetUrl);
-      
+
       // Load raid data from database
       if (this.supabase) {
         const { data: raid, error } = await this.supabase
@@ -369,7 +381,7 @@ export class EngagementTracker extends Service {
             retweets: 0,
             quotes: 0,
             replies: 0,
-            lastUpdated: Date.now()
+            lastUpdated: Date.now(),
           });
 
           elizaLogger.info(`Added raid ${raidId} for tracking (tweet: ${tweetId})`);
@@ -388,7 +400,7 @@ export class EngagementTracker extends Service {
       const tweetId = this.extractTweetId(targetUrl);
       this.activeRaids.delete(tweetId);
       this.engagementCounts.delete(tweetId);
-      
+
       elizaLogger.info(`Removed raid from tracking (tweet: ${tweetId})`);
     } catch (error) {
       elizaLogger.error('Failed to remove raid from tracking:', error);

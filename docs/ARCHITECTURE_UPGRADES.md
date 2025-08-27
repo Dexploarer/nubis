@@ -7,12 +7,14 @@ This document describes the comprehensive upgrades made to the ElizaOS Character
 ## 🎯 What Was Upgraded
 
 ### 1. Character System
+
 - **Schema Validation**: Added Zod-based validation for all character definitions
 - **Character Factory**: Implemented factory pattern with environment-specific configuration
 - **Automated Testing**: Added comprehensive character validation and testing
 - **Type Safety**: Enhanced TypeScript types and interfaces
 
 ### 2. Service Architecture
+
 - **Service Builder Pattern**: Fluent interface for constructing services
 - **Optimized Service Base**: Enhanced service lifecycle management with metrics
 - **Service Registry**: Centralized service management with dependency resolution
@@ -40,6 +42,7 @@ if (result.success) {
 ```
 
 **Key Features:**
+
 - Complete character structure validation
 - Environment-specific settings validation
 - Plugin dependency validation
@@ -70,6 +73,7 @@ const validation = await CharacterFactory.validateExistingCharacter(existingChar
 ```
 
 **Available Templates:**
+
 - `basic`: Simple AI assistant
 - `community-manager`: Community management specialist
 - `nubi`: Advanced community guardian with mystical elements
@@ -144,9 +148,13 @@ export class MyService extends OptimizedService {
 
   // Use retry logic
   async unreliableOperation(): Promise<any> {
-    return this.retryOperation(async () => {
-      return await this.externalApiCall();
-    }, 'unreliableOperation', 5);
+    return this.retryOperation(
+      async () => {
+        return await this.externalApiCall();
+      },
+      'unreliableOperation',
+      5,
+    );
   }
 
   // Custom health checks
@@ -154,7 +162,7 @@ export class MyService extends OptimizedService {
     return [
       {
         name: 'database_connection',
-        status: await this.checkDatabase() ? 'pass' : 'fail',
+        status: (await this.checkDatabase()) ? 'pass' : 'fail',
         message: 'Database connection status',
         duration: Date.now(),
       },
@@ -282,14 +290,14 @@ bun run src/test-upgrades.ts
 
 ### Before vs After
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| Character Validation | ❌ None | ✅ Comprehensive | +100% |
-| Type Safety | ⚠️ Partial | ✅ Full | +100% |
-| Service Construction | ❌ Manual | ✅ Builder Pattern | +80% |
-| Error Handling | ❌ Basic | ✅ Comprehensive | +90% |
-| Performance Monitoring | ❌ None | ✅ Built-in | +100% |
-| Testing Coverage | ❌ Manual | ✅ Automated | +95% |
+| Metric                 | Before     | After              | Improvement |
+| ---------------------- | ---------- | ------------------ | ----------- |
+| Character Validation   | ❌ None    | ✅ Comprehensive   | +100%       |
+| Type Safety            | ⚠️ Partial | ✅ Full            | +100%       |
+| Service Construction   | ❌ Manual  | ✅ Builder Pattern | +80%        |
+| Error Handling         | ❌ Basic   | ✅ Comprehensive   | +90%        |
+| Performance Monitoring | ❌ None    | ✅ Built-in        | +100%       |
+| Testing Coverage       | ❌ Manual  | ✅ Automated       | +95%        |
 
 ### Memory Usage
 

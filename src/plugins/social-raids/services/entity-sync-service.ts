@@ -72,7 +72,7 @@ export interface SyncedChat {
 
 export class EntitySyncService extends Service {
   static serviceType = 'ENTITY_SYNC_SERVICE';
-  
+
   public name: string = EntitySyncService.serviceType;
   public supabase: any;
   private userCache = new Map<string, SyncedUser>();
@@ -80,17 +80,20 @@ export class EntitySyncService extends Service {
   private syncQueue = new Set<string>();
   private isProcessing = false;
 
-  capabilityDescription = 'Synchronizes Telegram users and chats with database for raid coordination';
+  capabilityDescription =
+    'Synchronizes Telegram users and chats with database for raid coordination';
 
   constructor(runtime: IAgentRuntime) {
     super(runtime);
 
     const supabaseUrl = runtime.getSetting('SUPABASE_URL') || process.env.SUPABASE_URL;
-    const supabaseServiceKey = runtime.getSetting('SUPABASE_SERVICE_ROLE_KEY') || process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseServiceKey =
+      runtime.getSetting('SUPABASE_SERVICE_ROLE_KEY') || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    this.supabase = supabaseUrl && supabaseServiceKey
-      ? createClient(supabaseUrl, supabaseServiceKey)
-      : this.createNoopSupabase();
+    this.supabase =
+      supabaseUrl && supabaseServiceKey
+        ? createClient(supabaseUrl, supabaseServiceKey)
+        : this.createNoopSupabase();
 
     if (!supabaseUrl || !supabaseServiceKey) {
       elizaLogger.warn('Supabase configuration missing for EntitySyncService - using no-op client');
@@ -112,10 +115,10 @@ export class EntitySyncService extends Service {
     try {
       // Create database tables if they don't exist
       await this.createTables();
-      
+
       // Start periodic sync process
       this.startPeriodicSync();
-      
+
       elizaLogger.info('Entity Sync Service initialized successfully');
     } catch (error) {
       elizaLogger.error('Failed to initialize Entity Sync Service:', error);
@@ -127,10 +130,10 @@ export class EntitySyncService extends Service {
     try {
       // Create users table
       await this.supabase.rpc('create_synced_users_table_if_not_exists');
-      
-      // Create chats table  
+
+      // Create chats table
       await this.supabase.rpc('create_synced_chats_table_if_not_exists');
-      
+
       elizaLogger.info('Entity sync database tables ensured');
     } catch (error) {
       // Tables might already exist or RPC might not be available
@@ -144,7 +147,7 @@ export class EntitySyncService extends Service {
   async syncUser(telegramUser: TelegramUser, chatId?: string): Promise<SyncedUser> {
     try {
       const userId = telegramUser.id.toString();
-      
+
       // Check cache first
       if (this.userCache.has(userId)) {
         const cachedUser = this.userCache.get(userId)!;
@@ -188,7 +191,7 @@ export class EntitySyncService extends Service {
           {
             onConflict: 'telegram_id',
             ignoreDuplicates: false,
-          }
+          },
         )
         .select()
         .single();
@@ -232,7 +235,7 @@ export class EntitySyncService extends Service {
   async syncChat(telegramChat: TelegramChat): Promise<SyncedChat> {
     try {
       const chatId = telegramChat.id.toString();
-      
+
       // Check cache first
       if (this.chatCache.has(chatId)) {
         const cachedChat = this.chatCache.get(chatId)!;
@@ -276,7 +279,7 @@ export class EntitySyncService extends Service {
           {
             onConflict: 'telegram_id',
             ignoreDuplicates: false,
-          }
+          },
         )
         .select()
         .single();
@@ -380,7 +383,9 @@ export class EntitySyncService extends Service {
         }
       }
 
-      elizaLogger.debug(`Updated raid stats for chat ${chatId}${raidCreated ? ' (raid created)' : ''}`);
+      elizaLogger.debug(
+        `Updated raid stats for chat ${chatId}${raidCreated ? ' (raid created)' : ''}`,
+      );
     } catch (error) {
       elizaLogger.error('Failed to update chat raid stats:', error);
     }
@@ -535,9 +540,12 @@ export class EntitySyncService extends Service {
 
   private startPeriodicSync(): void {
     // Sync cached data every 5 minutes
-    setInterval(async () => {
-      await this.processSyncQueue();
-    }, 5 * 60 * 1000);
+    setInterval(
+      async () => {
+        await this.processSyncQueue();
+      },
+      5 * 60 * 1000,
+    );
   }
 
   private async processSyncQueue(): Promise<void> {
@@ -546,7 +554,7 @@ export class EntitySyncService extends Service {
     }
 
     this.isProcessing = true;
-    
+
     try {
       const entitiesToSync = Array.from(this.syncQueue);
       this.syncQueue.clear();
@@ -557,11 +565,11 @@ export class EntitySyncService extends Service {
       const batchSize = 10;
       for (let i = 0; i < entitiesToSync.length; i += batchSize) {
         const batch = entitiesToSync.slice(i, i + batchSize);
-        
+
         await Promise.allSettled(
           batch.map(async (entityId) => {
             // Additional sync logic if needed
-          })
+          }),
         );
       }
     } catch (error) {

@@ -6,11 +6,13 @@
 - Add e2e smoke test for publishing
 
 ## References
+
 - `../rules/twitter.mdc`
 - `../rules/twitter.md`
 - `../knowledge/security_protocols.md`
 
 ### Core internal references
+
 - `../rules/elizaos_development_workflow.md`
 - `../rules/elizaos_coding_standards.md`
 - `../rules/elizaos-architecture-patterns.md`

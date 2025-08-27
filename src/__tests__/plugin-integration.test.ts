@@ -16,24 +16,25 @@ describe('Plugin Integration', () => {
     test('should not include recall plugin (removed from configuration)', () => {
       // Verify recall plugin is no longer in the configuration
       const plugins = character.plugins;
-      const hasRecallPlugin = plugins.some((plugin: string) => 
-        typeof plugin === 'string' && plugin.includes('recall')
+      const hasRecallPlugin = plugins.some(
+        (plugin: string) => typeof plugin === 'string' && plugin.includes('recall'),
       );
       expect(hasRecallPlugin).toBe(false);
     });
 
     test('should have core plugins properly ordered', () => {
       const plugins = character.plugins;
-      
+
       // Knowledge plugin should come after bootstrap but before embedding plugins
       const knowledgeIndex = plugins.indexOf('@elizaos/plugin-knowledge');
-      const bootstrapIndex = plugins.findIndex((p: string) => 
-        p === '@elizaos/plugin-bootstrap' || 
-        (Array.isArray(p) && p.includes('@elizaos/plugin-bootstrap'))
+      const bootstrapIndex = plugins.findIndex(
+        (p: string) =>
+          p === '@elizaos/plugin-bootstrap' ||
+          (Array.isArray(p) && p.includes('@elizaos/plugin-bootstrap')),
       );
-      
+
       expect(knowledgeIndex).toBeGreaterThan(-1);
-      
+
       // Should be positioned correctly in plugin loading order
       expect(knowledgeIndex).toBeGreaterThan(0); // Not first
     });
@@ -46,7 +47,7 @@ describe('Plugin Integration', () => {
 
     test('should maintain essential plugins', () => {
       const plugins = buniCharacter.plugins;
-      
+
       expect(plugins).toContain('@elizaos/plugin-bootstrap');
       expect(plugins).toContain('@elizaos/plugin-sql');
       expect(plugins).toContain('@elizaos/plugin-knowledge');
@@ -68,7 +69,7 @@ describe('Plugin Integration', () => {
 
     test('should verify plugin versions are compatible', async () => {
       const packageJson = await import('../../package.json');
-      
+
       // Knowledge plugin should be a compatible version
       const knowledgeVersion = packageJson.dependencies['@elizaos/plugin-knowledge'];
       expect(knowledgeVersion).toBeDefined();
@@ -80,10 +81,10 @@ describe('Plugin Integration', () => {
     test('should respect LOAD_DOCS_ON_STARTUP environment variable', () => {
       // This tests the knowledge plugin configuration
       const originalLoadDocs = process.env.LOAD_DOCS_ON_STARTUP;
-      
+
       process.env.LOAD_DOCS_ON_STARTUP = 'true';
       expect(process.env.LOAD_DOCS_ON_STARTUP).toBe('true');
-      
+
       // Restore original environment
       if (originalLoadDocs) {
         process.env.LOAD_DOCS_ON_STARTUP = originalLoadDocs;
@@ -95,8 +96,8 @@ describe('Plugin Integration', () => {
     test('should not have recall-related environment variables', () => {
       // Verify recall environment variables are not being used
       const plugins = character.plugins;
-      const hasRecallLogic = plugins.some((plugin: string) => 
-        typeof plugin === 'string' && plugin.includes('RECALL_PRIVATE_KEY')
+      const hasRecallLogic = plugins.some(
+        (plugin: string) => typeof plugin === 'string' && plugin.includes('RECALL_PRIVATE_KEY'),
       );
       expect(hasRecallLogic).toBe(false);
     });
@@ -105,14 +106,14 @@ describe('Plugin Integration', () => {
   describe('Plugin Loading Order', () => {
     test('should load core plugins before knowledge plugins', () => {
       const plugins = character.plugins;
-      
+
       // Find indices of key plugins
       const sqlIndex = plugins.indexOf('@elizaos/plugin-sql');
       const knowledgeIndex = plugins.indexOf('@elizaos/plugin-knowledge');
-      
+
       expect(sqlIndex).toBeGreaterThan(-1);
       expect(knowledgeIndex).toBeGreaterThan(-1);
-      
+
       // SQL (core) should load before knowledge
       expect(sqlIndex).toBeLessThan(knowledgeIndex);
     });
@@ -120,9 +121,9 @@ describe('Plugin Integration', () => {
     test('should load knowledge plugin before embedding plugins', () => {
       const plugins = character.plugins;
       const knowledgeIndex = plugins.indexOf('@elizaos/plugin-knowledge');
-      
+
       expect(knowledgeIndex).toBeGreaterThan(-1);
-      
+
       // Knowledge should be positioned appropriately in the plugin array
       // It should be after core plugins but available for embedding-capable functionality
       expect(knowledgeIndex).toBeLessThan(plugins.length); // Should be in the array
@@ -137,7 +138,7 @@ describe('Plugin Integration', () => {
       expect(character.plugins).toBeDefined();
       expect(Array.isArray(character.plugins)).toBe(true);
       expect(character.plugins.length).toBeGreaterThan(3);
-      
+
       // Test Buni character (secondary)
       expect(buniCharacter.name).toBe('Buni');
       expect(buniCharacter.plugins).toBeDefined();

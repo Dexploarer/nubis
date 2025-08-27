@@ -14,15 +14,18 @@ interface MatrixFile {
 }
 
 function cartesianProduct<T>(arrays: T[][]): T[][] {
-  return arrays.reduce<T[][]>((acc, curr) => {
-    const res: T[][] = [];
-    for (const a of acc) {
-      for (const c of curr) {
-        res.push([...a, c]);
+  return arrays.reduce<T[][]>(
+    (acc, curr) => {
+      const res: T[][] = [];
+      for (const a of acc) {
+        for (const c of curr) {
+          res.push([...a, c]);
+        }
       }
-    }
-    return res;
-  }, [[]]);
+      return res;
+    },
+    [[]],
+  );
 }
 
 function buildAssignments(params: MatrixParam[], combo: any[]): Record<string, any> {
@@ -49,7 +52,7 @@ async function main() {
   }
 
   const params = parsed.matrix;
-  const valuesArrays = params.map(p => p.values);
+  const valuesArrays = params.map((p) => p.values);
   const combos = cartesianProduct(valuesArrays);
 
   console.log(`# Matrix plan for ${path.relative(process.cwd(), abs)}`);

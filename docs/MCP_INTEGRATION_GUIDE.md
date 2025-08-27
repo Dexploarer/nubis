@@ -13,7 +13,7 @@ Model Context Protocol (MCP) allows your NUBI agent to use external tools and se
 ✅ **MCP Plugin**: `@elizaos/plugin-mcp` installed and configured  
 ✅ **XMCPX Server**: Twitter MCP server integrated  
 ✅ **Character Configuration**: NUBI character updated with MCP capabilities  
-✅ **Environment Variables**: All necessary MCP configs added to env.template  
+✅ **Environment Variables**: All necessary MCP configs added to env.template
 
 ## XMCPX Twitter MCP Server
 
@@ -22,7 +22,7 @@ Model Context Protocol (MCP) allows your NUBI agent to use external tools and se
 The XMCPX server provides NUBI with comprehensive Twitter capabilities:
 
 - **Tweet Management**: Post, search, like, retweet, quote tweet
-- **User Operations**: Follow, unfollow, get profiles, search users  
+- **User Operations**: Follow, unfollow, get profiles, search users
 - **Timeline Access**: Home timeline, user timelines, search results
 - **Advanced Features**: Thread posting, media uploads, DMs
 - **Grok Integration**: Chat with Twitter's Grok AI
@@ -200,4 +200,4 @@ firecrawl: {
 
 ---
 
-*This guide is part of the NUBI Agent System documentation. For more information, see the main README.md file.*
+_This guide is part of the NUBI Agent System documentation. For more information, see the main README.md file._

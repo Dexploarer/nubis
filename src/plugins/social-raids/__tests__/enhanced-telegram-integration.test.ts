@@ -51,18 +51,18 @@ const mockContext = {
 describe('Enhanced Telegram Integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup default mock returns
     mockRuntime.getSetting.mockImplementation((key: string) => {
       const settings: { [key: string]: string } = {
-        'TELEGRAM_BOT_TOKEN': 'test-token',
-        'TELEGRAM_RAID_CHANNEL_ID': '-100123456789',
-        'TWITTER_USERNAME': 'testuser',
-        'TWITTER_PASSWORD': 'testpass',
-        'SUPABASE_URL': 'http://localhost:54321',
-        'SUPABASE_SERVICE_ROLE_KEY': 'test-key',
-        'RAID_COORDINATOR_URL': 'http://localhost:3000/raid-coordinator',
-        'TELEGRAM_ADMIN_USERS': '12345,67890',
+        TELEGRAM_BOT_TOKEN: 'test-token',
+        TELEGRAM_RAID_CHANNEL_ID: '-100123456789',
+        TWITTER_USERNAME: 'testuser',
+        TWITTER_PASSWORD: 'testpass',
+        SUPABASE_URL: 'http://localhost:54321',
+        SUPABASE_SERVICE_ROLE_KEY: 'test-key',
+        RAID_COORDINATOR_URL: 'http://localhost:3000/raid-coordinator',
+        TELEGRAM_ADMIN_USERS: '12345,67890',
       };
       return settings[key] || process.env[key];
     });
@@ -117,7 +117,7 @@ describe('Enhanced Telegram Integration', () => {
 
       // Test URL detection (private method, testing indirectly through reply)
       expect(contextWithTwitterUrl.message.text).toMatch(
-        /https?:\/\/(www\.)?(twitter\.com|x\.com)\/\w+\/status\/\d+/
+        /https?:\/\/(www\.)?(twitter\.com|x\.com)\/\w+\/status\/\d+/,
       );
     });
 
@@ -154,7 +154,7 @@ describe('Enhanced Telegram Integration', () => {
       // Verify the command would trigger Twitter service integration
       expect(selfRaidContext.message.text.startsWith('/selfraid')).toBe(true);
       expect(selfRaidContext.message.text.split(' ').slice(1).join(' ')).toBe(
-        'This is a test tweet for self-raiding!'
+        'This is a test tweet for self-raiding!',
       );
     });
   });
@@ -220,7 +220,8 @@ describe('Enhanced Telegram Integration', () => {
       });
 
       // Test engagement metrics processing
-      const total = mockMetrics.likes + mockMetrics.retweets + mockMetrics.quotes + mockMetrics.comments;
+      const total =
+        mockMetrics.likes + mockMetrics.retweets + mockMetrics.quotes + mockMetrics.comments;
       expect(total).toBe(25);
     });
   });
@@ -266,7 +267,7 @@ describe('Enhanced Telegram Integration', () => {
       ];
 
       // Test that all expected callback patterns would be handled
-      expectedKeyboardActions.forEach(action => {
+      expectedKeyboardActions.forEach((action) => {
         expect(action).toMatch(/^[a-z_]+$/);
       });
     });
@@ -277,7 +278,7 @@ describe('Enhanced Telegram Integration', () => {
       mockRuntime.getService.mockReturnValue(null);
 
       const telegramManager = new TelegramRaidManager(mockRuntime);
-      
+
       // Should not throw when Twitter service is unavailable
       expect(() => {
         // Simulation of trying to get Twitter service
@@ -309,7 +310,7 @@ describe('Enhanced Telegram Integration', () => {
       };
 
       const telegramManager = new TelegramRaidManager(noSupabaseRuntime);
-      
+
       // Should create no-op Supabase client
       expect(telegramManager.supabase).toBeDefined();
     });
@@ -324,8 +325,10 @@ describe('Enhanced Telegram Integration', () => {
       ];
 
       const allUrls: string[] = [];
-      messagesWithUrls.forEach(message => {
-        const matches = message.match(/https?:\/\/(www\.)?(twitter\.com|x\.com)\/\w+\/status\/\d+/g);
+      messagesWithUrls.forEach((message) => {
+        const matches = message.match(
+          /https?:\/\/(www\.)?(twitter\.com|x\.com)\/\w+\/status\/\d+/g,
+        );
         if (matches) allUrls.push(...matches);
       });
 
@@ -337,7 +340,7 @@ describe('Enhanced Telegram Integration', () => {
 
     it('should maintain chat state efficiently', () => {
       const telegramManager = new TelegramRaidManager(mockRuntime);
-      
+
       // Chat states should be managed in Map for efficient lookup
       expect((telegramManager as any).chatStates).toBeInstanceOf(Map);
       expect((telegramManager as any).adminUsers).toBeInstanceOf(Set);

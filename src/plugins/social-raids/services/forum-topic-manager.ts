@@ -45,7 +45,7 @@ export interface TopicTemplate {
 
 export class ForumTopicManager extends Service {
   static serviceType = 'FORUM_TOPIC_MANAGER';
-  
+
   public name: string = ForumTopicManager.serviceType;
   public supabase: any;
   private topicTemplates: Map<string, TopicTemplate> = new Map();
@@ -57,11 +57,13 @@ export class ForumTopicManager extends Service {
     super(runtime);
 
     const supabaseUrl = runtime.getSetting('SUPABASE_URL') || process.env.SUPABASE_URL;
-    const supabaseServiceKey = runtime.getSetting('SUPABASE_SERVICE_ROLE_KEY') || process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseServiceKey =
+      runtime.getSetting('SUPABASE_SERVICE_ROLE_KEY') || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    this.supabase = supabaseUrl && supabaseServiceKey
-      ? createClient(supabaseUrl, supabaseServiceKey)
-      : this.createNoopSupabase();
+    this.supabase =
+      supabaseUrl && supabaseServiceKey
+        ? createClient(supabaseUrl, supabaseServiceKey)
+        : this.createNoopSupabase();
 
     if (!supabaseUrl || !supabaseServiceKey) {
       elizaLogger.warn('Supabase configuration missing for ForumTopicManager - using no-op client');
@@ -85,10 +87,10 @@ export class ForumTopicManager extends Service {
     try {
       // Load active topics from database
       await this.loadActiveTopics();
-      
+
       // Start cleanup process
       this.startCleanupProcess();
-      
+
       elizaLogger.info('Forum Topic Manager initialized successfully');
     } catch (error) {
       elizaLogger.error('Failed to initialize Forum Topic Manager:', error);
@@ -101,7 +103,7 @@ export class ForumTopicManager extends Service {
     this.topicTemplates.set('twitter_raid', {
       name: '🚨 Twitter Raid - {{target}}',
       type: 'twitter',
-      icon_color: 0x1DA1F2, // Twitter blue
+      icon_color: 0x1da1f2, // Twitter blue
       icon_custom_emoji_id: undefined,
       description: 'Coordinated Twitter engagement raid',
       auto_pin_message: `🎯 **TWITTER RAID ACTIVE**\n\n**Target**: {{target_url}}\n**Duration**: {{duration}} minutes\n\n**📋 INSTRUCTIONS:**\n1️⃣ Click the target link\n2️⃣ Engage authentically (like, retweet, comment)\n3️⃣ Report your actions using the buttons below\n4️⃣ Earn points and climb the leaderboard!\n\n**⚡ POINT SYSTEM:**\n👍 Like = 1 point\n🔄 Retweet = 2 points\n💬 Quote = 3 points\n📝 Comment = 5 points\n\n**🚫 RAID RULES:**\n• No spam or low-quality content\n• Engage authentically and meaningfully\n• Respect Twitter's terms of service\n• Be positive and supportive\n\n**Let's dominate this together! 🔥**`,
@@ -118,7 +120,7 @@ export class ForumTopicManager extends Service {
     this.topicTemplates.set('coordination', {
       name: '📋 Raid Coordination',
       type: 'coordination',
-      icon_color: 0x7B68EE, // Medium slate blue
+      icon_color: 0x7b68ee, // Medium slate blue
       description: 'Strategic planning and coordination',
       auto_pin_message: `📋 **RAID COORDINATION CENTER**\n\n**Welcome to the strategic planning hub!**\n\nUse this topic to:\n• Plan upcoming raids\n• Coordinate timing and strategy\n• Share target suggestions\n• Discuss tactics and approaches\n\n**🎯 PLANNING COMMANDS:**\n\`/suggest <url>\` - Suggest a raid target\n\`/schedule <time>\` - Schedule a raid\n\`/strategy <plan>\` - Share raid strategy\n\n**Let's plan our next victory! 🏆**`,
       rules: [
@@ -132,7 +134,7 @@ export class ForumTopicManager extends Service {
     this.topicTemplates.set('results', {
       name: '📊 Raid Results & Analytics',
       type: 'results',
-      icon_color: 0x32CD32, // Lime green
+      icon_color: 0x32cd32, // Lime green
       description: 'Post-raid analysis and results',
       auto_pin_message: `📊 **RAID RESULTS & ANALYTICS**\n\n**Track our victories and analyze performance!**\n\nThis topic is for:\n• Raid completion reports\n• Performance analytics\n• Success stories and highlights\n• Lessons learned and improvements\n\n**📈 METRICS WE TRACK:**\n• Total participants\n• Engagement rates\n• Point distributions\n• Target platform impact\n• Community growth\n\n**Share your success stories! 🎉**`,
       rules: [
@@ -147,7 +149,7 @@ export class ForumTopicManager extends Service {
     this.topicTemplates.set('general', {
       name: '💬 General Raid Discussion',
       type: 'general',
-      icon_color: 0xFF6347, // Tomato
+      icon_color: 0xff6347, // Tomato
       description: 'General discussion and community chat',
       auto_pin_message: `💬 **GENERAL RAID DISCUSSION**\n\n**Welcome to our community space!**\n\nThis topic is for:\n• General raid-related discussions\n• Community building and networking\n• Questions and support\n• Sharing experiences and tips\n\n**🌟 COMMUNITY GUIDELINES:**\n• Be respectful and inclusive\n• Help new members learn\n• Share knowledge and experiences\n• Keep discussions raid-focused\n\n**Building our community together! 🤝**`,
       rules: [
@@ -167,7 +169,7 @@ export class ForumTopicManager extends Service {
     chatId: number,
     raidId: string,
     targetUrl: string,
-    raidType: 'twitter' | 'general' | 'coordination' | 'results' = 'twitter'
+    raidType: 'twitter' | 'general' | 'coordination' | 'results' = 'twitter',
   ): Promise<RaidTopic | null> {
     try {
       if (!bot || !bot.telegram) {
@@ -183,19 +185,13 @@ export class ForumTopicManager extends Service {
 
       // Extract target name from URL for topic title
       const targetName = this.extractTargetName(targetUrl);
-      const topicName = template.name
-        .replace('{{target}}', targetName)
-        .substring(0, 85); // Telegram limit
+      const topicName = template.name.replace('{{target}}', targetName).substring(0, 85); // Telegram limit
 
       // Create the forum topic
-      const result = await bot.telegram.createForumTopic(
-        chatId,
-        topicName,
-        {
-          icon_color: template.icon_color,
-          icon_custom_emoji_id: template.icon_custom_emoji_id,
-        }
-      );
+      const result = await bot.telegram.createForumTopic(chatId, topicName, {
+        icon_color: template.icon_color,
+        icon_custom_emoji_id: template.icon_custom_emoji_id,
+      });
 
       if (!result || !result.message_thread_id) {
         elizaLogger.error('Failed to create forum topic');
@@ -203,7 +199,7 @@ export class ForumTopicManager extends Service {
       }
 
       const topicId = result.message_thread_id;
-      
+
       // Create raid topic record
       const raidTopic: RaidTopic = {
         id: `${chatId}-${topicId}`,
@@ -218,7 +214,9 @@ export class ForumTopicManager extends Service {
         participants_count: 0,
         created_at: new Date(),
         updated_at: new Date(),
-        auto_close_at: template.duration_hours ? new Date(Date.now() + template.duration_hours * 60 * 60 * 1000) : undefined,
+        auto_close_at: template.duration_hours
+          ? new Date(Date.now() + template.duration_hours * 60 * 60 * 1000)
+          : undefined,
         metadata: {
           template_used: raidType,
           created_by_bot: true,
@@ -238,7 +236,6 @@ export class ForumTopicManager extends Service {
 
       elizaLogger.info(`Created raid topic: ${topicName} (${topicId}) for raid ${raidId}`);
       return raidTopic;
-
     } catch (error) {
       elizaLogger.error('Failed to create raid topic:', error);
       return null;
@@ -254,11 +251,11 @@ export class ForumTopicManager extends Service {
     topicId: number,
     template: TopicTemplate,
     targetUrl: string,
-    raidId: string
+    raidId: string,
   ): Promise<void> {
     try {
-      const message = template.auto_pin_message!
-        .replace('{{target_url}}', targetUrl)
+      const message = template
+        .auto_pin_message!.replace('{{target_url}}', targetUrl)
         .replace('{{duration}}', (template.duration_hours! * 60).toString())
         .replace('{{raid_id}}', raidId);
 
@@ -266,25 +263,18 @@ export class ForumTopicManager extends Service {
       const keyboard = this.createRaidKeyboard(raidId, template.type);
 
       // Send the message
-      const sentMessage = await bot.telegram.sendMessage(
-        chatId,
-        message,
-        {
-          message_thread_id: topicId,
-          parse_mode: 'Markdown',
-          reply_markup: keyboard,
-        }
-      );
+      const sentMessage = await bot.telegram.sendMessage(chatId, message, {
+        message_thread_id: topicId,
+        parse_mode: 'Markdown',
+        reply_markup: keyboard,
+      });
 
       // Pin the message
       if (sentMessage && sentMessage.message_id) {
-        await bot.telegram.pinChatMessage(
-          chatId,
-          sentMessage.message_id,
-          { disable_notification: true }
-        );
+        await bot.telegram.pinChatMessage(chatId, sentMessage.message_id, {
+          disable_notification: true,
+        });
       }
-
     } catch (error) {
       elizaLogger.error('Failed to send pinned message:', error);
     }
@@ -310,9 +300,7 @@ export class ForumTopicManager extends Service {
               { text: '📊 Raid Status', callback_data: `raid_menu:status:${raidId}` },
               { text: '🏆 Leaderboard', callback_data: `raid_menu:leaderboard:${raidId}` },
             ],
-            [
-              { text: '👥 Participants', callback_data: `raid_menu:participants:${raidId}` },
-            ],
+            [{ text: '👥 Participants', callback_data: `raid_menu:participants:${raidId}` }],
           ],
         };
 
@@ -337,9 +325,7 @@ export class ForumTopicManager extends Service {
               { text: '📈 View Analytics', callback_data: `results_action:analytics:${raidId}` },
               { text: '🏅 Top Performers', callback_data: `results_action:top:${raidId}` },
             ],
-            [
-              { text: '📊 Export Data', callback_data: `results_action:export:${raidId}` },
-            ],
+            [{ text: '📊 Export Data', callback_data: `results_action:export:${raidId}` }],
           ],
         };
 
@@ -362,7 +348,7 @@ export class ForumTopicManager extends Service {
     bot: any,
     chatId: number,
     topicId: number,
-    reason: string = 'Raid completed'
+    reason: string = 'Raid completed',
   ): Promise<void> {
     try {
       const topicKey = `${chatId}-${topicId}`;
@@ -376,20 +362,19 @@ export class ForumTopicManager extends Service {
       // Send closing message
       const closingMessage = `🏁 **TOPIC CLOSING**\n\n**Reason**: ${reason}\n**Duration**: ${this.formatDuration(raidTopic.created_at, new Date())}\n**Participants**: ${raidTopic.participants_count}\n\n**Thank you for participating!** 🎉\n\nThis topic will be archived shortly.`;
 
-      await bot.telegram.sendMessage(
-        chatId,
-        closingMessage,
-        {
-          message_thread_id: topicId,
-          parse_mode: 'Markdown',
-        }
-      );
+      await bot.telegram.sendMessage(chatId, closingMessage, {
+        message_thread_id: topicId,
+        parse_mode: 'Markdown',
+      });
 
       // Close the topic (if bot has permissions)
       try {
         await bot.telegram.closeForumTopic(chatId, topicId);
       } catch (closeError) {
-        elizaLogger.warn('Could not close forum topic (insufficient permissions):', closeError.message);
+        elizaLogger.warn(
+          'Could not close forum topic (insufficient permissions):',
+          closeError.message,
+        );
       }
 
       // Update status in database
@@ -401,7 +386,6 @@ export class ForumTopicManager extends Service {
       this.activeTopics.delete(topicKey);
 
       elizaLogger.info(`Closed raid topic: ${raidTopic.topic_name} (${topicId})`);
-
     } catch (error) {
       elizaLogger.error('Failed to close raid topic:', error);
     }
@@ -412,7 +396,7 @@ export class ForumTopicManager extends Service {
    */
   async getTopicInfo(chatId: string, topicId: number): Promise<RaidTopic | null> {
     const topicKey = `${chatId}-${topicId}`;
-    
+
     // Check cache first
     if (this.activeTopics.has(topicKey)) {
       return this.activeTopics.get(topicKey)!;
@@ -432,7 +416,7 @@ export class ForumTopicManager extends Service {
       }
 
       const raidTopic: RaidTopic = this.mapDatabaseToRaidTopic(data);
-      
+
       // Cache if active
       if (raidTopic.status === 'active') {
         this.activeTopics.set(topicKey, raidTopic);
@@ -448,7 +432,11 @@ export class ForumTopicManager extends Service {
   /**
    * Update topic participant count
    */
-  async updateTopicParticipants(chatId: string, topicId: number, increment: number = 1): Promise<void> {
+  async updateTopicParticipants(
+    chatId: string,
+    topicId: number,
+    increment: number = 1,
+  ): Promise<void> {
     try {
       const topicKey = `${chatId}-${topicId}`;
       const raidTopic = this.activeTopics.get(topicKey);
@@ -499,24 +487,22 @@ export class ForumTopicManager extends Service {
 
   private async saveRaidTopic(raidTopic: RaidTopic): Promise<void> {
     try {
-      await this.supabase
-        .from('raid_topics')
-        .upsert({
-          id: raidTopic.id,
-          chat_id: raidTopic.chat_id,
-          topic_id: raidTopic.topic_id,
-          topic_name: raidTopic.topic_name,
-          raid_id: raidTopic.raid_id,
-          raid_type: raidTopic.raid_type,
-          target_platform: raidTopic.target_platform,
-          target_url: raidTopic.target_url,
-          status: raidTopic.status,
-          participants_count: raidTopic.participants_count,
-          created_at: raidTopic.created_at.toISOString(),
-          updated_at: raidTopic.updated_at.toISOString(),
-          auto_close_at: raidTopic.auto_close_at?.toISOString(),
-          metadata: raidTopic.metadata,
-        });
+      await this.supabase.from('raid_topics').upsert({
+        id: raidTopic.id,
+        chat_id: raidTopic.chat_id,
+        topic_id: raidTopic.topic_id,
+        topic_name: raidTopic.topic_name,
+        raid_id: raidTopic.raid_id,
+        raid_type: raidTopic.raid_type,
+        target_platform: raidTopic.target_platform,
+        target_url: raidTopic.target_url,
+        status: raidTopic.status,
+        participants_count: raidTopic.participants_count,
+        created_at: raidTopic.created_at.toISOString(),
+        updated_at: raidTopic.updated_at.toISOString(),
+        auto_close_at: raidTopic.auto_close_at?.toISOString(),
+        metadata: raidTopic.metadata,
+      });
     } catch (error) {
       elizaLogger.error('Failed to save raid topic:', error);
     }
@@ -580,7 +566,7 @@ export class ForumTopicManager extends Service {
     const diffMs = end.getTime() - start.getTime();
     const minutes = Math.floor(diffMs / 60000);
     const hours = Math.floor(minutes / 60);
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes % 60}m`;
     }
@@ -589,9 +575,12 @@ export class ForumTopicManager extends Service {
 
   private startCleanupProcess(): void {
     // Clean up expired topics every 10 minutes
-    setInterval(async () => {
-      await this.cleanupExpiredTopics();
-    }, 10 * 60 * 1000);
+    setInterval(
+      async () => {
+        await this.cleanupExpiredTopics();
+      },
+      10 * 60 * 1000,
+    );
   }
 
   private async cleanupExpiredTopics(): Promise<void> {

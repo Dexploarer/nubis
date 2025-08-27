@@ -1,5 +1,5 @@
-import { defineConfig } from "vite";
-import viteConfig from "./vite.config";
+import { defineConfig } from 'vite';
+import viteConfig from './vite.config';
 
 export default defineConfig({
   component: {

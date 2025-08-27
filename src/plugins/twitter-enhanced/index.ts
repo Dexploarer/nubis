@@ -40,7 +40,8 @@ interface TwitterEnhancedConfig {
 
 export const twitterEnhancedPlugin: Plugin = {
   name: 'twitter-enhanced',
-  description: 'Enhanced Twitter integration with credential authentication and real-time monitoring.',
+  description:
+    'Enhanced Twitter integration with credential authentication and real-time monitoring.',
   priority: 90, // Higher priority than social-raids (100) to ensure it loads first
 
   // Configuration
@@ -93,12 +94,12 @@ export const twitterEnhancedPlugin: Plugin = {
   // Component definitions
   services: [
     TwitterAuthService,
-    TwitterClientService, 
+    TwitterClientService,
     NotificationMonitor,
     EngagementTracker,
-    TwitterRSSService
+    TwitterRSSService,
   ],
-  
+
   actions: [
     postTweetAction,
     monitorMentionsAction,
@@ -106,16 +107,13 @@ export const twitterEnhancedPlugin: Plugin = {
     createRSSFeedAction,
     manageRSSFeedsAction,
   ],
-  
-  providers: [
-    twitterTimelineProvider,
-    engagementDataProvider
-  ],
+
+  providers: [twitterTimelineProvider, engagementDataProvider],
 
   // Event handlers (empty for now)
   events: {},
 
-  // Model handlers (empty for now) 
+  // Model handlers (empty for now)
   models: {},
 
   // API routes (empty for now)

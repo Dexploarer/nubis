@@ -7,6 +7,7 @@ The Social Raids Plugin successfully implements Twitter operations using cookie-
 ## ✅ **Working Twitter Operations**
 
 ### **Core Twitter Functions:**
+
 1. **✅ Cookie Authentication** - Successfully authenticates using cookies from `.env`
 2. **✅ Tweet Scraping** - Can extract engagement metrics from individual tweets
 3. **✅ User Tweet Export** - Can export tweets from public user accounts (tested with @elonmusk)
@@ -15,6 +16,7 @@ The Social Raids Plugin successfully implements Twitter operations using cookie-
 6. **✅ Service Health Monitoring** - Health checks and status monitoring working
 
 ### **Verified Capabilities:**
+
 - **Tweet Data Extraction**: ID, text, author, likes, retweets, quotes, comments
 - **User Timeline Access**: Can fetch user's recent tweets with pagination support
 - **Engagement Metrics**: Real-time metrics collection from live tweets
@@ -26,7 +28,7 @@ The Social Raids Plugin successfully implements Twitter operations using cookie-
 The following operations are implemented but require `RUN_WRITE_TESTS=true`:
 
 1. **Tweet Posting** - `postTweet(content)`
-2. **Like Tweets** - `engageWithTweet(url, 'like')`  
+2. **Like Tweets** - `engageWithTweet(url, 'like')`
 3. **Retweet** - `engageWithTweet(url, 'retweet')`
 4. **Quote Tweet** - `engageWithTweet(url, 'quote', content)`
 5. **Reply to Tweet** - `engageWithTweet(url, 'comment', content)`
@@ -34,21 +36,25 @@ The following operations are implemented but require `RUN_WRITE_TESTS=true`:
 ## ⚠️ **Issues Identified**
 
 ### **Database Schema Issues:**
+
 1. **Raid Creation**: Missing `session_id` field in database schema
 2. **UUID Validation**: Database expects proper UUID format for user identifiers
 
 ### **API Limitations:**
+
 1. **Profile Access**: Some Twitter profiles return "rest_id not found" (Twitter API changes)
 2. **Rate Limiting**: Heavy usage may trigger Twitter rate limits
 
 ## 🏗️ **Plugin Architecture Overview**
 
 ### **Services:**
+
 - **TwitterRaidService**: Core Twitter operations and authentication
-- **TelegramRaidManager**: Telegram bot coordination  
+- **TelegramRaidManager**: Telegram bot coordination
 - **CommunityMemoryService**: User behavior tracking and analytics
 
 ### **Actions:**
+
 - **startRaidAction**: Initiate raids on specific tweets
 - **joinRaidAction**: Allow users to join active raids
 - **submitEngagementAction**: Track user participation and award points
@@ -56,6 +62,7 @@ The following operations are implemented but require `RUN_WRITE_TESTS=true`:
 - **scrapeTweetsAction**: Export tweet data for analysis
 
 ### **Evaluators:**
+
 - **EngagementQualityEvaluator**: Score engagement authenticity
 - **SpamScoreEvaluator**: Detect low-quality participation
 - **ContentRelevanceEvaluator**: Analyze content relevance
@@ -75,6 +82,7 @@ The following operations are implemented but require `RUN_WRITE_TESTS=true`:
 ## 🛠️ **Required Fixes**
 
 ### **Database Schema Updates:**
+
 ```sql
 -- Add missing session_id field
 ALTER TABLE raids ADD COLUMN session_id UUID DEFAULT gen_random_uuid();
@@ -84,6 +92,7 @@ ALTER TABLE raids ALTER COLUMN created_by SET DATA TYPE UUID USING created_by::U
 ```
 
 ### **Configuration Updates:**
+
 ```env
 # Ensure these are set for full functionality
 TWITTER_COOKIES="[cookie array from authentication]"
@@ -96,11 +105,12 @@ RAID_COORDINATOR_URL=your_edge_function_url
 ## 🧪 **Testing Recommendations**
 
 ### **Read Operations (Safe to Test):**
+
 ```bash
 # Test individual tweet scraping
 bun test --grep "should scrape engagement data"
 
-# Test user timeline export  
+# Test user timeline export
 bun test --grep "should handle tweet export"
 
 # Test error handling
@@ -108,6 +118,7 @@ bun test --grep "Error Handling"
 ```
 
 ### **Write Operations (Use with Caution):**
+
 ```bash
 # Enable write operations testing
 RUN_WRITE_TESTS=true bun test --grep "Tweet Posting Operations"
@@ -118,33 +129,36 @@ RUN_WRITE_TESTS=true bun test --grep "Engagement Operations"
 
 - **Authentication**: ~100ms cookie setup
 - **Tweet Scraping**: ~300ms per tweet
-- **User Export**: ~2s for 5 tweets  
+- **User Export**: ~2s for 5 tweets
 - **Health Checks**: ~50ms response time
 - **Error Recovery**: Graceful fallbacks implemented
 
 ## 🚀 **Deployment Readiness**
 
 ### **Production Ready:**
+
 ✅ Cookie authentication  
 ✅ Tweet scraping and analysis  
 ✅ User timeline export  
 ✅ Error handling and logging  
-✅ Health monitoring  
+✅ Health monitoring
 
 ### **Needs Database Setup:**
+
 ⚠️ Raid creation (schema fixes needed)  
-⚠️ Engagement logging (UUID constraints)  
+⚠️ Engagement logging (UUID constraints)
 
 ### **Requires Testing:**
+
 🔄 Write operations (posting, liking, etc.)  
 🔄 Telegram integration  
-🔄 Full raid workflow  
+🔄 Full raid workflow
 
 ## 💡 **Recommendations**
 
 1. **Fix Database Schema**: Update raids table with proper UUID handling
 2. **Test Write Operations**: Carefully test posting/engagement on non-production accounts
-3. **Monitor Rate Limits**: Implement proper rate limiting and backoff strategies  
+3. **Monitor Rate Limits**: Implement proper rate limiting and backoff strategies
 4. **Expand Authentication**: Consider multiple account rotation for scale
 5. **Enhanced Analytics**: Leverage the evaluator system for deeper insights
 

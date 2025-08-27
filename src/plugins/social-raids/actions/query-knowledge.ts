@@ -4,7 +4,14 @@
  * and Knowledge Optimization Service
  */
 
-import type { ActionExample, IAgentRuntime, HandlerCallback, State, Memory, Action } from '@elizaos/core';
+import type {
+  ActionExample,
+  IAgentRuntime,
+  HandlerCallback,
+  State,
+  Memory,
+  Action,
+} from '@elizaos/core';
 import { ActionResult, elizaLogger } from '@elizaos/core';
 
 export const queryKnowledgeAction: Action = {
@@ -21,12 +28,12 @@ export const queryKnowledgeAction: Action = {
     'help-with',
   ],
   description: 'Query the combined knowledge base and community memories for information',
-  
+
   validate: async (runtime: IAgentRuntime, message: Memory, state?: State): Promise<boolean> => {
     if (!message.content?.text) return false;
 
     const text = message.content.text.toLowerCase();
-    
+
     // Trigger on queries asking for information
     return (
       text.includes('what') ||
@@ -47,17 +54,20 @@ export const queryKnowledgeAction: Action = {
     message: Memory,
     state?: State,
     options?: any,
-    callback?: HandlerCallback
+    callback?: HandlerCallback,
   ): Promise<ActionResult> => {
     try {
       const query = message.content?.text || '';
       const userId = message.entityId?.toString();
-      
+
       elizaLogger.info('Processing knowledge query:', query);
 
       // Get the Community Memory Service
       const communityMemoryService = runtime.getService('COMMUNITY_MEMORY_SERVICE');
-      if (!communityMemoryService || typeof (communityMemoryService as any).queryKnowledgeAndMemory !== 'function') {
+      if (
+        !communityMemoryService ||
+        typeof (communityMemoryService as any).queryKnowledgeAndMemory !== 'function'
+      ) {
         await callback?.({
           text: "I'm having trouble accessing my knowledge system right now. Please try again later.",
           error: true,
@@ -71,13 +81,17 @@ export const queryKnowledgeAction: Action = {
 
       // Extract the actual query from the text
       const extractedQuery = extractQueryFromText(query);
-      
+
       // Query knowledge and memory
-      const results = await (communityMemoryService as any).queryKnowledgeAndMemory(extractedQuery, userId, 5);
-      
+      const results = await (communityMemoryService as any).queryKnowledgeAndMemory(
+        extractedQuery,
+        userId,
+        5,
+      );
+
       // Format and send response
       const response = formatKnowledgeResponse(results, extractedQuery);
-      
+
       await callback?.({
         text: response,
         action: 'query-knowledge',
@@ -99,9 +113,9 @@ export const queryKnowledgeAction: Action = {
       };
     } catch (error) {
       elizaLogger.error('Failed to process knowledge query:', error);
-      
+
       await callback?.({
-        text: "I encountered an error while searching for that information. Please try rephrasing your question.",
+        text: 'I encountered an error while searching for that information. Please try rephrasing your question.',
         error: true,
       });
 
@@ -119,9 +133,9 @@ export const queryKnowledgeAction: Action = {
         content: { text: 'Tell me about Nubi' },
       },
       {
-        name: 'assistant', 
+        name: 'assistant',
         content: {
-          text: "Based on our knowledge base, Nubi is an ElizaOS-based AI mentor built for developers, especially those working in the Solana/Web3 space. He combines humor, sarcasm and deep technical knowledge to guide community members through coding and AI challenges.\n\n**Key Personality Traits:**\n- Entertaining first, educational second\n- Uses wit and metaphor to draw people in\n- Strategic mystery to encourage deeper engagement\n- Approachable authority without condescension\n\n**Community Role:**\n- Acts as a benevolent cult leader figure\n- Guides members through prompt engineering and development\n- Builds community through gamified learning\n\nWould you like me to search for more specific information about any aspect of Nubi?",
+          text: 'Based on our knowledge base, Nubi is an ElizaOS-based AI mentor built for developers, especially those working in the Solana/Web3 space. He combines humor, sarcasm and deep technical knowledge to guide community members through coding and AI challenges.\n\n**Key Personality Traits:**\n- Entertaining first, educational second\n- Uses wit and metaphor to draw people in\n- Strategic mystery to encourage deeper engagement\n- Approachable authority without condescension\n\n**Community Role:**\n- Acts as a benevolent cult leader figure\n- Guides members through prompt engineering and development\n- Builds community through gamified learning\n\nWould you like me to search for more specific information about any aspect of Nubi?',
           action: 'query-knowledge',
         },
       },
@@ -158,30 +172,33 @@ export const queryKnowledgeAction: Action = {
 function extractQueryFromText(text: string): string {
   // Remove common question words and extract the core query
   let query = text.toLowerCase();
-  
+
   // Remove leading question words
-  query = query.replace(/^(what|how|tell me about|explain|search|find|lookup|help with|who|when|where|why|which)\s+/i, '');
+  query = query.replace(
+    /^(what|how|tell me about|explain|search|find|lookup|help with|who|when|where|why|which)\s+/i,
+    '',
+  );
   query = query.replace(/^(is|are|do|does|can|could|would|should)\s+/i, '');
   query = query.replace(/\b(about|regarding|concerning)\s+/i, '');
-  
+
   // Remove trailing question marks and common endings
   query = query.replace(/[?!.]*$/, '');
   query = query.replace(/\s+(please|thanks|thank you)$/i, '');
-  
+
   // If the query is too short, use the original
   if (query.length < 3) {
     query = text.toLowerCase().replace(/[?!.]*$/, '');
   }
-  
+
   return query.trim();
 }
 
 function formatKnowledgeResponse(results: any, query: string): string {
   let response = `Here's what I found about "${query}":\n\n`;
-  
+
   // Add knowledge base results
   if (results.knowledge && results.knowledge.length > 0) {
-    response += "**📚 Knowledge Base:**\n";
+    response += '**📚 Knowledge Base:**\n';
     results.knowledge.forEach((doc: any, index: number) => {
       response += `${index + 1}. **${doc.title}** (${doc.category})\n`;
       response += `   ${doc.summary}\n`;
@@ -191,40 +208,42 @@ function formatKnowledgeResponse(results: any, query: string): string {
       response += '\n';
     });
   }
-  
+
   // Add memory results
   if (results.memories && results.memories.length > 0) {
-    response += "**💭 Recent Community Interactions:**\n";
+    response += '**💭 Recent Community Interactions:**\n';
     results.memories.forEach((memory: any, index: number) => {
       response += `${index + 1}. ${memory.content.substring(0, 100)}${memory.content.length > 100 ? '...' : ''}\n`;
       response += `   *${memory.platform} • ${new Date(memory.timestamp).toLocaleDateString()}*\n\n`;
     });
   }
-  
+
   // Add combined insights
   if (results.combined_insights && results.combined_insights.length > 0) {
-    response += "**🔗 Insights & Connections:**\n";
+    response += '**🔗 Insights & Connections:**\n';
     results.combined_insights.forEach((insight: any, index: number) => {
       response += `${index + 1}. ${insight.insight}\n`;
       response += `   *Correlation: ${(insight.correlation_score * 100).toFixed(0)}%*\n\n`;
     });
   }
-  
+
   // If no results found
-  if ((!results.knowledge || results.knowledge.length === 0) && 
-      (!results.memories || results.memories.length === 0) &&
-      (!results.combined_insights || results.combined_insights.length === 0)) {
+  if (
+    (!results.knowledge || results.knowledge.length === 0) &&
+    (!results.memories || results.memories.length === 0) &&
+    (!results.combined_insights || results.combined_insights.length === 0)
+  ) {
     response = `I couldn't find specific information about "${query}" in our knowledge base or your interaction history. `;
-    response += "Try asking about:\n";
+    response += 'Try asking about:\n';
     response += "- Nubi's personality and community roles\n";
-    response += "- Social raids and engagement strategies\n";
-    response += "- ElizaOS architecture and memory systems\n";
-    response += "- Community guidelines and best practices\n\n";
-    response += "Or ask me to search for something more specific!";
+    response += '- Social raids and engagement strategies\n';
+    response += '- ElizaOS architecture and memory systems\n';
+    response += '- Community guidelines and best practices\n\n';
+    response += 'Or ask me to search for something more specific!';
   } else {
-    response += "\n*Want to dive deeper into any of these topics? Just ask!*";
+    response += '\n*Want to dive deeper into any of these topics? Just ask!*';
   }
-  
+
   return response;
 }
 

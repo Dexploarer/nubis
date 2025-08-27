@@ -30,11 +30,14 @@ export const createRSSFeedAction: Action = {
     'TWITTER_TO_RSS',
   ],
   description: 'Creates RSS feeds from Twitter timeline, lists, users, or communities',
-  
+
   validate: async (runtime: IAgentRuntime, message: Memory): Promise<boolean> => {
     try {
+      if (!message.content.text) {
+        return false;
+      }
       const text = message.content.text.toLowerCase();
-      
+
       // Check for RSS feed creation keywords
       const rssKeywords = [
         'create rss',
@@ -45,31 +48,22 @@ export const createRSSFeedAction: Action = {
         'twitter to rss',
         'rss from',
       ];
-      
-      const hasRSSKeyword = rssKeywords.some(keyword => text.includes(keyword));
-      
+
+      const hasRSSKeyword = rssKeywords.some((keyword) => text.includes(keyword));
+
       // Check for Twitter source keywords
-      const sourceKeywords = [
-        'timeline',
-        'list',
-        'user',
-        'community',
-        'tweets from',
-        'feed from',
-      ];
-      
-      const hasSourceKeyword = sourceKeywords.some(keyword => text.includes(keyword));
-      
+      const sourceKeywords = ['timeline', 'list', 'user', 'community', 'tweets from', 'feed from'];
+
+      const hasSourceKeyword = sourceKeywords.some((keyword) => text.includes(keyword));
+
       const isValid = hasRSSKeyword && hasSourceKeyword;
-      
+
       if (isValid) {
-        elizaLogger.debug('CREATE_RSS_FEED action validation passed', {
-          text: text.substring(0, 100),
-          hasRSSKeyword,
-          hasSourceKeyword,
-        });
+        elizaLogger.debug(
+          `CREATE_RSS_FEED action validation passed: ${text.substring(0, 100)}, RSS: ${hasRSSKeyword}, Source: ${hasSourceKeyword}`,
+        );
       }
-      
+
       return isValid;
     } catch (error) {
       elizaLogger.error('Error validating CREATE_RSS_FEED action:', error);
@@ -92,38 +86,47 @@ export const createRSSFeedAction: Action = {
       if (!rssService) {
         const errorMsg = 'Twitter RSS Service not available';
         elizaLogger.error(errorMsg);
-        
+
         if (callback) {
           await callback({
             text: "Sorry, the RSS feed functionality isn't available right now. The Twitter RSS service needs to be running to create feeds.",
             error: true,
           });
         }
-        
+
         return {
           success: false,
           error: new Error(errorMsg),
         };
       }
 
+      if (!message.content.text) {
+        await callback({
+          text: 'No message content provided.',
+          action: 'CREATE_RSS_FEED_ERROR',
+        });
+        return { success: false, error: 'No message content' };
+      }
+
       const content = await parseContent(runtime, message.content.text);
-      
+
       if (!content) {
         const errorMsg = 'Could not parse RSS feed creation request';
-        elizaLogger.warn(errorMsg, { text: message.content.text });
-        
+        elizaLogger.warn(`${errorMsg}: ${message.content.text || 'no content'}`);
+
         if (callback) {
           await callback({
-            text: "I couldn't understand what type of RSS feed you want to create. Please specify:\n\n" +
-                  "• 'timeline' for your Twitter timeline\n" +
-                  "• 'user @username' for a specific user's tweets\n" +
-                  "• 'list [list-id]' for a Twitter list\n" +
-                  "• 'community [community-id]' for a Twitter community\n\n" +
-                  "Example: 'Create RSS feed from user @elonmusk'",
+            text:
+              "I couldn't understand what type of RSS feed you want to create. Please specify:\n\n" +
+              "• 'timeline' for your Twitter timeline\n" +
+              "• 'user @username' for a specific user's tweets\n" +
+              "• 'list [list-id]' for a Twitter list\n" +
+              "• 'community [community-id]' for a Twitter community\n\n" +
+              "Example: 'Create RSS feed from user @elonmusk'",
             error: true,
           });
         }
-        
+
         return {
           success: false,
           error: new Error(errorMsg),
@@ -133,16 +136,16 @@ export const createRSSFeedAction: Action = {
       // Create RSS feed based on type
       let feedId: string;
       let feedUrl: string;
-      
+
       try {
         switch (content.feedType) {
           case 'timeline':
             feedId = await rssService.createTimelineFeed(
               content.title || 'My Twitter Timeline',
-              content.description || 'RSS feed of my Twitter timeline'
+              content.description || 'RSS feed of my Twitter timeline',
             );
             break;
-            
+
           case 'user':
             if (!content.source) {
               throw new Error('Username required for user RSS feed');
@@ -150,10 +153,10 @@ export const createRSSFeedAction: Action = {
             feedId = await rssService.createUserFeed(
               content.source,
               content.title || `@${content.source} Tweets`,
-              content.description || `RSS feed for @${content.source} tweets`
+              content.description || `RSS feed for @${content.source} tweets`,
             );
             break;
-            
+
           case 'list':
             if (!content.source) {
               throw new Error('List ID required for list RSS feed');
@@ -161,10 +164,10 @@ export const createRSSFeedAction: Action = {
             feedId = await rssService.createListFeed(
               content.source,
               content.title || `Twitter List ${content.source}`,
-              content.description || `RSS feed for Twitter list ${content.source}`
+              content.description || `RSS feed for Twitter list ${content.source}`,
             );
             break;
-            
+
           case 'community':
             if (!content.source) {
               throw new Error('Community ID required for community RSS feed');
@@ -172,52 +175,49 @@ export const createRSSFeedAction: Action = {
             feedId = await rssService.createCommunityFeed(
               content.source,
               content.title || `Twitter Community ${content.source}`,
-              content.description || `RSS feed for Twitter community ${content.source}`
+              content.description || `RSS feed for Twitter community ${content.source}`,
             );
             break;
-            
+
           default:
             throw new Error(`Unsupported feed type: ${content.feedType}`);
         }
-        
+
         feedUrl = `${rssService.getServerUrl()}/rss/${feedId}`;
-        
-        elizaLogger.info('RSS feed created successfully', {
-          feedId,
-          feedType: content.feedType,
-          source: content.source,
-          url: feedUrl,
-        });
-        
+
+        elizaLogger.info(
+          `RSS feed created successfully - ID: ${feedId}, Type: ${content.feedType}, Source: ${content.source || 'unknown'}, URL: ${feedUrl}`,
+        );
+
         // Format success message based on feed type
-        let successMessage = "🎉 RSS feed created successfully!\n\n";
-        
+        let successMessage = '🎉 RSS feed created successfully!\n\n';
+
         switch (content.feedType) {
           case 'timeline':
-            successMessage += "📱 **Timeline Feed**\n";
-            successMessage += "Your personal Twitter timeline is now available as an RSS feed.\n";
+            successMessage += '📱 **Timeline Feed**\n';
+            successMessage += 'Your personal Twitter timeline is now available as an RSS feed.\n';
             break;
-            
+
           case 'user':
             successMessage += `👤 **User Feed: @${content.source}**\n`;
             successMessage += `All tweets from @${content.source} are now available as an RSS feed.\n`;
             break;
-            
+
           case 'list':
             successMessage += `📋 **List Feed: ${content.source}**\n`;
             successMessage += `Tweets from Twitter list ${content.source} are now available as an RSS feed.\n`;
             break;
-            
+
           case 'community':
             successMessage += `🏘️ **Community Feed: ${content.source}**\n`;
             successMessage += `Tweets from Twitter community ${content.source} are now available as an RSS feed.\n`;
             break;
         }
-        
+
         successMessage += `\n**Feed URL:** ${feedUrl}\n`;
         successMessage += `**Feed ID:** ${feedId}\n\n`;
-        successMessage += "You can now subscribe to this URL in your favorite RSS reader!";
-        
+        successMessage += 'You can now subscribe to this URL in your favorite RSS reader!';
+
         if (callback) {
           await callback({
             text: successMessage,
@@ -248,28 +248,26 @@ export const createRSSFeedAction: Action = {
             },
           },
         };
-
       } catch (serviceError) {
         elizaLogger.error('Failed to create RSS feed:', serviceError);
-        
+
         const errorMessage = `Failed to create RSS feed: ${serviceError instanceof Error ? serviceError.message : String(serviceError)}`;
-        
+
         if (callback) {
           await callback({
             text: `Sorry, I couldn't create the RSS feed. ${errorMessage}`,
             error: true,
           });
         }
-        
+
         return {
           success: false,
           error: serviceError instanceof Error ? serviceError : new Error(String(serviceError)),
         };
       }
-
     } catch (error) {
       elizaLogger.error('Error in CREATE_RSS_FEED action:', error);
-      
+
       if (callback) {
         await callback({
           text: 'An unexpected error occurred while creating the RSS feed. Please try again.',
@@ -288,16 +286,19 @@ export const createRSSFeedAction: Action = {
 /**
  * Parse content to extract RSS feed creation details
  */
-async function parseContent(runtime: IAgentRuntime, text: string): Promise<CreateRSSFeedContent | null> {
+async function parseContent(
+  runtime: IAgentRuntime,
+  text: string,
+): Promise<CreateRSSFeedContent | null> {
   try {
     const lowerText = text.toLowerCase();
-    
+
     // Determine feed type
     let feedType: 'timeline' | 'list' | 'user' | 'community';
     let source: string | undefined;
     let title: string | undefined;
     let description: string | undefined;
-    
+
     if (lowerText.includes('timeline')) {
       feedType = 'timeline';
     } else if (lowerText.includes('user') || lowerText.includes('@')) {
@@ -317,7 +318,8 @@ async function parseContent(runtime: IAgentRuntime, text: string): Promise<Creat
     } else if (lowerText.includes('community')) {
       feedType = 'community';
       // Extract community ID
-      const communityMatch = text.match(/community\s+(\w+)/i) || text.match(/community[:\s]+(\w+)/i);
+      const communityMatch =
+        text.match(/community\s+(\w+)/i) || text.match(/community[:\s]+(\w+)/i);
       if (communityMatch) {
         source = communityMatch[1];
       }
@@ -331,19 +333,19 @@ async function parseContent(runtime: IAgentRuntime, text: string): Promise<Creat
         return null;
       }
     }
-    
+
     // Extract custom title
     const titleMatch = text.match(/title[:\s]+"([^"]+)"/i) || text.match(/called\s+"([^"]+)"/i);
     if (titleMatch) {
       title = titleMatch[1];
     }
-    
+
     // Extract custom description
     const descMatch = text.match(/description[:\s]+"([^"]+)"/i) || text.match(/about\s+"([^"]+)"/i);
     if (descMatch) {
       description = descMatch[1];
     }
-    
+
     return {
       text,
       feedType,
@@ -351,7 +353,6 @@ async function parseContent(runtime: IAgentRuntime, text: string): Promise<Creat
       title,
       description,
     };
-    
   } catch (error) {
     elizaLogger.error('Error parsing RSS feed content:', error);
     return null;

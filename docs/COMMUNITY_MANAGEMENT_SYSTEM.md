@@ -9,24 +9,28 @@ The Community Management System is a comprehensive solution that leverages **100
 Based on our analysis of elizaOS's capabilities, **we now have complete coverage** of all community management features:
 
 ### ✅ **Memory & Knowledge System**
+
 - **Complete Memory Tracking**: All community interactions with configurable limits and priorities
 - **Semantic Search**: Vector embeddings and BM25 reranking for intelligent content discovery
 - **Multi-Table Support**: Memories, messages, facts, documents, and custom tables
 - **Scope Management**: Shared, private, and room-specific memory access
 
 ### ✅ **Community Control & Moderation**
+
 - **Role Management**: Hierarchical role system with permission validation
 - **Auto-Moderation**: Progressive discipline with configurable thresholds
 - **Conflict Resolution**: Automated escalation and appeal systems
 - **Action Logging**: Complete audit trail of all moderation activities
 
 ### ✅ **Community Analytics & Insights**
+
 - **Real-time Metrics**: Member engagement, activity patterns, and health indicators
 - **Predictive Analysis**: Pattern recognition for proactive community management
 - **Custom Reports**: Configurable analytics with actionable recommendations
 - **Performance Monitoring**: Service health checks and performance metrics
 
 ### ✅ **Member Onboarding & Guidelines**
+
 - **Personalized Onboarding**: Adaptive guidance based on user background
 - **Dynamic Guidelines**: Community rules with examples and consequences
 - **Progress Tracking**: Milestone management and success measurement
@@ -56,10 +60,10 @@ bun run test:all
 ### **3. Basic Usage**
 
 ```typescript
-import { 
-  CommunityMemoryService, 
+import {
+  CommunityMemoryService,
   CommunityManagementService,
-  communityManagementTemplates 
+  communityManagementTemplates,
 } from './src/index';
 
 // Create a community memory service
@@ -70,7 +74,7 @@ const memoryService = new CommunityMemoryService(runtime, {
   tables: ['memories', 'messages', 'facts', 'documents'],
   enableAutoModeration: true,
   enableAnalytics: true,
-  enableRoleTracking: true
+  enableRoleTracking: true,
 });
 
 // Create a community management service
@@ -79,7 +83,7 @@ const communityService = new CommunityManagementService(runtime, {
   enableAutoModeration: true,
   enableCommunityAnalytics: true,
   enableOnboarding: true,
-  enableGuidelines: true
+  enableGuidelines: true,
 });
 
 // Use the service
@@ -94,6 +98,7 @@ await communityService.assignRole(userId, 'MEMBER', adminId, 'Promoted for good 
 ### **Available Templates**
 
 #### **1. Community Supervisor** 🎯
+
 - **Full Feature Set**: Role management, moderation, analytics, onboarding, guidelines
 - **Memory Config**: 1000 limit, high priority, shared scope
 - **Use Case**: Large communities requiring comprehensive oversight
@@ -102,21 +107,24 @@ await communityService.assignRole(userId, 'MEMBER', adminId, 'Promoted for good 
 const template = getCommunityTemplate('community-supervisor');
 const character = await CharacterFactory.createFromTemplate(template.id, {
   name: 'My Community Supervisor',
-  username: 'supervisor'
+  username: 'supervisor',
 });
 ```
 
 #### **2. Community Moderator** 🛡️
+
 - **Focus**: Moderation and conflict resolution
 - **Memory Config**: 500 limit, high priority, shared scope
 - **Use Case**: Communities with active moderation needs
 
 #### **3. Community Analyst** 📊
+
 - **Focus**: Data-driven insights and community health
 - **Memory Config**: 2000 limit, high priority, shared scope
 - **Use Case**: Communities requiring detailed analytics
 
 #### **4. Community Onboarding Specialist** 👋
+
 - **Focus**: Member onboarding and integration
 - **Memory Config**: 300 limit, normal priority, private scope
 - **Use Case**: Communities with high member turnover
@@ -125,12 +133,12 @@ const character = await CharacterFactory.createFromTemplate(template.id, {
 
 ```typescript
 // Get templates by feature requirements
-const moderationTemplates = getTemplatesByFeatures({ 
-  moderation: true 
+const moderationTemplates = getTemplatesByFeatures({
+  moderation: true,
 });
 
-const analyticsTemplates = getTemplatesByFeatures({ 
-  analytics: true 
+const analyticsTemplates = getTemplatesByFeatures({
+  analytics: true,
 });
 
 // Get all available templates
@@ -151,8 +159,8 @@ const memoryId = await memoryService.createCommunityMemory(
     type: 'fact',
     scope: 'shared',
     tags: ['guidelines', 'behavior', 'community'],
-    priority: 'high'
-  }
+    priority: 'high',
+  },
 );
 
 // Create a moderation memory
@@ -163,8 +171,8 @@ const moderationMemory = await memoryService.createCommunityMemory(
     scope: 'shared',
     entityId: userId,
     tags: ['moderation', 'warning', 'enforcement'],
-    priority: 'high'
-  }
+    priority: 'high',
+  },
 );
 ```
 
@@ -178,14 +186,14 @@ const results = await memoryService.searchCommunityMemories(
     scope: 'shared',
     type: 'fact',
     count: 10,
-    threshold: 0.8
-  }
+    threshold: 0.8,
+  },
 );
 
 // Get insights for a specific room
 const insights = await memoryService.getCommunityInsights(
   roomId,
-  24 * 60 * 60 * 1000 // Last 24 hours
+  24 * 60 * 60 * 1000, // Last 24 hours
 );
 ```
 
@@ -213,7 +221,7 @@ const backupSuccess = await memoryService.backupMemories();
 const newMember = await communityService.onboardNewMember(
   userId,
   'NewUser',
-  'Welcome to our amazing community! We\'re glad to have you here.'
+  "Welcome to our amazing community! We're glad to have you here.",
 );
 
 // Check onboarding status
@@ -230,14 +238,14 @@ const roleAssigned = await communityService.assignRole(
   userId,
   'MEMBER',
   adminId,
-  'Promoted for consistent positive contributions'
+  'Promoted for consistent positive contributions',
 );
 
 // Remove a role
 const roleRemoved = await communityService.removeRole(
   userId,
   adminId,
-  'Role removed due to policy violations'
+  'Role removed due to policy violations',
 );
 ```
 
@@ -251,7 +259,7 @@ const warning = await communityService.moderateUser(
   'Inappropriate language in community chat',
   moderatorId,
   undefined, // duration
-  ['chat_log_evidence.txt'] // evidence
+  ['chat_log_evidence.txt'], // evidence
 );
 
 // Check for escalation
@@ -271,23 +279,23 @@ const guidelineId = await communityService.addGuideline({
   description: 'Maintain respectful and constructive communication',
   category: 'behavior',
   severity: 'high',
-  examples: [
-    'No personal attacks',
-    'No harassment or bullying',
-    'Be inclusive and welcoming'
-  ],
+  examples: ['No personal attacks', 'No harassment or bullying', 'Be inclusive and welcoming'],
   consequences: [
     'Warning for first violation',
     'Timeout for repeated violations',
-    'Ban for severe or persistent violations'
-  ]
+    'Ban for severe or persistent violations',
+  ],
 });
 
 // Update an existing guideline
-await communityService.updateGuideline(guidelineId, {
-  severity: 'critical',
-  examples: ['No personal attacks', 'No harassment', 'No hate speech']
-}, adminId);
+await communityService.updateGuideline(
+  guidelineId,
+  {
+    severity: 'critical',
+    examples: ['No personal attacks', 'No harassment', 'No hate speech'],
+  },
+  adminId,
+);
 ```
 
 ---
@@ -307,7 +315,7 @@ console.log(`Engagement Score: ${health.engagementScore}`);
 console.log(`Moderation Actions: ${health.moderationActions}`);
 
 // Review recommendations
-health.recommendations.forEach(rec => {
+health.recommendations.forEach((rec) => {
   console.log(`💡 ${rec}`);
 });
 ```
@@ -334,19 +342,19 @@ if (memberAnalytics) {
 // Generate insights for specific timeframes
 const dailyInsights = await memoryService.getCommunityInsights(
   roomId,
-  24 * 60 * 60 * 1000 // 24 hours
+  24 * 60 * 60 * 1000, // 24 hours
 );
 
 const weeklyInsights = await memoryService.getCommunityInsights(
   roomId,
-  7 * 24 * 60 * 60 * 1000 // 7 days
+  7 * 24 * 60 * 60 * 1000, // 7 days
 );
 
 // Process insights
-dailyInsights.forEach(insight => {
+dailyInsights.forEach((insight) => {
   if (insight.actionable) {
     console.log(`🎯 ${insight.title}: ${insight.description}`);
-    insight.recommendations?.forEach(rec => {
+    insight.recommendations?.forEach((rec) => {
       console.log(`   💡 ${rec}`);
     });
   }
@@ -361,18 +369,19 @@ dailyInsights.forEach(insight => {
 
 ```typescript
 const memoryConfig = {
-  trackingLimit: 1000,           // Maximum memories to track
-  embeddingPriority: 'high',     // 'high' | 'normal' | 'low'
-  memoryScope: 'shared',         // 'shared' | 'private' | 'room'
-  tables: [                      // Memory tables to use
-    'memories', 
-    'messages', 
-    'facts', 
-    'documents'
+  trackingLimit: 1000, // Maximum memories to track
+  embeddingPriority: 'high', // 'high' | 'normal' | 'low'
+  memoryScope: 'shared', // 'shared' | 'private' | 'room'
+  tables: [
+    // Memory tables to use
+    'memories',
+    'messages',
+    'facts',
+    'documents',
   ],
-  enableAutoModeration: true,    // Enable automatic moderation
-  enableAnalytics: true,         // Enable analytics features
-  enableRoleTracking: true       // Enable role change tracking
+  enableAutoModeration: true, // Enable automatic moderation
+  enableAnalytics: true, // Enable analytics features
+  enableRoleTracking: true, // Enable role change tracking
 };
 ```
 
@@ -380,25 +389,25 @@ const memoryConfig = {
 
 ```typescript
 const communityConfig = {
-  enableRoleManagement: true,    // Enable role management
-  enableAutoModeration: true,    // Enable auto-moderation
+  enableRoleManagement: true, // Enable role management
+  enableAutoModeration: true, // Enable auto-moderation
   enableCommunityAnalytics: true, // Enable community analytics
-  enableOnboarding: true,        // Enable member onboarding
-  enableGuidelines: true,        // Enable guideline management
-  
+  enableOnboarding: true, // Enable member onboarding
+  enableGuidelines: true, // Enable guideline management
+
   moderationThresholds: {
-    warningThreshold: 2,         // Warnings before timeout
-    timeoutThreshold: 3,         // Timeouts before ban
-    banThreshold: 5              // Total violations before ban
+    warningThreshold: 2, // Warnings before timeout
+    timeoutThreshold: 3, // Timeouts before ban
+    banThreshold: 5, // Total violations before ban
   },
-  
+
   roleHierarchy: {
-    OWNER: 5,                    // Highest level
-    ADMIN: 4,                    // Administrative level
-    MODERATOR: 3,                // Moderation level
-    MEMBER: 2,                   // Regular member
-    GUEST: 1                     // Basic access
-  }
+    OWNER: 5, // Highest level
+    ADMIN: 4, // Administrative level
+    MODERATOR: 3, // Moderation level
+    MEMBER: 2, // Regular member
+    GUEST: 1, // Basic access
+  },
 };
 ```
 
@@ -416,8 +425,8 @@ const customMemory = await memoryService.createCommunityMemory(
     type: 'custom',
     scope: 'shared',
     tags: ['events', 'meetup', 'community'],
-    priority: 'normal'
-  }
+    priority: 'normal',
+  },
 );
 ```
 
@@ -426,8 +435,8 @@ const customMemory = await memoryService.createCommunityMemory(
 ```typescript
 // Bulk onboard multiple members
 const memberIds = ['user1', 'user2', 'user3'];
-const onboardingPromises = memberIds.map(id => 
-  communityService.onboardNewMember(id, `User_${id}`)
+const onboardingPromises = memberIds.map((id) =>
+  communityService.onboardNewMember(id, `User_${id}`),
 );
 
 const newMembers = await Promise.all(onboardingPromises);
@@ -466,6 +475,7 @@ bun run test:all
 ### **Test Coverage**
 
 The test suite covers:
+
 - ✅ **Template System**: All 4 community management templates
 - ✅ **Memory Service**: Memory creation, search, insights, metrics
 - ✅ **Management Service**: Onboarding, roles, moderation, guidelines
@@ -478,6 +488,7 @@ The test suite covers:
 ### **Common Issues**
 
 #### **1. Permission Errors**
+
 ```typescript
 // Error: "Insufficient permissions to assign this role"
 // Solution: Ensure the assigner has appropriate role level
@@ -485,6 +496,7 @@ const canAssign = communityService.canAssignRole(assignerRole, targetRole);
 ```
 
 #### **2. Memory Service Errors**
+
 ```typescript
 // Error: "Failed to search table"
 // Solution: Check table configuration and runtime permissions
@@ -492,6 +504,7 @@ const tables = ['memories', 'messages', 'facts', 'documents'];
 ```
 
 #### **3. Service Initialization Errors**
+
 ```typescript
 // Error: "Service failed to initialize"
 // Solution: Check runtime configuration and dependencies
@@ -505,7 +518,7 @@ await communityService.initialize();
 // Enable debug logging
 const memoryService = new CommunityMemoryService(runtime, {
   ...config,
-  logLevel: 'debug'
+  logLevel: 'debug',
 });
 
 // Check service health
@@ -546,6 +559,7 @@ console.log('Service Health:', health);
 ### **Contribution Guidelines**
 
 The system is designed for extensibility:
+
 - **Plugin Architecture**: Easy to add new community features
 - **Template System**: Customizable community management templates
 - **Service Extensions**: Extend base services with custom functionality
@@ -590,4 +604,4 @@ The Community Management System provides **100% coverage** of elizaOS's capabili
 
 ---
 
-*For support, questions, or contributions, please refer to the project documentation or create an issue in the repository.*
+_For support, questions, or contributions, please refer to the project documentation or create an issue in the repository._

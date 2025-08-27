@@ -130,10 +130,7 @@ export default [
       'arrow-spacing': 'warn',
       'comma-spacing': 'warn',
       'key-spacing': 'warn',
-      'object-property-newline': [
-        'warn',
-        { allowAllPropertiesOnSameLine: true },
-      ],
+      'object-property-newline': ['warn', { allowAllPropertiesOnSameLine: true }],
       'object-curly-newline': [
         'warn',
         {
@@ -175,7 +172,6 @@ export default [
           case: 'kebabCase',
         },
       ],
-
 
       // React JSX component names
       'react/jsx-pascal-case': 'warn',

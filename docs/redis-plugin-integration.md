@@ -51,7 +51,7 @@ plugins: [
 // In your character settings
 memory: {
   // ... existing memory configuration
-  
+
   // Redis caching configuration for enhanced performance
   redis: {
     enabled: !!process.env.REDIS_URL?.trim(),
@@ -127,16 +127,16 @@ const redisManager = createRedisManagerFromEnv();
 if (redisManager) {
   // Connect to Redis
   await redisManager.connect();
-  
+
   // Check connection status
   if (redisManager.isRedisConnected()) {
     console.log('Redis connected successfully');
   }
-  
+
   // Use Redis operations
   await redisManager.set('key', 'value', 300); // Set with 5-minute TTL
   const value = await redisManager.get('key');
-  
+
   // Disconnect when done
   await redisManager.disconnect();
 }
@@ -147,10 +147,10 @@ if (redisManager) {
 For application-wide Redis access:
 
 ```typescript
-import { 
-  getGlobalRedisManager, 
-  initializeGlobalRedis, 
-  cleanupGlobalRedis 
+import {
+  getGlobalRedisManager,
+  initializeGlobalRedis,
+  cleanupGlobalRedis,
 } from '../utils/redis-config';
 
 // Initialize global Redis manager
@@ -179,18 +179,18 @@ if (redisManager) {
   await redisManager.setEx('key', 300, 'value'); // Set with TTL
   const value = await redisManager.get('key');
   await redisManager.del('key');
-  
+
   // Hash operations
   await redisManager.hSet('hash', 'field', 'value');
   const fieldValue = await redisManager.hGet('hash', 'field');
   const allFields = await redisManager.hGetAll('hash');
-  
+
   // Pattern-based deletion
   const deleted = await redisManager.delByPattern('user:*');
-  
+
   // Health check
   const isHealthy = await redisManager.healthCheck();
-  
+
   // Get Redis info
   const info = await redisManager.getInfo();
 }
@@ -218,7 +218,7 @@ const redisCache = new RedisMemoryCache();
 const messages = await redisCache.getCachedMemories(runtime, {
   tableName: 'messages',
   roomId: 'room123',
-  count: 10
+  count: 10,
 });
 
 // Get search results with Redis-enhanced caching
@@ -226,7 +226,7 @@ const facts = await redisCache.getCachedSearchResults(runtime, {
   tableName: 'facts',
   roomId: 'room123',
   count: 5,
-  query: 'community guidelines'
+  query: 'community guidelines',
 });
 
 // Clear cache patterns
@@ -264,13 +264,18 @@ import { RedisContextualMemories } from '../plugins/redis-memory-optimizations';
 const redisContext = new RedisContextualMemories();
 
 // Get comprehensive context with Redis-enhanced caching
-const context = await redisContext.getContextualMemories(runtime, 'room123', 'What are our guidelines?', {
-  messageCount: 5,
-  factCount: 6,
-  entityCount: 3,
-  similarityThreshold: 0.7,
-  includeEmbeddings: false
-});
+const context = await redisContext.getContextualMemories(
+  runtime,
+  'room123',
+  'What are our guidelines?',
+  {
+    messageCount: 5,
+    factCount: 6,
+    entityCount: 3,
+    similarityThreshold: 0.7,
+    includeEmbeddings: false,
+  },
+);
 
 console.log('Context:', context.context);
 console.log('Total memories:', context.metadata.totalMemories);
@@ -281,10 +286,10 @@ console.log('Redis used:', context.metadata.redisUsed);
 ### Convenience Functions
 
 ```typescript
-import { 
-  redisMemoryCache, 
-  redisBatchOperations, 
-  redisContextualMemories 
+import {
+  redisMemoryCache,
+  redisBatchOperations,
+  redisContextualMemories,
 } from '../plugins/redis-memory-optimizations';
 
 // Use pre-configured instances
@@ -297,32 +302,32 @@ const context = await redisContextualMemories.getContextualMemories(runtime, roo
 
 ### Required Variables
 
-| Variable | Description | Default | Example |
-|----------|-------------|---------|---------|
-| `REDIS_URL` | Redis connection URL | None | `redis://localhost:6379` |
-| `REDIS_PASSWORD` | Redis authentication password | Empty | `mypassword` |
-| `REDIS_DB` | Redis database number | `0` | `1` |
+| Variable         | Description                   | Default | Example                  |
+| ---------------- | ----------------------------- | ------- | ------------------------ |
+| `REDIS_URL`      | Redis connection URL          | None    | `redis://localhost:6379` |
+| `REDIS_PASSWORD` | Redis authentication password | Empty   | `mypassword`             |
+| `REDIS_DB`       | Redis database number         | `0`     | `1`                      |
 
 ### Optional Variables
 
-| Variable | Description | Default | Example |
-|----------|-------------|---------|---------|
-| `REDIS_MAX_MEMORY` | Maximum memory usage | `256mb` | `512mb` |
-| `REDIS_KEY_PREFIX` | Key prefix for namespacing | `elizaos:` | `nubi:` |
-| `REDIS_EVICTION_POLICY` | Memory eviction policy | `allkeys-lru` | `volatile-lru` |
-| `REDIS_POOL_MIN` | Minimum connection pool size | `2` | `5` |
-| `REDIS_POOL_MAX` | Maximum connection pool size | `10` | `20` |
+| Variable                | Description                  | Default       | Example        |
+| ----------------------- | ---------------------------- | ------------- | -------------- |
+| `REDIS_MAX_MEMORY`      | Maximum memory usage         | `256mb`       | `512mb`        |
+| `REDIS_KEY_PREFIX`      | Key prefix for namespacing   | `elizaos:`    | `nubi:`        |
+| `REDIS_EVICTION_POLICY` | Memory eviction policy       | `allkeys-lru` | `volatile-lru` |
+| `REDIS_POOL_MIN`        | Minimum connection pool size | `2`           | `5`            |
+| `REDIS_POOL_MAX`        | Maximum connection pool size | `10`          | `20`           |
 
 ### Connection Pool Variables
 
-| Variable | Description | Default | Example |
-|----------|-------------|---------|---------|
-| `REDIS_ACQUIRE_TIMEOUT` | Connection acquisition timeout (ms) | `30000` | `60000` |
-| `REDIS_CREATE_TIMEOUT` | Connection creation timeout (ms) | `30000` | `60000` |
-| `REDIS_DESTROY_TIMEOUT` | Connection destruction timeout (ms) | `5000` | `10000` |
-| `REDIS_IDLE_TIMEOUT` | Connection idle timeout (ms) | `30000` | `60000` |
-| `REDIS_REAP_INTERVAL` | Connection cleanup interval (ms) | `1000` | `2000` |
-| `REDIS_CREATE_RETRY_INTERVAL` | Connection retry interval (ms) | `200` | `500` |
+| Variable                      | Description                         | Default | Example |
+| ----------------------------- | ----------------------------------- | ------- | ------- |
+| `REDIS_ACQUIRE_TIMEOUT`       | Connection acquisition timeout (ms) | `30000` | `60000` |
+| `REDIS_CREATE_TIMEOUT`        | Connection creation timeout (ms)    | `30000` | `60000` |
+| `REDIS_DESTROY_TIMEOUT`       | Connection destruction timeout (ms) | `5000`  | `10000` |
+| `REDIS_IDLE_TIMEOUT`          | Connection idle timeout (ms)        | `30000` | `60000` |
+| `REDIS_REAP_INTERVAL`         | Connection cleanup interval (ms)    | `1000`  | `2000`  |
+| `REDIS_CREATE_RETRY_INTERVAL` | Connection retry interval (ms)      | `200`   | `500`   |
 
 ## Usage Examples
 
@@ -344,7 +349,7 @@ async function initializeApp() {
 // Use Redis in your application
 async function cacheUserData(userId: string, userData: any) {
   const redisManager = getGlobalRedisManager();
-  
+
   if (redisManager && redisManager.isRedisConnected()) {
     try {
       await redisManager.setEx(`user:${userId}`, 3600, JSON.stringify(userData));
@@ -369,9 +374,9 @@ async function getEnhancedMemories(runtime: IAgentRuntime, roomId: string) {
     const memories = await redisMemoryCache.getCachedMemories(runtime, {
       tableName: 'messages',
       roomId,
-      count: 20
+      count: 20,
     });
-    
+
     return memories;
   } catch (error) {
     console.error('Enhanced memory retrieval failed:', error.message);
@@ -379,7 +384,7 @@ async function getEnhancedMemories(runtime: IAgentRuntime, roomId: string) {
     return await runtime.getMemories({
       tableName: 'messages',
       roomId,
-      count: 20
+      count: 20,
     });
   }
 }
@@ -394,12 +399,12 @@ import { redisBatchOperations } from '../plugins/redis-memory-optimizations';
 async function createBatchMemories(runtime: IAgentRuntime, memories: Memory[]) {
   try {
     const memoryIds = await redisBatchOperations.createMemoriesBatch(
-      runtime, 
-      memories, 
-      'facts', 
-      true
+      runtime,
+      memories,
+      'facts',
+      true,
     );
-    
+
     console.log(`Created ${memoryIds.length} memories in batch`);
     return memoryIds;
   } catch (error) {
@@ -426,16 +431,16 @@ async function getEnhancedContext(runtime: IAgentRuntime, roomId: string, userMe
         factCount: 8,
         entityCount: 5,
         similarityThreshold: 0.8,
-        includeEmbeddings: true
-      }
+        includeEmbeddings: true,
+      },
     );
-    
+
     console.log('Enhanced context retrieved:', {
       totalMemories: context.metadata.totalMemories,
       queryTime: context.metadata.queryTime,
-      redisUsed: context.metadata.redisUsed
+      redisUsed: context.metadata.redisUsed,
     });
-    
+
     return context;
   } catch (error) {
     console.error('Enhanced context retrieval failed:', error.message);
@@ -448,30 +453,30 @@ async function getEnhancedContext(runtime: IAgentRuntime, roomId: string, userMe
 
 ### Cache Performance
 
-| Metric | Local Cache Only | Redis + Local Cache | Improvement |
-|--------|------------------|---------------------|-------------|
-| Cache Hit Rate | 60-70% | 80-90% | **20-30% better** |
-| Memory Usage | High (per instance) | Low (shared) | **Significant reduction** |
-| Cache Consistency | Per instance | Cross-instance | **Perfect consistency** |
-| Startup Time | Fast | Fast | **Similar** |
+| Metric            | Local Cache Only    | Redis + Local Cache | Improvement               |
+| ----------------- | ------------------- | ------------------- | ------------------------- |
+| Cache Hit Rate    | 60-70%              | 80-90%              | **20-30% better**         |
+| Memory Usage      | High (per instance) | Low (shared)        | **Significant reduction** |
+| Cache Consistency | Per instance        | Cross-instance      | **Perfect consistency**   |
+| Startup Time      | Fast                | Fast                | **Similar**               |
 
 ### Distributed Performance
 
-| Scenario | Without Redis | With Redis | Improvement |
-|----------|---------------|------------|-------------|
-| Multiple instances | Cache misses | Shared cache | **Eliminates misses** |
-| Load balancing | Sticky sessions needed | Stateless | **Better load distribution** |
-| Memory usage | N × local cache | 1 × shared cache | **N times reduction** |
-| Cache warming | Per instance | Shared | **Faster warmup** |
+| Scenario           | Without Redis          | With Redis       | Improvement                  |
+| ------------------ | ---------------------- | ---------------- | ---------------------------- |
+| Multiple instances | Cache misses           | Shared cache     | **Eliminates misses**        |
+| Load balancing     | Sticky sessions needed | Stateless        | **Better load distribution** |
+| Memory usage       | N × local cache        | 1 × shared cache | **N times reduction**        |
+| Cache warming      | Per instance           | Shared           | **Faster warmup**            |
 
 ### Memory Operations
 
-| Operation | Standard | Redis-Enhanced | Improvement |
-|-----------|----------|----------------|-------------|
-| Single retrieval | ~50ms | ~10ms | **5x faster** |
-| Batch creation (100) | ~5s | ~0.8s | **6x faster** |
-| Context retrieval | ~200ms | ~40ms | **5x faster** |
-| Cache invalidation | ~100ms | ~20ms | **5x faster** |
+| Operation            | Standard | Redis-Enhanced | Improvement   |
+| -------------------- | -------- | -------------- | ------------- |
+| Single retrieval     | ~50ms    | ~10ms          | **5x faster** |
+| Batch creation (100) | ~5s      | ~0.8s          | **6x faster** |
+| Context retrieval    | ~200ms   | ~40ms          | **5x faster** |
+| Cache invalidation   | ~100ms   | ~20ms          | **5x faster** |
 
 ## Troubleshooting
 
@@ -480,11 +485,13 @@ async function getEnhancedContext(runtime: IAgentRuntime, roomId: string, userMe
 #### Redis Connection Failed
 
 **Symptoms:**
+
 - Redis plugin not loading
 - Cache operations falling back to local only
 - Connection timeout errors
 
 **Solutions:**
+
 1. Check Redis server status: `redis-cli ping`
 2. Verify connection URL: `redis://host:port`
 3. Check firewall and network connectivity
@@ -493,11 +500,13 @@ async function getEnhancedContext(runtime: IAgentRuntime, roomId: string, userMe
 #### Cache Inconsistency
 
 **Symptoms:**
+
 - Stale data being served
 - Cache not updating after data changes
 - Inconsistent results across instances
 
 **Solutions:**
+
 1. Ensure proper cache invalidation patterns
 2. Check TTL settings for different data types
 3. Verify cache key generation consistency
@@ -506,11 +515,13 @@ async function getEnhancedContext(runtime: IAgentRuntime, roomId: string, userMe
 #### Performance Degradation
 
 **Symptoms:**
+
 - Slower response times
 - High Redis memory usage
 - Connection pool exhaustion
 
 **Solutions:**
+
 1. Monitor Redis memory usage and adjust `maxmemory` policy
 2. Optimize connection pool settings
 3. Implement cache warming strategies
@@ -526,11 +537,11 @@ const redisManager = getGlobalRedisManager();
 if (redisManager) {
   const isConnected = redisManager.isRedisConnected();
   console.log('Redis connected:', isConnected);
-  
+
   // Health check
   const isHealthy = await redisManager.healthCheck();
   console.log('Redis healthy:', isHealthy);
-  
+
   // Get Redis info
   const info = await redisManager.getInfo();
   console.log('Redis info:', info);
@@ -548,12 +559,12 @@ console.log('Cache Statistics:', {
   local: {
     size: stats.local.size,
     maxSize: stats.local.maxSize,
-    utilization: (stats.local.size / stats.local.maxSize * 100).toFixed(2) + '%'
+    utilization: ((stats.local.size / stats.local.maxSize) * 100).toFixed(2) + '%',
   },
   redis: {
     connected: stats.redis.connected,
-    info: stats.redis.info
-  }
+    info: stats.redis.info,
+  },
 });
 ```
 

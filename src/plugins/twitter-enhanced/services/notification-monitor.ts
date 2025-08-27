@@ -22,13 +22,14 @@ export class NotificationMonitor extends Service {
 
   constructor(runtime: IAgentRuntime) {
     super(runtime);
-    
+
     // Get poll interval from config
-    const intervalStr = runtime.getSetting('TWITTER_NOTIFICATION_POLL_INTERVAL') || 
-                        process.env.TWITTER_NOTIFICATION_POLL_INTERVAL || 
-                        '60000';
+    const intervalStr =
+      runtime.getSetting('TWITTER_NOTIFICATION_POLL_INTERVAL') ||
+      process.env.TWITTER_NOTIFICATION_POLL_INTERVAL ||
+      '60000';
     this.pollInterval = parseInt(intervalStr);
-    
+
     elizaLogger.info(`NotificationMonitor configured with ${this.pollInterval}ms poll interval`);
   }
 
@@ -53,17 +54,22 @@ export class NotificationMonitor extends Service {
   async initialize(): Promise<void> {
     try {
       elizaLogger.info('Initializing Notification Monitor');
-      
+
       // Get Twitter client service
-      this.clientService = this.runtime.getService('TWITTER_CLIENT_SERVICE') as TwitterClientService;
+      this.clientService = this.runtime.getService(
+        'TWITTER_CLIENT_SERVICE',
+      ) as TwitterClientService;
       if (!this.clientService) {
         throw new Error('TwitterClientService not found - ensure it is loaded first');
       }
 
       // Start monitoring if enabled
-      const monitoringEnabled = (this.runtime.getSetting('TWITTER_RAID_MONITORING') || 
-                                process.env.TWITTER_RAID_MONITORING || 
-                                'true').toLowerCase() === 'true';
+      const monitoringEnabled =
+        (
+          this.runtime.getSetting('TWITTER_RAID_MONITORING') ||
+          process.env.TWITTER_RAID_MONITORING ||
+          'true'
+        ).toLowerCase() === 'true';
 
       if (monitoringEnabled) {
         await this.startMonitoring();
@@ -111,7 +117,9 @@ export class NotificationMonitor extends Service {
       // Do initial poll
       await this.pollNotifications();
 
-      elizaLogger.info(`Twitter notification monitoring started (interval: ${this.pollInterval}ms)`);
+      elizaLogger.info(
+        `Twitter notification monitoring started (interval: ${this.pollInterval}ms)`,
+      );
     } catch (error) {
       this.isMonitoring = false;
       elizaLogger.error('Failed to start notification monitoring:', error);
@@ -128,9 +136,9 @@ export class NotificationMonitor extends Service {
     }
 
     elizaLogger.info('Stopping Twitter notification monitoring...');
-    
+
     this.isMonitoring = false;
-    
+
     if (this.monitorInterval) {
       clearInterval(this.monitorInterval);
       this.monitorInterval = null;
@@ -150,19 +158,21 @@ export class NotificationMonitor extends Service {
 
     try {
       elizaLogger.debug('Polling Twitter notifications...');
-      
+
       // Get mentions (our primary notification source)
       const mentions = await this.clientService.getMentions();
-      
+
       // Filter for new notifications since last poll
-      const newNotifications = mentions.filter(mention => {
-        const mentionTime = new Date(mention.createdAt || mention.created_at || mention.timestamp || 0).getTime();
+      const newNotifications = mentions.filter((mention) => {
+        const mentionTime = new Date(
+          mention.createdAt || mention.created_at || mention.timestamp || 0,
+        ).getTime();
         return mentionTime > this.lastNotificationTimestamp;
       });
 
       if (newNotifications.length > 0) {
         elizaLogger.info(`Found ${newNotifications.length} new Twitter notifications`);
-        
+
         // Process each notification
         for (const notification of newNotifications) {
           await this.processNotification(notification);
@@ -173,7 +183,6 @@ export class NotificationMonitor extends Service {
       } else {
         elizaLogger.debug('No new notifications found');
       }
-
     } catch (error) {
       elizaLogger.error('Failed to poll notifications:', error);
     }
@@ -186,12 +195,10 @@ export class NotificationMonitor extends Service {
     try {
       const notificationType = this.classifyNotification(notification);
       const tweetId = notification.id || notification.rest_id || notification.id_str;
-      
-      elizaLogger.info('Processing notification', {
-        type: notificationType,
-        tweetId,
-        author: notification.username || notification.user?.username || 'unknown'
-      });
+
+      elizaLogger.info(
+        `Processing notification: ${notificationType} from ${notification.username || notification.user?.username || 'unknown'} (${tweetId || 'unknown'})`,
+      );
 
       // Store in engagement history
       const engagementData = {
@@ -200,7 +207,7 @@ export class NotificationMonitor extends Service {
         author: notification.username || notification.user?.username || 'unknown',
         text: notification.text || notification.full_text || '',
         timestamp: Date.now(),
-        originalNotification: notification
+        originalNotification: notification,
       };
 
       // Add to history
@@ -212,7 +219,6 @@ export class NotificationMonitor extends Service {
       // Trigger callbacks
       await this.triggerCallbacks(notificationType, engagementData);
       await this.triggerCallbacks('all', engagementData);
-
     } catch (error) {
       elizaLogger.error('Failed to process notification:', error);
     }
@@ -253,7 +259,7 @@ export class NotificationMonitor extends Service {
       this.notificationCallbacks.set(type, []);
     }
     this.notificationCallbacks.get(type)!.push(callback);
-    
+
     elizaLogger.debug(`Registered notification callback for type: ${type}`);
   }
 
@@ -278,7 +284,7 @@ export class NotificationMonitor extends Service {
     const callbacks = this.notificationCallbacks.get(type);
     if (callbacks && callbacks.length > 0) {
       elizaLogger.debug(`Triggering ${callbacks.length} callbacks for type: ${type}`);
-      
+
       for (const callback of callbacks) {
         try {
           await callback(data);
@@ -303,9 +309,7 @@ export class NotificationMonitor extends Service {
       allEngagements.push(...engagements);
     }
 
-    return allEngagements
-      .sort((a, b) => b.timestamp - a.timestamp)
-      .slice(0, limit);
+    return allEngagements.sort((a, b) => b.timestamp - a.timestamp).slice(0, limit);
   }
 
   /**
@@ -314,9 +318,14 @@ export class NotificationMonitor extends Service {
   isMonitoringTweet(tweetId: string): boolean {
     // Check if any engagement history contains this tweet ID
     for (const [_, engagements] of this.engagementHistory) {
-      if (engagements.some(e => e.originalNotification?.in_reply_to_status_id === tweetId || 
-                              e.originalNotification?.quoted_status?.id === tweetId ||
-                              e.id === tweetId)) {
+      if (
+        engagements.some(
+          (e) =>
+            e.originalNotification?.in_reply_to_status_id === tweetId ||
+            e.originalNotification?.quoted_status?.id === tweetId ||
+            e.id === tweetId,
+        )
+      ) {
         return true;
       }
     }

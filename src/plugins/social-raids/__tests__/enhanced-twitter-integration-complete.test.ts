@@ -8,12 +8,12 @@ import { EngagementTracker } from '../../twitter-enhanced/services/engagement-tr
 // Mock runtime with enhanced Twitter services
 const createEnhancedMockRuntime = (): IAgentRuntime => {
   const services: Record<string, any> = {};
-  
+
   return {
     getSetting: (key: string) => {
       const settings: Record<string, string> = {
         TWITTER_USERNAME: process.env.TWITTER_USERNAME || 'test_user',
-        TWITTER_PASSWORD: process.env.TWITTER_PASSWORD || 'test_password', 
+        TWITTER_PASSWORD: process.env.TWITTER_PASSWORD || 'test_password',
         TWITTER_EMAIL: process.env.TWITTER_EMAIL || 'test@example.com',
         SUPABASE_URL: 'http://localhost:3000',
         SUPABASE_SERVICE_ROLE_KEY: 'test_key',
@@ -45,17 +45,17 @@ describe('Enhanced Twitter Plugin + Social Raids Integration', () => {
     }
 
     runtime = createEnhancedMockRuntime();
-    
+
     // Initialize enhanced Twitter services first
     authService = new TwitterAuthService(runtime);
     (runtime as any).registerService('TWITTER_AUTH_SERVICE', authService);
-    
+
     clientService = new TwitterClientService(runtime);
     (runtime as any).registerService('TWITTER_CLIENT_SERVICE', clientService);
-    
+
     engagementTracker = new EngagementTracker(runtime);
     (runtime as any).registerService('ENGAGEMENT_TRACKER', engagementTracker);
-    
+
     // Initialize TwitterRaidService with enhanced services available
     twitterRaidService = new TwitterRaidService(runtime);
   });
@@ -66,7 +66,7 @@ describe('Enhanced Twitter Plugin + Social Raids Integration', () => {
       const authServiceFromRuntime = runtime.getService('TWITTER_AUTH_SERVICE');
       const clientServiceFromRuntime = runtime.getService('TWITTER_CLIENT_SERVICE');
       const engagementTrackerFromRuntime = runtime.getService('ENGAGEMENT_TRACKER');
-      
+
       expect(authServiceFromRuntime).toBe(authService);
       expect(clientServiceFromRuntime).toBe(clientService);
       expect(engagementTrackerFromRuntime).toBe(engagementTracker);
@@ -74,7 +74,7 @@ describe('Enhanced Twitter Plugin + Social Raids Integration', () => {
 
     it('should use enhanced scraping with fallback capability', async () => {
       const testUrl = 'https://twitter.com/user/status/1234567890';
-      
+
       // Mock the enhanced services to simulate real-time data
       const mockEngagement = {
         likes: 100,
@@ -83,14 +83,14 @@ describe('Enhanced Twitter Plugin + Social Raids Integration', () => {
         replies: 75,
         lastUpdated: Date.now(),
       };
-      
+
       // Mock getRaidEngagement to return data
       const originalGetRaidEngagement = engagementTracker.getRaidEngagement;
       engagementTracker.getRaidEngagement = () => mockEngagement;
-      
+
       try {
         const result = await twitterRaidService.scrapeEngagement(testUrl);
-        
+
         expect(result).toBeTruthy();
         expect(result.metrics).toBeTruthy();
         expect(result.metrics.likes).toBe(100);
@@ -98,7 +98,6 @@ describe('Enhanced Twitter Plugin + Social Raids Integration', () => {
         expect(result.metrics.quotes).toBe(25);
         expect(result.metrics.comments).toBe(75);
         expect(result.id).toBe('1234567890');
-        
       } catch (error) {
         // If enhanced services fail, should fall back gracefully
         expect(error.message).toContain('Tweet scraping failed');
@@ -110,7 +109,7 @@ describe('Enhanced Twitter Plugin + Social Raids Integration', () => {
 
     it('should handle enhanced Twitter client fallback', async () => {
       const testUrl = 'https://twitter.com/user/status/9876543210';
-      
+
       // Mock the TwitterClientService to return data
       const mockTweet = {
         id: '9876543210',
@@ -122,20 +121,19 @@ describe('Enhanced Twitter Plugin + Social Raids Integration', () => {
         quoteCount: 50,
         replyCount: 150,
       };
-      
+
       // Mock getTweet method
       clientService.getTweet = async () => mockTweet;
-      
+
       try {
         const result = await twitterRaidService.scrapeEngagement(testUrl);
-        
+
         expect(result).toBeTruthy();
         expect(result.id).toBe('9876543210');
         expect(result.text).toBe('Test tweet content');
         expect(result.author).toBe('testuser');
         expect(result.metrics.likes).toBe(200);
         expect(result.metrics.retweets).toBe(100);
-        
       } catch (error) {
         // Enhanced client might not be fully functional in test environment
         expect(error.message).toContain('Tweet scraping failed');
@@ -143,12 +141,14 @@ describe('Enhanced Twitter Plugin + Social Raids Integration', () => {
     });
 
     it('should register raids with engagement tracker', async () => {
-      const mockRaidData = [{
-        id: 'test-raid-123',
-        target_url: 'https://twitter.com/user/status/1111111111',
-        status: 'active',
-      }];
-      
+      const mockRaidData = [
+        {
+          id: 'test-raid-123',
+          target_url: 'https://twitter.com/user/status/1111111111',
+          status: 'active',
+        },
+      ];
+
       // Mock Supabase response
       const originalSupabase = twitterRaidService.supabase;
       twitterRaidService.supabase = {
@@ -161,18 +161,18 @@ describe('Enhanced Twitter Plugin + Social Raids Integration', () => {
           }),
         }),
       };
-      
+
       // Mock addRaidForTracking method
       let raidRegistered = false;
       let registeredRaidId = '';
       let registeredUrl = '';
-      
+
       engagementTracker.addRaidForTracking = async (raidId: string, targetUrl: string) => {
         raidRegistered = true;
         registeredRaidId = raidId;
         registeredUrl = targetUrl;
       };
-      
+
       try {
         const result = await twitterRaidService.createRaid({
           targetUrl: 'https://twitter.com/user/status/1111111111',
@@ -180,12 +180,11 @@ describe('Enhanced Twitter Plugin + Social Raids Integration', () => {
           platform: 'telegram',
           createdBy: '12345678-1234-1234-1234-123456789012',
         });
-        
+
         expect(result).toBeTruthy();
         expect(raidRegistered).toBe(true);
         expect(registeredRaidId).toBe('test-raid-123');
         expect(registeredUrl).toBe('https://twitter.com/user/status/1111111111');
-        
       } catch (error) {
         // Might fail due to mock limitations, but should show integration attempt
         console.log('Raid creation test error (expected in test environment):', error.message);
@@ -199,16 +198,16 @@ describe('Enhanced Twitter Plugin + Social Raids Integration', () => {
   describe('Service Communication Flow', () => {
     it('should demonstrate complete engagement tracking flow', async () => {
       const testTweetUrl = 'https://twitter.com/user/status/2222222222';
-      
+
       // 1. Raid creation should register with engagement tracker
       let trackedRaids: any[] = [];
       engagementTracker.addRaidForTracking = async (raidId: string, targetUrl: string) => {
         trackedRaids.push({ raidId, targetUrl });
       };
-      
+
       // 2. Engagement scraping should use real-time data
       engagementTracker.getRaidEngagement = (url: string) => {
-        const found = trackedRaids.find(r => r.targetUrl === url);
+        const found = trackedRaids.find((r) => r.targetUrl === url);
         if (found) {
           return {
             likes: 300,
@@ -220,7 +219,7 @@ describe('Enhanced Twitter Plugin + Social Raids Integration', () => {
         }
         return null;
       };
-      
+
       // 3. Mock raid creation
       const mockRaid = { id: 'flow-test-raid', target_url: testTweetUrl };
       twitterRaidService.supabase = {
@@ -230,26 +229,25 @@ describe('Enhanced Twitter Plugin + Social Raids Integration', () => {
           }),
         }),
       };
-      
+
       // Execute the flow
       try {
         // Create raid
         await twitterRaidService.createRaid({
           targetUrl: testTweetUrl,
           targetPlatform: 'twitter',
-          platform: 'telegram', 
+          platform: 'telegram',
           createdBy: '12345678-1234-1234-1234-123456789012',
         });
-        
+
         // Verify raid was registered for tracking
         expect(trackedRaids.length).toBe(1);
         expect(trackedRaids[0].targetUrl).toBe(testTweetUrl);
-        
+
         // Scrape engagement (should use real-time data)
         const engagement = await twitterRaidService.scrapeEngagement(testTweetUrl);
         expect(engagement.metrics.likes).toBe(300);
         expect(engagement.metrics.retweets).toBe(150);
-        
       } catch (error) {
         // Test the integration concept even if mocks are limited
         console.log('Flow test completed with expected mock limitations');
@@ -267,12 +265,12 @@ describe('Enhanced Twitter Plugin + Social Raids Integration', () => {
         },
         getService: () => null, // No enhanced services available
       } as IAgentRuntime;
-      
+
       const limitedRaidService = new TwitterRaidService(limitedRuntime);
-      
+
       // Should still function with legacy scraper fallback
       expect(limitedRaidService).toBeInstanceOf(TwitterRaidService);
-      
+
       // Scraping should attempt legacy fallback
       try {
         await limitedRaidService.scrapeEngagement('https://twitter.com/user/status/3333333333');
@@ -290,12 +288,12 @@ describe('Enhanced Twitter Plugin + Social Raids Integration', () => {
       expect(authService.capabilityDescription).toBeTruthy();
       expect(clientService.capabilityDescription).toBeTruthy();
       expect(engagementTracker.capabilityDescription).toBeTruthy();
-      
+
       // Services should have proper logging context
       const authStatus = authService.getAuthStatus();
       const clientHealth = clientService.getHealthStatus();
       const trackerStatus = engagementTracker.getStatus();
-      
+
       expect(authStatus).toBeTruthy();
       expect(clientHealth).toBeTruthy();
       expect(trackerStatus).toBeTruthy();

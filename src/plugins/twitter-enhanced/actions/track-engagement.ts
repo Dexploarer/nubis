@@ -6,11 +6,14 @@ export const trackEngagementAction: Action = {
   name: 'TRACK_ENGAGEMENT',
   description: 'Track engagement for specific tweets or raids in real-time',
   similes: ['track engagement', 'monitor engagement', 'check raid progress', 'engagement stats'],
-  
+
   validate: async (runtime: IAgentRuntime, message: Memory) => {
     const content = message.content?.text?.toLowerCase() || '';
-    return content.includes('engagement') || content.includes('track') || 
-           content.includes('raid') && (content.includes('progress') || content.includes('stats'));
+    return (
+      content.includes('engagement') ||
+      content.includes('track') ||
+      (content.includes('raid') && (content.includes('progress') || content.includes('stats')))
+    );
   },
 
   handler: async (
@@ -18,11 +21,11 @@ export const trackEngagementAction: Action = {
     message: Memory,
     state: State,
     options: any,
-    callback?: any
+    callback?: any,
   ): Promise<ActionResult> => {
     try {
       elizaLogger.info('Executing TRACK_ENGAGEMENT action');
-      
+
       // Get engagement tracker service
       const tracker = runtime.getService('ENGAGEMENT_TRACKER') as EngagementTracker;
       if (!tracker) {
@@ -30,17 +33,18 @@ export const trackEngagementAction: Action = {
       }
 
       const content = message.content?.text || '';
-      
+
       // Check if specific tweet URL is provided
       const tweetUrlMatch = content.match(/https:\/\/(?:twitter\.com|x\.com)\/\w+\/status\/\d+/);
-      
+
       if (tweetUrlMatch) {
         // Track specific tweet
         const tweetUrl = tweetUrlMatch[0];
         const engagement = tracker.getRaidEngagement(tweetUrl);
-        
+
         if (engagement) {
-          const engagementText = `📊 **Engagement Tracking: ${tweetUrl}**\n\n` +
+          const engagementText =
+            `📊 **Engagement Tracking: ${tweetUrl}**\n\n` +
             `• **Likes**: ${engagement.likes}\n` +
             `• **Retweets**: ${engagement.retweets}\n` +
             `• **Quote Tweets**: ${engagement.quotes}\n` +
@@ -63,7 +67,7 @@ export const trackEngagementAction: Action = {
           };
         } else {
           const notFoundText = `❌ No engagement tracking found for: ${tweetUrl}\n\nThis tweet may not be part of an active raid or tracking may not have started yet.`;
-          
+
           if (callback) {
             await callback({
               text: notFoundText,
@@ -78,14 +82,14 @@ export const trackEngagementAction: Action = {
             data: { tweetUrl, found: false },
           };
         }
-        
       } else {
         // Show all active raids and their engagement
         const activeRaids = tracker.getActiveRaids();
         const status = tracker.getStatus();
-        
+
         if (activeRaids.length === 0) {
-          const noRaidsText = `📊 **Engagement Tracking Status**\n\n` +
+          const noRaidsText =
+            `📊 **Engagement Tracking Status**\n\n` +
             `• **Tracking Enabled**: ${status.trackingEnabled ? '✅' : '❌'}\n` +
             `• **Active Raids**: 0\n` +
             `• **Database Connected**: ${status.supabaseConnected ? '✅' : '❌'}\n\n` +
@@ -107,19 +111,25 @@ export const trackEngagementAction: Action = {
         }
 
         // Format active raids engagement data
-        let raidsText = `📊 **Active Raid Engagement Tracking**\n\n` +
+        let raidsText =
+          `📊 **Active Raid Engagement Tracking**\n\n` +
           `• **Tracking Status**: ${status.trackingEnabled ? '🟢 Active' : '🔴 Inactive'}\n` +
           `• **Active Raids**: ${status.activeRaids}\n` +
           `• **Total Engagements**: ${status.totalEngagements}\n` +
           `• **Database**: ${status.supabaseConnected ? '✅ Connected' : '❌ Disconnected'}\n\n` +
           `**Raid Details:**\n\n`;
 
-        for (const { tweetId, raid, counts } of activeRaids.slice(0, 5)) { // Limit to 5 most recent
+        for (const { tweetId, raid, counts } of activeRaids.slice(0, 5)) {
+          // Limit to 5 most recent
           const tweetUrl = `https://twitter.com/user/status/${tweetId}`;
-          const totalEngagement = (counts?.likes || 0) + (counts?.retweets || 0) + 
-                                 (counts?.quotes || 0) + (counts?.replies || 0);
-          
-          raidsText += `🎯 **Raid ${raid.id.slice(0, 8)}**\n` +
+          const totalEngagement =
+            (counts?.likes || 0) +
+            (counts?.retweets || 0) +
+            (counts?.quotes || 0) +
+            (counts?.replies || 0);
+
+          raidsText +=
+            `🎯 **Raid ${raid.id.slice(0, 8)}**\n` +
             `• Target: [Tweet](${tweetUrl})\n` +
             `• Likes: ${counts?.likes || 0} | Retweets: ${counts?.retweets || 0}\n` +
             `• Quotes: ${counts?.quotes || 0} | Replies: ${counts?.replies || 0}\n` +
@@ -145,12 +155,11 @@ export const trackEngagementAction: Action = {
           data: { status, activeRaids },
         };
       }
-
     } catch (error) {
       elizaLogger.error('Failed to track engagement:', error);
-      
+
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      
+
       if (callback) {
         await callback({
           text: `❌ Engagement tracking error: ${errorMessage}`,
@@ -168,22 +177,24 @@ export const trackEngagementAction: Action = {
   examples: [
     [
       {
-        user: 'user',
+        name: 'user',
         content: { text: 'Track engagement for https://twitter.com/user/status/1234567890' },
       },
       {
-        user: 'assistant', 
-        content: { text: 'I\'ll track the engagement metrics for that tweet!' },
+        name: 'assistant',
+        content: { text: "I'll track the engagement metrics for that tweet!" },
       },
     ],
     [
       {
-        user: 'user',
+        name: 'user',
         content: { text: 'Show me current raid engagement stats' },
       },
       {
-        user: 'assistant',
-        content: { text: 'I\'ll show you the current engagement tracking status for all active raids!' },
+        name: 'assistant',
+        content: {
+          text: "I'll show you the current engagement tracking status for all active raids!",
+        },
       },
     ],
   ],

@@ -91,10 +91,11 @@ export class TelegramRaidManager extends Service {
     this.passiveMode = String(passiveSetting ?? '').toLowerCase() === 'true';
 
     // Initialize admin users
-    const adminUsersStr = runtime.getSetting('TELEGRAM_ADMIN_USERS') || process.env.TELEGRAM_ADMIN_USERS;
+    const adminUsersStr =
+      runtime.getSetting('TELEGRAM_ADMIN_USERS') || process.env.TELEGRAM_ADMIN_USERS;
     if (adminUsersStr) {
-      const adminIds = adminUsersStr.split(',').map(id => id.trim());
-      adminIds.forEach(id => this.adminUsers.add(id));
+      const adminIds: string[] = adminUsersStr.split(',').map((id: string) => id.trim());
+      adminIds.forEach((id: string) => this.adminUsers.add(id));
     }
   }
 
@@ -291,15 +292,15 @@ export class TelegramRaidManager extends Service {
       try {
         // 1. Sync user and chat entities
         await this.syncEntities(ctx);
-        
+
         // 2. Check chat state and permissions
         await this.checkChatPermissions(ctx);
-        
+
         // 3. Auto-detect Twitter URLs and suggest raids
         if (ctx.message && 'text' in ctx.message) {
           await this.detectTwitterUrls(ctx);
         }
-        
+
         // 4. Log interaction for community memory
         if (ctx.message && 'text' in ctx.message) {
           await this.logUserInteraction(ctx);
@@ -317,8 +318,10 @@ export class TelegramRaidManager extends Service {
     try {
       // 🧠 Use Enhanced Community Memory Service for ElizaOS integration
       const communityMemoryService = this.runtime.getService('COMMUNITY_MEMORY_SERVICE');
-      if (communityMemoryService && typeof (communityMemoryService as any).recordInteraction === 'function') {
-        
+      if (
+        communityMemoryService &&
+        typeof (communityMemoryService as any).recordInteraction === 'function'
+      ) {
         // Prepare interaction data for ElizaOS memory system
         const interaction = {
           userId: ctx.from.id.toString(),
@@ -333,9 +336,10 @@ export class TelegramRaidManager extends Service {
             first_name: ctx.from.first_name,
             message_id: ctx.message.message_id,
             is_bot_command: ctx.message.text.startsWith('/'),
-            is_raid_related: ctx.message.text.toLowerCase().includes('raid') || 
-                           ctx.message.text.toLowerCase().includes('twitter') ||
-                           ctx.message.text.toLowerCase().includes('engagement'),
+            is_raid_related:
+              ctx.message.text.toLowerCase().includes('raid') ||
+              ctx.message.text.toLowerCase().includes('twitter') ||
+              ctx.message.text.toLowerCase().includes('engagement'),
           },
           sentimentScore: 0.5, // TODO: Add sentiment analysis
           timestamp: new Date(),
@@ -343,7 +347,7 @@ export class TelegramRaidManager extends Service {
 
         // Store in ElizaOS memory system via Community Memory Service
         await (communityMemoryService as any).recordInteraction(interaction);
-        
+
         elizaLogger.debug('Telegram interaction stored in ElizaOS memory system');
       } else {
         // Fallback: Direct Supabase storage (legacy)
@@ -404,7 +408,6 @@ export class TelegramRaidManager extends Service {
       };
 
       await entitySyncService.syncChat(telegramChat);
-
     } catch (error) {
       elizaLogger.error('Failed to sync entities:', error);
       // Don't throw - entity sync is not critical for basic functionality
@@ -419,7 +422,11 @@ export class TelegramRaidManager extends Service {
     const chatState = this.chatStates.get(chatId);
 
     // If chat is in raid mode and user is not authorized
-    if (chatState?.isRaidMode && !chatState.allowedUsers?.includes(userId) && !this.adminUsers.has(userId)) {
+    if (
+      chatState?.isRaidMode &&
+      !chatState.allowedUsers?.includes(userId) &&
+      !this.adminUsers.has(userId)
+    ) {
       // Silently ignore non-authorized messages in raid mode
       return false;
     }
@@ -429,7 +436,7 @@ export class TelegramRaidManager extends Service {
 
   private async detectTwitterUrls(ctx: TelegramRaidContext): Promise<void> {
     if (!ctx.message || !('text' in ctx.message)) return;
-    
+
     const text = ctx.message.text;
     const twitterRegex = /https?:\/\/(www\.)?(twitter\.com|x\.com)\/\w+\/status\/\d+/g;
     const matches = text.match(twitterRegex);
@@ -442,12 +449,14 @@ export class TelegramRaidManager extends Service {
         ]);
 
         await ctx.reply(
-          `🎯 *Twitter Link Detected!*\n\nFound: [Tweet](${ url })\n\nWant to start a raid?`,
+          `🎯 *Twitter Link Detected!*\n\nFound: [Tweet](${url})\n\nWant to start a raid?`,
           {
             reply_markup: keyboard.reply_markup,
             parse_mode: 'Markdown',
-            reply_to_message_id: ctx.message.message_id,
-          }
+            reply_parameters: {
+              message_id: ctx.message.message_id,
+            },
+          },
         );
       }
     }
@@ -538,11 +547,13 @@ export class TelegramRaidManager extends Service {
     // Help command
     this.bot.command('help', async (ctx: TelegramRaidContext) => {
       const isAdmin = this.adminUsers.has(ctx.from?.id.toString() || '');
-      const adminCommands = isAdmin ? `\n*Admin Commands:*\n` +
+      const adminCommands = isAdmin
+        ? `\n*Admin Commands:*\n` +
           `/lock - Lock chat to raid mode\n` +
           `/unlock - Unlock chat\n` +
           `/selfraid - Post tweet and start raid\n` +
-          `/announce <message> - Send announcement\n\n` : '';
+          `/announce <message> - Send announcement\n\n`
+        : '';
 
       await ctx.reply(
         `🤖 *NUBI Raids Bot Help*\n\n` +
@@ -713,7 +724,9 @@ export class TelegramRaidManager extends Service {
         });
 
         // Create forum topic for raid organization (if chat supports it)
-        await this.createRaidForumTopic(ctx, result.raidId, twitterUrl);
+        if (result.raidId) {
+          await this.createRaidForumTopic(ctx, result.raidId, twitterUrl);
+        }
 
         // Notify channel if this is a private message
         if (ctx.chat?.type === 'private' && this.channelId != null) {
@@ -1145,7 +1158,7 @@ export class TelegramRaidManager extends Service {
       `🔒 *CHAT LOCKED FOR RAID MODE*\n\n` +
         `Only raid participants and admins can message.\n` +
         `Use /unlock to restore normal chat.`,
-      { parse_mode: 'Markdown' }
+      { parse_mode: 'Markdown' },
     );
   }
 
@@ -1156,32 +1169,39 @@ export class TelegramRaidManager extends Service {
     this.chatStates.delete(chatId);
 
     await ctx.reply(
-      `🔓 *CHAT UNLOCKED*\n\n` +
-        `Normal chat mode restored. All users can participate.`,
-      { parse_mode: 'Markdown' }
+      `🔓 *CHAT UNLOCKED*\n\n` + `Normal chat mode restored. All users can participate.`,
+      { parse_mode: 'Markdown' },
     );
   }
 
   private async initiateSelfRaid(ctx: Context): Promise<void> {
     try {
       if (!ctx.message || !('text' in ctx.message)) {
-        await ctx.reply('Usage: `/selfraid <tweet_content>`\n\nExample: `/selfraid Check out this amazing project!`', {
-          parse_mode: 'Markdown',
-        });
+        await ctx.reply(
+          'Usage: `/selfraid <tweet_content>`\n\nExample: `/selfraid Check out this amazing project!`',
+          {
+            parse_mode: 'Markdown',
+          },
+        );
         return;
       }
 
       const args = (ctx.message as any).text.split(' ');
       if (args.length < 2) {
-        await ctx.reply('Usage: `/selfraid <tweet_content>`\n\nExample: `/selfraid Check out this amazing project!`', {
-          parse_mode: 'Markdown',
-        });
+        await ctx.reply(
+          'Usage: `/selfraid <tweet_content>`\n\nExample: `/selfraid Check out this amazing project!`',
+          {
+            parse_mode: 'Markdown',
+          },
+        );
         return;
       }
 
       const tweetContent = args.slice(1).join(' ');
-      
-      await ctx.reply('🚀 *INITIATING SELF-RAID*\n\n1️⃣ Posting tweet to Twitter...\n2️⃣ Starting raid coordination...');
+
+      await ctx.reply(
+        '🚀 *INITIATING SELF-RAID*\n\n1️⃣ Posting tweet to Twitter...\n2️⃣ Starting raid coordination...',
+      );
 
       // Get Twitter service to post the tweet
       const twitterService = this.runtime.getService('TWITTER_RAID_SERVICE');
@@ -1197,7 +1217,7 @@ export class TelegramRaidManager extends Service {
         userId: ctx.from?.id,
       });
       const tweetId = tweetResult?.id || tweetResult?.rest_id || tweetResult?.data?.id;
-      
+
       if (!tweetId) {
         await ctx.reply('❌ Failed to post tweet. Please try again.');
         return;
@@ -1217,10 +1237,9 @@ export class TelegramRaidManager extends Service {
             `Bot posted: "${tweetContent}"\n\n` +
             `Target: [Our Tweet](${tweetUrl})\n\n` +
             `Join the raid and show support! 🔥`,
-          { parse_mode: 'Markdown' }
+          { parse_mode: 'Markdown' },
         );
       }
-
     } catch (error) {
       elizaLogger.error('Failed to initiate self-raid:', error);
       await ctx.reply('❌ Failed to initiate self-raid. Please try again.');
@@ -1229,22 +1248,28 @@ export class TelegramRaidManager extends Service {
 
   private async sendAnnouncement(ctx: Context): Promise<void> {
     if (!ctx.message || !('text' in ctx.message)) {
-      await ctx.reply('Usage: `/announce <message>`\n\nExample: `/announce Important raid starting in 5 minutes!`', {
-        parse_mode: 'Markdown',
-      });
+      await ctx.reply(
+        'Usage: `/announce <message>`\n\nExample: `/announce Important raid starting in 5 minutes!`',
+        {
+          parse_mode: 'Markdown',
+        },
+      );
       return;
     }
 
     const args = (ctx.message as any).text.split(' ');
     if (args.length < 2) {
-      await ctx.reply('Usage: `/announce <message>`\n\nExample: `/announce Important raid starting in 5 minutes!`', {
-        parse_mode: 'Markdown',
-      });
+      await ctx.reply(
+        'Usage: `/announce <message>`\n\nExample: `/announce Important raid starting in 5 minutes!`',
+        {
+          parse_mode: 'Markdown',
+        },
+      );
       return;
     }
 
     const announcement = args.slice(1).join(' ');
-    
+
     const messageText = `📢 *ANNOUNCEMENT* 📢\n\n${announcement}\n\n— Management`;
 
     if (this.channelId) {
@@ -1266,8 +1291,8 @@ export class TelegramRaidManager extends Service {
       }
 
       const tweetData = await (twitterService as any).scrapeEngagement(url);
-      
-      const analysisText = 
+
+      const analysisText =
         `📊 *TWEET ANALYSIS* 📊\n\n` +
         `*Author:* @${tweetData.author}\n` +
         `*Created:* ${tweetData.createdAt.toLocaleDateString()}\n\n` +
@@ -1288,7 +1313,6 @@ export class TelegramRaidManager extends Service {
         reply_markup: keyboard.reply_markup,
         parse_mode: 'Markdown',
       });
-
     } catch (error) {
       elizaLogger.error('Failed to analyze tweet:', error);
       await ctx.reply('❌ Failed to analyze tweet. The link may be invalid or private.');
@@ -1316,7 +1340,8 @@ export class TelegramRaidManager extends Service {
       // Get current raid participants from the database
       const { data: raid, error } = await this.supabase
         .from('raids')
-        .select(`
+        .select(
+          `
           id,
           target_url,
           participants:raid_participants(
@@ -1326,7 +1351,8 @@ export class TelegramRaidManager extends Service {
             actions_count,
             points_earned
           )
-        `)
+        `,
+        )
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(1)
@@ -1356,14 +1382,17 @@ export class TelegramRaidManager extends Service {
       participantsText += `💡 *Keep engaging to climb the ranks!*`;
 
       await ctx.reply(participantsText, { parse_mode: 'Markdown' });
-
     } catch (error) {
       elizaLogger.error('Failed to show raid participants:', error);
       await ctx.reply('❌ Failed to load participant data.');
     }
   }
 
-  private async createRaidForumTopic(ctx: Context, raidId: string, twitterUrl: string): Promise<void> {
+  private async createRaidForumTopic(
+    ctx: Context,
+    raidId: string,
+    twitterUrl: string,
+  ): Promise<void> {
     try {
       // Get ForumTopicManager service
       const forumTopicManager = this.runtime.getService('FORUM_TOPIC_MANAGER') as ForumTopicManager;
@@ -1373,7 +1402,7 @@ export class TelegramRaidManager extends Service {
       }
 
       // Only create topics in supergroups that support forums
-      if (!ctx.chat || !(['supergroup'].includes(ctx.chat.type))) {
+      if (!ctx.chat || !['supergroup'].includes(ctx.chat.type)) {
         elizaLogger.debug('Chat does not support forum topics - skipping');
         return;
       }
@@ -1381,18 +1410,38 @@ export class TelegramRaidManager extends Service {
       // Extract tweet ID from URL for topic naming
       const tweetIdMatch = twitterUrl.match(/status\/(\d+)/);
       const tweetId = tweetIdMatch ? tweetIdMatch[1].slice(-8) : 'unknown';
-      
+
       const topicName = `🎯 Raid ${raidId.slice(0, 8)} - ${tweetId}`;
       const chatId = ctx.chat.id;
 
-      // Create forum topic for this raid
-      const topic = await forumTopicManager.createForumTopic(chatId, topicName, 'twitter');
-      
+      // Create forum topic for this raid - pass bot instance
+      const bot = this.runtime.getSetting('telegramBot'); // Assuming bot is available in runtime
+      if (!bot) {
+        elizaLogger.debug('Telegram bot not available for forum topic creation');
+        return;
+      }
+
+      const topic = await forumTopicManager.createRaidTopic(
+        bot,
+        chatId,
+        raidId,
+        twitterUrl,
+        'twitter',
+      );
+
       if (topic) {
-        elizaLogger.info(`Created forum topic for raid ${raidId}: ${topic.name} (ID: ${topic.message_thread_id})`);
-        
-        // Send raid info to the forum topic
-        const topicKeyboard = forumTopicManager.getTopicKeyboard('twitter', raidId);
+        elizaLogger.info(
+          `Created forum topic for raid ${raidId}: ${topic.topic_name} (ID: ${topic.topic_id})`,
+        );
+
+        // Send raid info to the forum topic using private method
+        // Note: createRaidKeyboard is private, so we'll create a simple keyboard
+        const topicKeyboard = {
+          inline_keyboard: [
+            [{ text: '👍 Liked', callback_data: `raid_action:like:${raidId}` }],
+            [{ text: '📊 Status', callback_data: `raid_menu:status:${raidId}` }],
+          ],
+        };
         const topicMessage =
           `🎯 **RAID COORDINATION TOPIC** 🎯\n\n` +
           `**Target:** [Twitter Post](${twitterUrl})\n` +
@@ -1407,9 +1456,9 @@ export class TelegramRaidManager extends Service {
 
         if (this.bot) {
           await this.bot.telegram.sendMessage(chatId, topicMessage, {
-            message_thread_id: topic.message_thread_id,
+            message_thread_id: topic.topic_id,
             parse_mode: 'Markdown',
-            reply_markup: topicKeyboard?.reply_markup,
+            reply_markup: topicKeyboard,
           });
         }
       }

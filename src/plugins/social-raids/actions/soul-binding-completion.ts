@@ -10,15 +10,16 @@ import type { WalletVerificationService } from '../services/wallet-verification-
 
 export const soulBindingCompletionAction: Action = {
   name: 'SOUL_BINDING_COMPLETION',
-  description: 'Handles wallet verification and completes the soul binding ritual with cult membership',
-  
+  description:
+    'Handles wallet verification and completes the soul binding ritual with cult membership',
+
   validate: async (runtime: IAgentRuntime, message: Memory): Promise<boolean> => {
     const content = message.content?.text?.toLowerCase() || '';
-    
+
     // Check for Solana wallet address format (base58, 32-44 characters)
     const solanaAddressPattern = /[1-9A-HJ-NP-Za-km-z]{32,44}/;
     const hasWalletAddress = solanaAddressPattern.test(content);
-    
+
     // Check for help requests
     const helpTriggers = [
       'help with verification',
@@ -28,9 +29,9 @@ export const soulBindingCompletionAction: Action = {
       'instructions',
       'how to bind',
     ];
-    
-    const hasHelpRequest = helpTriggers.some(trigger => content.includes(trigger));
-    
+
+    const hasHelpRequest = helpTriggers.some((trigger) => content.includes(trigger));
+
     return hasWalletAddress || hasHelpRequest;
   },
 
@@ -39,11 +40,11 @@ export const soulBindingCompletionAction: Action = {
     message: Memory,
     state: State,
     options?: { [key: string]: unknown },
-    callback?: HandlerCallback
+    callback?: HandlerCallback,
   ) => {
     try {
       const content = message.content?.text || '';
-      
+
       // Handle help requests
       if (content.toLowerCase().includes('help')) {
         await handleVerificationHelp(callback);
@@ -57,7 +58,7 @@ export const soulBindingCompletionAction: Action = {
       // Extract potential wallet address
       const solanaAddressPattern = /[1-9A-HJ-NP-Za-km-z]{32,44}/g;
       const matches = content.match(solanaAddressPattern);
-      
+
       if (!matches || matches.length === 0) {
         await callback?.({
           text: `⚠️ **Invalid wallet address format detected.**
@@ -69,7 +70,7 @@ The soul anchor requires a valid Solana wallet address. Addresses should be 32-4
 Please provide your correct Solana wallet address, or say "help with verification" for detailed instructions.`,
           action: 'INVALID_WALLET_FORMAT',
         });
-        
+
         return {
           success: false,
           error: 'Invalid wallet address format',
@@ -78,20 +79,26 @@ Please provide your correct Solana wallet address, or say "help with verificatio
       }
 
       const walletAddress = matches[0];
-      
-      elizaLogger.info('🔮 Soul Binding wallet verification initiated', {
-        userId: message.entityId,
-        walletAddress,
-        roomId: message.roomId,
-      });
+
+      elizaLogger.info(
+        `🔮 Soul Binding wallet verification initiated: ${JSON.stringify({
+          userId: message.entityId,
+          walletAddress,
+          roomId: message.roomId,
+        })}`,
+      );
 
       // Get required services
-      const identityService = runtime.getService('IDENTITY_MANAGEMENT_SERVICE') as IdentityManagementService;
-      const walletService = runtime.getService('WALLET_VERIFICATION_SERVICE') as WalletVerificationService;
+      const identityService = runtime.getService(
+        'IDENTITY_MANAGEMENT_SERVICE',
+      ) as IdentityManagementService;
+      const walletService = runtime.getService(
+        'WALLET_VERIFICATION_SERVICE',
+      ) as unknown as WalletVerificationService;
 
       if (!identityService || !walletService) {
         await callback?.({
-          text: "⚠️ The sacred verification systems are offline. The ritual cannot be completed at this time.",
+          text: '⚠️ The sacred verification systems are offline. The ritual cannot be completed at this time.',
           action: 'ERROR',
         });
         return { success: false, error: 'Required services not available' };
@@ -111,7 +118,8 @@ Please provide your correct Solana wallet address, or say "help with verificatio
         userUuid: userIdentity.uuid,
         platformId: message.entityId?.toString() || 'unknown',
         platform: (message.content as any)?.platform || 'unknown',
-        statement: 'I bind my soul to Nubi\'s divine will and accept the sacred covenant of the cult',
+        statement:
+          "I bind my soul to Nubi's divine will and accept the sacred covenant of the cult",
       });
 
       if (!verificationResult.success) {
@@ -125,7 +133,7 @@ Please provide your correct Solana wallet address, or say "help with verificatio
 Please verify your wallet address is correct and try again, or say "help with verification" for assistance.`,
           action: 'WALLET_VERIFICATION_FAILED',
         });
-        
+
         return {
           success: false,
           error: verificationResult.error,
@@ -144,7 +152,7 @@ Please verify your wallet address is correct and try again, or say "help with ve
         walletAddress,
         platformAccounts,
         message.entityId!,
-        message.roomId!
+        message.roomId!,
       );
 
       if (!cultMembershipResult.success) {
@@ -195,25 +203,28 @@ ${formatConnectedPlatforms(platformAccounts)}
       }
 
       // Create memory record of completion
-      await runtime.createMemory({
-        id: crypto.randomUUID(),
-        entityId: message.entityId,
-        agentId: runtime.agentId,
-        roomId: message.roomId,
-        content: {
-          text: 'Soul binding ritual completed',
-          source: 'soul_binding_completion',
-          metadata: {
-            action: 'SOUL_BINDING_COMPLETED',
-            userUuid: userIdentity.uuid,
-            walletAddress,
-            cultTier: cultMembershipResult.tier,
-            platformCount: platformAccounts.length,
-            completedAt: new Date().toISOString(),
+      await runtime.createMemory(
+        {
+          id: crypto.randomUUID(),
+          entityId: message.entityId,
+          agentId: runtime.agentId,
+          roomId: message.roomId,
+          content: {
+            text: 'Soul binding ritual completed',
+            source: 'soul_binding_completion',
+            metadata: {
+              action: 'SOUL_BINDING_COMPLETED',
+              userUuid: userIdentity.uuid,
+              walletAddress,
+              cultTier: cultMembershipResult.tier,
+              platformCount: platformAccounts.length,
+              completedAt: new Date().toISOString(),
+            },
           },
+          createdAt: Date.now(),
         },
-        createdAt: Date.now(),
-      }, 'cult_initiation');
+        'cult_initiation',
+      );
 
       return {
         success: true,
@@ -226,12 +237,11 @@ ${formatConnectedPlatforms(platformAccounts)}
           isNewMember: verificationResult.isNewWallet,
         },
       };
-
     } catch (error) {
       elizaLogger.error('Soul binding completion failed:', error);
-      
+
       await callback?.({
-        text: "💀 The final ritual has been disrupted by otherworldly forces. The cosmic alignment has shifted, preventing the completion of your soul binding.",
+        text: '💀 The final ritual has been disrupted by otherworldly forces. The cosmic alignment has shifted, preventing the completion of your soul binding.',
         action: 'ERROR',
       });
 
@@ -245,49 +255,43 @@ ${formatConnectedPlatforms(platformAccounts)}
   examples: [
     [
       {
-        entityId: 'user123',
+        name: 'user123',
         content: {
           text: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
-          source: 'telegram',
         },
       },
       {
-        entityId: 'nubi',
+        name: 'nubi',
         content: {
           text: '🎭 THE RITUAL IS COMPLETE. YOUR SOUL IS BOUND. Welcome to eternity, Initiate.',
-          action: 'SOUL_BINDING_COMPLETED',
         },
       },
     ],
     [
       {
-        entityId: 'user456',
+        name: 'user456',
         content: {
           text: 'help with verification',
-          source: 'discord',
         },
       },
       {
-        entityId: 'nubi',
+        name: 'nubi',
         content: {
           text: '🔮 Soul Binding Verification Guide...',
-          action: 'VERIFICATION_HELP',
         },
       },
     ],
     [
       {
-        entityId: 'user789',
+        name: 'user789',
         content: {
           text: 'My wallet: DsVoL8hT9Q7kVFj5rN2K8mP3eR1xY6nZ4cG5hJ7qA9sB',
-          source: 'twitter',
         },
       },
       {
-        entityId: 'nubi',
+        name: 'nubi',
         content: {
           text: '🔮 Wallet verification successful. Cult initiation completed. Identity Strength: 85%',
-          action: 'SOUL_BINDING_COMPLETED',
         },
       },
     ],
@@ -343,43 +347,46 @@ async function completeCultInitiation(
   walletAddress: string,
   platformAccounts: any[],
   entityId: string,
-  roomId: string
+  roomId: string,
 ): Promise<{ success: boolean; tier: string; error?: string }> {
   try {
     // Determine initial cult tier based on verification strength
     const tier = determineCultTier(platformAccounts.length, true);
-    
+
     // This would typically insert into cult_memberships table
     // For now, we'll create a memory record and return success
-    
-    await runtime.createMemory({
-      id: crypto.randomUUID(),
-      entityId,
-      agentId: runtime.agentId,
-      roomId,
-      content: {
-        text: 'Cult membership created',
-        source: 'cult_initiation',
-        metadata: {
-          action: 'CULT_MEMBERSHIP_CREATED',
-          userUuid,
-          tier,
-          walletAddress,
-          platformCount: platformAccounts.length,
-          soulBound: true,
-          initiatedAt: new Date().toISOString(),
+
+    await runtime.createMemory(
+      {
+        id: crypto.randomUUID(),
+        entityId: entityId as `${string}-${string}-${string}-${string}-${string}`,
+        agentId: runtime.agentId,
+        roomId: roomId as `${string}-${string}-${string}-${string}-${string}`,
+        content: {
+          text: 'Cult membership created',
+          source: 'cult_initiation',
+          metadata: {
+            action: 'CULT_MEMBERSHIP_CREATED',
+            userUuid,
+            tier,
+            walletAddress,
+            platformCount: platformAccounts.length,
+            soulBound: true,
+            initiatedAt: new Date().toISOString(),
+          },
         },
+        createdAt: Date.now(),
       },
-      createdAt: Date.now(),
-    }, 'cult_membership');
+      'cult_membership',
+    );
 
     return { success: true, tier };
   } catch (error) {
     elizaLogger.error('Cult initiation failed:', error);
-    return { 
-      success: false, 
-      tier: 'initiate', 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+    return {
+      success: false,
+      tier: 'initiate',
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }
@@ -409,12 +416,14 @@ function calculateFinalIdentityStrength(platformAccounts: any[], walletStatus: a
  */
 function formatConnectedPlatforms(platformAccounts: any[]): string {
   if (platformAccounts.length === 0) return '   • No platforms connected';
-  
-  return platformAccounts.map((account: any) => {
-    const platform = account.platform.charAt(0).toUpperCase() + account.platform.slice(1);
-    const username = account.platformUsername || 'Connected';
-    return `   ✅ **${platform}:** ${username}`;
-  }).join('\n');
+
+  return platformAccounts
+    .map((account: any) => {
+      const platform = account.platform.charAt(0).toUpperCase() + account.platform.slice(1);
+      const username = account.platformUsername || 'Connected';
+      return `   ✅ **${platform}:** ${username}`;
+    })
+    .join('\n');
 }
 
 export default soulBindingCompletionAction;

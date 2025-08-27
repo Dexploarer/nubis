@@ -48,14 +48,15 @@ interface IdentityLinkingRequest {
 
 export class IdentityManagementService extends Service {
   static serviceType = 'IDENTITY_MANAGEMENT_SERVICE';
-  
+
   public name: string = IdentityManagementService.serviceType;
-  public capabilityDescription = 'Manages unified cross-platform user identities with UUID consistency';
+  public capabilityDescription =
+    'Manages unified cross-platform user identities with UUID consistency';
   private supabase: any;
   private identityCache = new Map<string, UserIdentity>();
   private platformCache = new Map<string, PlatformAccount[]>();
   private readonly MAX_CACHE_SIZE = 1000;
-  
+
   constructor(runtime: IAgentRuntime) {
     super(runtime);
   }
@@ -85,18 +86,20 @@ export class IdentityManagementService extends Service {
     try {
       // Initialize Supabase client
       const supabaseUrl = this.runtime.getSetting('SUPABASE_URL') || process.env.SUPABASE_URL;
-      const supabaseServiceKey = this.runtime.getSetting('SUPABASE_SERVICE_ROLE_KEY') || process.env.SUPABASE_SERVICE_ROLE_KEY;
-      
+      const supabaseServiceKey =
+        this.runtime.getSetting('SUPABASE_SERVICE_ROLE_KEY') ||
+        process.env.SUPABASE_SERVICE_ROLE_KEY;
+
       if (supabaseUrl && supabaseServiceKey) {
         this.supabase = createClient(supabaseUrl, supabaseServiceKey);
       } else {
         elizaLogger.warn('Supabase credentials not available, using mock client');
         this.supabase = this.createNoopSupabase();
       }
-      
+
       // Create database tables if they don't exist
       await this.ensureDatabaseTables();
-      
+
       elizaLogger.success('Identity Management Service initialized successfully');
     } catch (error) {
       elizaLogger.error('Failed to initialize Identity Management Service:', error);
@@ -106,16 +109,24 @@ export class IdentityManagementService extends Service {
 
   private async ensureDatabaseTables(): Promise<void> {
     try {
-      // Create user_identities table
-      await this.supabase.rpc('create_user_identities_table', {});
-      
-      // Create platform_accounts table  
-      await this.supabase.rpc('create_platform_accounts_table', {});
-      
-      elizaLogger.debug('Database tables ensured for Identity Management');
+      // Only attempt RPC calls if we have a real Supabase client
+      if (this.supabase && typeof this.supabase.rpc === 'function') {
+        // Create user_identities table
+        await this.supabase.rpc('create_user_identities_table', {});
+
+        // Create platform_accounts table
+        await this.supabase.rpc('create_platform_accounts_table', {});
+
+        elizaLogger.debug('Database tables ensured for Identity Management');
+      } else {
+        elizaLogger.debug('Mock Supabase client detected, skipping table creation');
+      }
     } catch (error) {
       // Tables might already exist, which is fine
-      elizaLogger.debug('Database tables already exist or creation skipped:', error.message);
+      elizaLogger.debug(
+        'Database tables already exist or creation skipped:',
+        error?.message || error,
+      );
     }
   }
 
@@ -125,7 +136,7 @@ export class IdentityManagementService extends Service {
    */
   async getOrCreateUserIdentity(request: IdentityLinkingRequest): Promise<UserIdentity> {
     const cacheKey = `${request.platform}:${request.platformId}`;
-    
+
     try {
       // Check cache first
       if (this.identityCache.has(cacheKey)) {
@@ -136,7 +147,7 @@ export class IdentityManagementService extends Service {
 
       // Check if platform account already exists
       const existingAccount = await this.findPlatformAccount(request.platform, request.platformId);
-      
+
       if (existingAccount) {
         // Get the associated user identity
         const identity = await this.getUserIdentity(existingAccount.userUuid);
@@ -156,7 +167,10 @@ export class IdentityManagementService extends Service {
     }
   }
 
-  private async findPlatformAccount(platform: string, platformId: string): Promise<PlatformAccount | null> {
+  private async findPlatformAccount(
+    platform: string,
+    platformId: string,
+  ): Promise<PlatformAccount | null> {
     try {
       const { data, error } = await this.supabase
         .from('platform_accounts')
@@ -165,19 +179,22 @@ export class IdentityManagementService extends Service {
         .eq('platform_id', platformId)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 = no rows returned
         throw error;
       }
 
-      return data ? {
-        id: data.id,
-        userUuid: data.user_uuid,
-        platform: data.platform,
-        platformId: data.platform_id,
-        platformUsername: data.platform_username,
-        verifiedAt: data.verified_at ? new Date(data.verified_at) : undefined,
-        metadata: data.metadata || {},
-      } : null;
+      return data
+        ? {
+            id: data.id,
+            userUuid: data.user_uuid,
+            platform: data.platform,
+            platformId: data.platform_id,
+            platformUsername: data.platform_username,
+            verifiedAt: data.verified_at ? new Date(data.verified_at) : undefined,
+            metadata: data.metadata || {},
+          }
+        : null;
     } catch (error) {
       elizaLogger.warn('Failed to find platform account:', error);
       return null;
@@ -196,12 +213,14 @@ export class IdentityManagementService extends Service {
         throw error;
       }
 
-      return data ? {
-        uuid: data.uuid,
-        createdAt: new Date(data.created_at),
-        lastActiveAt: data.last_active_at ? new Date(data.last_active_at) : undefined,
-        metadata: data.metadata || {},
-      } : null;
+      return data
+        ? {
+            uuid: data.uuid,
+            createdAt: new Date(data.created_at),
+            lastActiveAt: data.last_active_at ? new Date(data.last_active_at) : undefined,
+            metadata: data.metadata || {},
+          }
+        : null;
     } catch (error) {
       elizaLogger.warn('Failed to get user identity:', error);
       return null;
@@ -211,40 +230,36 @@ export class IdentityManagementService extends Service {
   private async createNewUserIdentity(request: IdentityLinkingRequest): Promise<UserIdentity> {
     const newUuid = crypto.randomUUID() as UUID;
     const now = new Date();
-    
+
     elizaLogger.info(`Creating new user identity for ${request.platform}:${request.platformId}`);
 
     try {
       // Create user identity
-      const { error: identityError } = await this.supabase
-        .from('user_identities')
-        .insert({
-          uuid: newUuid,
-          created_at: now.toISOString(),
-          last_active_at: now.toISOString(),
-          metadata: {
-            displayName: request.platformUsername,
-            preferredPlatform: request.platform,
-            createdFrom: request.platform,
-          },
-        });
+      const { error: identityError } = await this.supabase.from('user_identities').insert({
+        uuid: newUuid,
+        created_at: now.toISOString(),
+        last_active_at: now.toISOString(),
+        metadata: {
+          displayName: request.platformUsername,
+          preferredPlatform: request.platform,
+          createdFrom: request.platform,
+        },
+      });
 
       if (identityError) {
         throw identityError;
       }
 
       // Create platform account
-      const { error: accountError } = await this.supabase
-        .from('platform_accounts')
-        .insert({
-          id: crypto.randomUUID(),
-          user_uuid: newUuid,
-          platform: request.platform,
-          platform_id: request.platformId,
-          platform_username: request.platformUsername,
-          verified_at: now.toISOString(),
-          metadata: request.metadata || {},
-        });
+      const { error: accountError } = await this.supabase.from('platform_accounts').insert({
+        id: crypto.randomUUID(),
+        user_uuid: newUuid,
+        platform: request.platform,
+        platform_id: request.platformId,
+        platform_username: request.platformUsername,
+        verified_at: now.toISOString(),
+        metadata: request.metadata || {},
+      });
 
       if (accountError) {
         throw accountError;
@@ -264,7 +279,9 @@ export class IdentityManagementService extends Service {
       const cacheKey = `${request.platform}:${request.platformId}`;
       this.updateCache(cacheKey, identity);
 
-      elizaLogger.success(`Created new user identity: ${newUuid} for ${request.platform}:${request.platformId}`);
+      elizaLogger.success(
+        `Created new user identity: ${newUuid} for ${request.platform}:${request.platformId}`,
+      );
       return identity;
     } catch (error) {
       elizaLogger.error('Failed to create new user identity:', error);
@@ -275,9 +292,9 @@ export class IdentityManagementService extends Service {
   private createTemporaryIdentity(request: IdentityLinkingRequest): UserIdentity {
     // Create a temporary identity for graceful degradation
     const tempUuid = crypto.randomUUID() as UUID;
-    
+
     elizaLogger.warn(`Creating temporary identity for ${request.platform}:${request.platformId}`);
-    
+
     return {
       uuid: tempUuid,
       createdAt: new Date(),
@@ -297,7 +314,7 @@ export class IdentityManagementService extends Service {
     try {
       // Check if platform account already exists for this user
       const existingAccount = await this.findPlatformAccount(request.platform, request.platformId);
-      
+
       if (existingAccount && existingAccount.userUuid === userUuid) {
         elizaLogger.debug('Platform account already linked to this user');
         return true;
@@ -309,17 +326,15 @@ export class IdentityManagementService extends Service {
       }
 
       // Create new platform account link
-      const { error } = await this.supabase
-        .from('platform_accounts')
-        .insert({
-          id: crypto.randomUUID(),
-          user_uuid: userUuid,
-          platform: request.platform,
-          platform_id: request.platformId,
-          platform_username: request.platformUsername,
-          verified_at: new Date().toISOString(),
-          metadata: request.metadata || {},
-        });
+      const { error } = await this.supabase.from('platform_accounts').insert({
+        id: crypto.randomUUID(),
+        user_uuid: userUuid,
+        platform: request.platform,
+        platform_id: request.platformId,
+        platform_username: request.platformUsername,
+        verified_at: new Date().toISOString(),
+        metadata: request.metadata || {},
+      });
 
       if (error) {
         throw error;
@@ -388,7 +403,7 @@ export class IdentityManagementService extends Service {
         platform: platform as any,
         platformId,
       });
-      
+
       return identity.uuid;
     } catch (error) {
       elizaLogger.error('Failed to convert platform ID to UUID:', error);
@@ -407,7 +422,7 @@ export class IdentityManagementService extends Service {
       return {
         uuid: userUuid,
         identity,
-        platformAccounts: platformAccounts.map(account => ({
+        platformAccounts: platformAccounts.map((account) => ({
           platform: account.platform,
           username: account.platformUsername,
           platformId: account.platformId,
@@ -444,7 +459,7 @@ export class IdentityManagementService extends Service {
         this.identityCache.delete(firstKey);
       }
     }
-    
+
     this.identityCache.set(key, identity);
   }
 
@@ -481,6 +496,6 @@ export class IdentityManagementService extends Service {
 }
 
 // Ensure the class constructor reports the expected static identifier when accessed as `.name`
-Object.defineProperty(IdentityManagementService, 'name', { 
-  value: IdentityManagementService.serviceType 
+Object.defineProperty(IdentityManagementService, 'name', {
+  value: IdentityManagementService.serviceType,
 });
