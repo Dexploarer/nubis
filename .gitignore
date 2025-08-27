@@ -56,5 +56,9 @@ temp/
 pglite/
 cache/
 
+# Generated data files
+tweets.json
+exported-tweets.json
+
 xmcpx
 src/plugins/xmcpx
