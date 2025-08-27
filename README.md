@@ -1,3 +1,4 @@
+Chore: trigger CI (dummy change)
 # Project Starter
 
 This is the starter template for ElizaOS projects.
