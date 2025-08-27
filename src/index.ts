@@ -2,36 +2,43 @@
 import { logger, type Project, type ProjectAgent } from '@elizaos/core';
 
 // Local imports last
-import { character } from './nubi.ts'; // Nubi is now the main character
+import { Nubi, Buni } from './characters/index.ts';
+import { validateCharacter } from './characters/validation.ts';
 import plugin from './plugin.ts';
 import { twitterEnhancedPlugin } from './plugins/twitter-enhanced/index.ts';
 import { socialRaidsPlugin } from './plugins/social-raids/index.ts';
 import { ProjectStarterTestSuite } from './__tests__/e2e/project-starter.e2e';
+import { assertProjectPluginOrder } from './utils/plugin-order-guard.ts';
+
+function validateAgentCharacter(character: unknown, characterName: string) {
+  const res = validateCharacter(character);
+  if (!res.valid) {
+    logger.error(res.errors.join('; '));
+    throw new Error(`${characterName} character failed validation`);
+  }
+}
 
 // Main project agent (Nubi) - now the primary agent
+validateAgentCharacter(Nubi, 'Nubi')
 export const projectAgent: ProjectAgent = {
-  character, // This is Nubi character
+  character: Nubi,
 
-  // Project-specific plugins (loaded after character's core plugins)
-  // Order matters: twitter-enhanced loads first (priority 90), then social-raids (priority 100)
-  plugins: [
-    plugin, // Starter plugin with basic functionality
-    twitterEnhancedPlugin, // Enhanced Twitter integration with RSS feeds
-    socialRaidsPlugin, // Social raids coordination and management
-  ],
-
-  tests: [ProjectStarterTestSuite],
-};
-
-// Secondary agent (Buni) - supportive community builder
-export const buniAgent: ProjectAgent = {
-  character,
-
-  // Same plugin configuration as main agent
   plugins: [plugin, twitterEnhancedPlugin, socialRaidsPlugin],
 
   tests: [ProjectStarterTestSuite],
 };
+assertProjectPluginOrder(projectAgent.plugins, logger);
+
+// Secondary agent (Buni) - supportive community builder
+validateAgentCharacter(Buni, 'Buni')
+export const buniAgent: ProjectAgent = {
+  character: Buni,
+
+  plugins: [plugin, twitterEnhancedPlugin, socialRaidsPlugin],
+
+  tests: [ProjectStarterTestSuite],
+};
+assertProjectPluginOrder(buniAgent.plugins, logger);
 
 // Project configuration with multiple agents
 const project: Project = {
@@ -42,8 +49,7 @@ const project: Project = {
 };
 
 // Export character configurations for direct use
-export { character } from './nubi.ts'; // Main character export is now Nubi
-export { character as buniCharacter } from './character.ts'; // Buni as secondary
+export { Nubi as character, Buni as buniCharacter } from './characters/index.ts';
 
 // Export plugin instances for external use
 export { plugin, twitterEnhancedPlugin, socialRaidsPlugin };

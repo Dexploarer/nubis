@@ -25,7 +25,8 @@
     "paths": {
       "@elizaos/core": ["node_modules/@elizaos/core"],
       "@elizaos/core/*": ["node_modules/@elizaos/core/*"]
-    }
+    },
+    "types": ["bun-types", "node"]
   },
   "include": ["src/**/*.ts", "types/**/*.d.ts"],
   "exclude": [

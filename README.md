@@ -1,3 +1,54 @@
+# Nubis (ElizaOS Project Starter)
+
+This project aligns with ElizaOS architecture and includes near-term improvements for character management, validation, plugin ordering, and test scaffolding.
+
+Quick start
+- Install: npm install
+- Dev: npm run dev
+- Build: npm run build
+
+New scripts
+- Type check: npm run check:types
+- Architecture compliance: npm run check:arch
+- Smoke tests: npm run test:smoke
+- Full tests: npm test
+
+Characters registry
+- Characters are centralized. Import from src/characters:
+  import { Nubi, Buni } from './src/characters'
+- Project agents in src/index.ts now reference the registry instead of direct character files.
+
+Validation
+- Minimal zod-based validation runs at startup (src/characters/validation.ts).
+- REQUIRED_PLUGINS order enforced as a prefix:
+  1) @elizaos/plugin-bootstrap
+  2) @elizaos/plugin-sql
+- Validation errors log via @elizaos/core logger and throw to prevent misconfigured startup.
+
+Plugin order guard
+- A runtime guard ensures twitterEnhancedPlugin loads before socialRaidsPlugin.
+- Implementation: src/utils/plugin-order-guard.ts
+- Guard is invoked in src/index.ts for both projectAgent and buniAgent.
+
+CommunityMemoryService health
+- health() method added for observability (src/plugins/social-raids/services/community-memory-service.ts):
+  Returns supabaseEnabled and cache sizes.
+
+Scaffolding for roadmap
+- Test engines stubs under src/__tests__/infrastructure (matrix, performance, load, integration, coverage).
+- Base service and logger wrappers:
+  - src/services/base/optimized-service.ts
+  - src/services/logging/elizaos-logger.service.ts
+- Templates and utils:
+  - src/templates/index.ts
+  - src/elizaosUtils.ts
+
+DeepWiki reference
+- Architecture concepts: https://deepwiki.com/elizaOS/eliza
+
+Notes
+- Tests use Bun. If Bun is not installed locally, rely on CI to run tests.
+- Keep REQUIRED_PLUGINS at the start of each character’s plugins list to pass validation.
 # Project Starter
 
 This is the starter template for ElizaOS projects.

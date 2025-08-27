@@ -1272,6 +1272,15 @@ export class CommunityMemoryService extends Service {
       elizaLogger.warn('Failed to sync to Supabase:', error);
     }
   }
+  health(): { supabaseEnabled: boolean; memoryCacheSize: number; personalityCacheSize: number } {
+    const supabaseEnabled = !!(this.supabase && typeof this.supabase.rpc === 'function');
+    return {
+      supabaseEnabled,
+      memoryCacheSize: this.memoryCache.size,
+      personalityCacheSize: this.personalityCache.size,
+    };
+  }
+
 
   async stop(): Promise<void> {
     if (this.cleanupInterval) {
