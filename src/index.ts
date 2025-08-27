@@ -10,14 +10,16 @@ import { socialRaidsPlugin } from './plugins/social-raids/index.ts';
 import { ProjectStarterTestSuite } from './__tests__/e2e/project-starter.e2e';
 import { assertProjectPluginOrder } from './utils/plugin-order-guard.ts';
 
-// Main project agent (Nubi) - now the primary agent
-{
-  const n = validateCharacter(Nubi);
-  if (!n.valid) {
-    logger.error(n.errors.join('; '));
-    throw new Error('Nubi character failed validation');
+function validateAgentCharacter(character: unknown, characterName: string) {
+  const res = validateCharacter(character);
+  if (!res.valid) {
+    logger.error(res.errors.join('; '));
+    throw new Error(`${characterName} character failed validation`);
   }
 }
+
+// Main project agent (Nubi) - now the primary agent
+validateAgentCharacter(Nubi, 'Nubi')
 export const projectAgent: ProjectAgent = {
   character: Nubi,
 
@@ -25,16 +27,10 @@ export const projectAgent: ProjectAgent = {
 
   tests: [ProjectStarterTestSuite],
 };
-assertProjectPluginOrder(projectAgent.plugins as any, logger as any);
+assertProjectPluginOrder(projectAgent.plugins, logger);
 
 // Secondary agent (Buni) - supportive community builder
-{
-  const b = validateCharacter(Buni);
-  if (!b.valid) {
-    logger.error(b.errors.join('; '));
-    throw new Error('Buni character failed validation');
-  }
-}
+validateAgentCharacter(Buni, 'Buni')
 export const buniAgent: ProjectAgent = {
   character: Buni,
 
@@ -42,7 +38,7 @@ export const buniAgent: ProjectAgent = {
 
   tests: [ProjectStarterTestSuite],
 };
-assertProjectPluginOrder(buniAgent.plugins as any, logger as any);
+assertProjectPluginOrder(buniAgent.plugins, logger);
 
 // Project configuration with multiple agents
 const project: Project = {
