@@ -8,7 +8,7 @@ Quick start
 - Build: npm run build
 
 New scripts
-- Type check: npm run type-check
+- Type check: npm run check:types
 - Architecture compliance: npm run check:arch
 - Smoke tests: npm run test:smoke
 - Full tests: npm test

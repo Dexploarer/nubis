@@ -82,6 +82,7 @@
     "format:check": "prettier --check ./src",
     "check-all": "bun run check && bun run test",
     "check:arch": "bun test src/__tests__/elizaos-architecture-compliance.test.ts",
+    "check:types": "tsc --noEmit",
     "cy:open": "bun run test:install && cypress open",
     "cy:run": "bun run test:install && cypress run --component",
     "cy:test": "bun run test:install && cypress run --component --reporter spec",
